@@ -1,89 +1,175 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="min-h-[80vh] flex flex-col justify-center items-center">
-    
-    <a href="https://atom-dev-studios.onrender.com/" target="_blank" title="Visit AtomDev Studios" class="text-center mb-10 group block transition-transform hover:scale-105">
-        
-        <div class="inline-flex items-center justify-center w-20 h-20 mb-4 p-4">
-            <img src="{{ url_for('static', filename='atomdevstudios.png') }}" 
-                alt="AtomDev Studios Logo"
-                class="w-full h-full object-contain">
-        </div>
+<div class="min-h-[100vh] relative overflow-hidden bg-gradient-to-br from-neutral-950 via-zinc-900 to-black flex items-center justify-center px-4 py-10">
 
-        <h1 class="text-4xl font-black text-gray-900 tracking-tighter uppercase italic group-hover:text-blue-600 transition-colors">
-            ATOM Gate
-        </h1>
-        <p class="text-gray-400 font-bold uppercase tracking-[0.3em] text-[10px] mt-1 opacity-80">Unified Security Architecture</p>
-    </a>
-
-    <div class="w-full max-w-md bg-white p-10 rounded-[2.5rem] shadow-[0_25px_70px_rgba(0,0,0,0.07)] border border-gray-100 relative overflow-hidden">
-        
-        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yello-600 via-indigo-600 to-yello-500"></div>
-
-        <div class="mb-10">
-            <h2 class="text-2xl font-black text-gray-800 tracking-tight">System Access</h2>
-            <p class="text-sm text-gray-400">Enter your administrative credentials</p>
-        </div>
-
-        <form method="POST" class="space-y-6">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            
-            <div class="space-y-2">
-                <label class="block text-[10px] font-black uppercase text-gray-400 tracking-widest ml-1">Identity (Email)</label>
-                <div class="relative group">
-                    <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 group-focus-within:text-blue-600 transition-colors">
-                        📧
-                    </span>
-                    <input type="email" name="email" 
-                           class="w-full pl-12 pr-4 py-4 bg-gray-50 border-2 border-gray-50 rounded-2xl focus:bg-white focus:border-blue-600 focus:ring-0 outline-none transition-all placeholder-gray-300 font-medium" 
-                           placeholder="name@school.com" required>
-                </div>
-            </div>
-
-            <div class="space-y-2">
-                <div class="flex justify-between items-center px-1">
-                    <label class="block text-[10px] font-black uppercase text-gray-400 tracking-widest">Security Key</label>
-                    <a href="{{ url_for('auth.forgot_password') }}" class="text-[10px] font-bold text-brand hover:underline uppercase">Forgotten password</a>
-                </div>
-                <div class="relative group">
-                    <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 group-focus-within:text-blue-600 transition-colors">
-                        🔑
-                    </span>
-                    <input type="password" name="password" 
-                           class="w-full pl-12 pr-4 py-4 bg-gray-50 border-2 border-gray-50 rounded-2xl focus:bg-white focus:border-blue-600 focus:ring-0 outline-none transition-all placeholder-gray-300" 
-                           placeholder="••••••••" required>
-                </div>
-            </div>
-
-            <button type="submit" 
-                    class="w-full bg-gray-900 text-white font-black py-5 rounded-2xl hover:bg-blue-600 transition-all duration-300 shadow-xl hover:shadow-blue-500/20 transform hover:-translate-y-1 flex justify-center items-center gap-3 tracking-widest text-sm">
-                INITIALIZE SESSION
-                <span class="text-xl">→</span>
-            </button>
-        </form>
-
-        <div class="mt-10 pt-8 border-t border-gray-50 grid grid-cols-3 gap-2">
-            <div class="text-center">
-                <div class="text-[9px] font-black text-gray-300 uppercase tracking-tighter">Super Admin</div>
-                <div class="h-1 w-full bg-gray-100 rounded-full mt-1"></div>
-            </div>
-            <div class="text-center">
-                <div class="text-[9px] font-black text-gray-300 uppercase tracking-tighter">School Admin</div>
-                <div class="h-1 w-full bg-gray-100 rounded-full mt-1"></div>
-            </div>
-            <div class="text-center">
-                <div class="text-[9px] font-black text-gray-300 uppercase tracking-tighter">Parent Portal</div>
-                <div class="h-1 w-full bg-gray-100 rounded-full mt-1"></div>
-            </div>
+    <!-- Background glow -->
+    <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute top-[-120px] left-[-80px] w-[320px] h-[320px] bg-yellow-500/10 blur-3xl rounded-full"></div>
+        <div class="absolute bottom-[-100px] right-[-40px] w-[280px] h-[280px] bg-amber-400/10 blur-3xl rounded-full"></div>
+        <div class="absolute inset-0 opacity-[0.05]"
+             style="background-image: radial-gradient(circle at 1px 1px, rgba(255,215,0,0.35) 1px, transparent 0); background-size: 24px 24px;">
         </div>
     </div>
 
-    <div class="mt-12 flex items-center gap-3">
-        <span class="flex h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
-        <p class="text-xs text-gray-400 font-bold uppercase tracking-[0.2em]">
-            &copy; 2026 <a href="https://atom-dev-studios.onrender.com/" class="hover:text-blue-600 transition-colors">AtomDev Studios</a> | all rights reserved | ATOM Gate V1.1.1
-        </p>
+    <div class="relative z-10 w-full max-w-6xl grid lg:grid-cols-2 gap-8 items-center">
+
+        <!-- Left Brand Panel -->
+        <div class="hidden lg:flex flex-col justify-center pr-8">
+            <a href="https://atom-dev-studios.onrender.com/" target="_blank" title="Visit AtomDev Studios"
+               class="group inline-flex items-center gap-5 mb-8 w-fit">
+                <div class="w-20 h-20 rounded-3xl bg-white/5 border border-yellow-500/20 shadow-[0_0_40px_rgba(234,179,8,0.12)] flex items-center justify-center p-4">
+                    <img src="{{ url_for('static', filename='atomdevstudios.png') }}"
+                         alt="AtomDev Studios Logo"
+                         class="w-full h-full object-contain">
+                </div>
+
+                <div>
+                    <h1 class="text-5xl font-black tracking-tight uppercase italic text-white group-hover:text-yellow-400 transition-colors">
+                        ATOM Gate
+                    </h1>
+                    <p class="text-yellow-500/80 font-bold uppercase tracking-[0.35em] text-[11px] mt-2">
+                        Unified Security Architecture
+                    </p>
+                </div>
+            </a>
+
+            <div class="space-y-5 max-w-xl">
+                <h2 class="text-3xl font-black text-white leading-tight">
+                    Smart school access, attendance, identity and security — in one command center.
+                </h2>
+                <p class="text-sm text-zinc-400 leading-7">
+                    Secure administrative access for school operations, guardian visibility, attendance intelligence and protected identity workflows.
+                </p>
+
+                <div class="grid grid-cols-3 gap-3 pt-4">
+                    <div class="rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
+                        <div class="text-yellow-400 text-lg mb-2">🛡️</div>
+                        <p class="text-[10px] uppercase tracking-[0.18em] font-black text-zinc-300">Secure Access</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
+                        <div class="text-yellow-400 text-lg mb-2">📍</div>
+                        <p class="text-[10px] uppercase tracking-[0.18em] font-black text-zinc-300">Live Tracking</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/10 bg-white/5 px-4 py-4">
+                        <div class="text-yellow-400 text-lg mb-2">📨</div>
+                        <p class="text-[10px] uppercase tracking-[0.18em] font-black text-zinc-300">Parent Alerts</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Login Card -->
+        <div class="w-full max-w-md mx-auto">
+            <div class="relative rounded-[2rem] border border-yellow-500/20 bg-white shadow-[0_25px_80px_rgba(0,0,0,0.25)] overflow-hidden">
+
+                <!-- Gold top line -->
+                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-700 via-yellow-500 to-amber-400"></div>
+
+                <!-- Gold corner glow -->
+                <div class="absolute -top-16 -right-16 w-36 h-36 bg-yellow-400/20 blur-3xl rounded-full pointer-events-none"></div>
+
+                <div class="p-8 sm:p-10">
+                    <!-- Mobile brand -->
+                    <a href="https://atom-dev-studios.onrender.com/" target="_blank" title="Visit AtomDev Studios"
+                       class="lg:hidden text-center mb-8 group block transition-transform hover:scale-[1.02]">
+                        <div class="inline-flex items-center justify-center w-16 h-16 mb-3 p-3 rounded-2xl bg-yellow-50 border border-yellow-200">
+                            <img src="{{ url_for('static', filename='atomdevstudios.png') }}"
+                                 alt="AtomDev Studios Logo"
+                                 class="w-full h-full object-contain">
+                        </div>
+
+                        <h1 class="text-3xl font-black text-gray-900 tracking-tighter uppercase italic group-hover:text-yellow-600 transition-colors">
+                            ATOM Gate
+                        </h1>
+                        <p class="text-yellow-700/70 font-bold uppercase tracking-[0.28em] text-[9px] mt-1">
+                            Unified Security Architecture
+                        </p>
+                    </a>
+
+                    <div class="mb-8">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-50 border border-yellow-200 mb-4">
+                            <span class="h-2 w-2 rounded-full bg-yellow-500 animate-pulse"></span>
+                            <span class="text-[10px] font-black uppercase tracking-[0.2em] text-yellow-700">Secure Login</span>
+                        </div>
+
+                        <h2 class="text-3xl font-black text-gray-900 tracking-tight">System Access</h2>
+                        <p class="text-sm text-gray-500 mt-2">Enter your administrative credentials</p>
+                    </div>
+
+                    <form method="POST" class="space-y-5">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                        <div class="space-y-2">
+                            <label class="block text-[10px] font-black uppercase text-gray-400 tracking-[0.22em] ml-1">
+                                Identity (Email)
+                            </label>
+                            <div class="relative group">
+                                <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-yellow-700/70 group-focus-within:text-yellow-600 transition-colors">
+                                    📧
+                                </span>
+                                <input type="email" name="email"
+                                       class="w-full pl-12 pr-4 py-4 bg-zinc-50 border-2 border-zinc-100 rounded-2xl focus:bg-white focus:border-yellow-500 focus:ring-0 outline-none transition-all placeholder-gray-300 font-medium text-gray-800"
+                                       placeholder="name@school.com" required>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center px-1">
+                                <label class="block text-[10px] font-black uppercase text-gray-400 tracking-[0.22em]">
+                                    Security Key
+                                </label>
+                                <a href="{{ url_for('auth.forgot_password') }}"
+                                   class="text-[10px] font-black text-yellow-700 hover:text-yellow-600 uppercase tracking-wide">
+                                    Forgotten password
+                                </a>
+                            </div>
+
+                            <div class="relative group">
+                                <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-yellow-700/70 group-focus-within:text-yellow-600 transition-colors">
+                                    🔑
+                                </span>
+                                <input type="password" name="password"
+                                       class="w-full pl-12 pr-4 py-4 bg-zinc-50 border-2 border-zinc-100 rounded-2xl focus:bg-white focus:border-yellow-500 focus:ring-0 outline-none transition-all placeholder-gray-300 text-gray-800"
+                                       placeholder="••••••••" required>
+                            </div>
+                        </div>
+
+                        <button type="submit"
+                                class="w-full bg-gradient-to-r from-zinc-900 via-black to-zinc-800 text-white font-black py-4 rounded-2xl hover:from-yellow-700 hover:via-yellow-600 hover:to-amber-500 transition-all duration-300 shadow-xl hover:shadow-yellow-500/20 transform hover:-translate-y-0.5 flex justify-center items-center gap-3 tracking-[0.18em] text-sm uppercase">
+                            Initialize Session
+                            <span class="text-lg">→</span>
+                        </button>
+                    </form>
+
+                    <div class="mt-8 pt-6 border-t border-gray-100 grid grid-cols-3 gap-3">
+                        <div class="text-center">
+                            <div class="text-[9px] font-black text-gray-400 uppercase tracking-tight">Super Admin</div>
+                            <div class="h-1.5 w-full bg-gradient-to-r from-yellow-700 to-yellow-400 rounded-full mt-2 opacity-70"></div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-[9px] font-black text-gray-400 uppercase tracking-tight">School Admin</div>
+                            <div class="h-1.5 w-full bg-gradient-to-r from-yellow-700 to-yellow-400 rounded-full mt-2 opacity-70"></div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-[9px] font-black text-gray-400 uppercase tracking-tight">Parent Portal</div>
+                            <div class="h-1.5 w-full bg-gradient-to-r from-yellow-700 to-yellow-400 rounded-full mt-2 opacity-70"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 flex items-center justify-center gap-3">
+                <span class="flex h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
+                <p class="text-[11px] text-zinc-400 font-bold uppercase tracking-[0.18em] text-center">
+                    &copy; 2026
+                    <a href="https://atom-dev-studios.onrender.com/" class="hover:text-yellow-400 transition-colors">
+                        AtomDev Studios
+                    </a>
+                    | All rights reserved | ATOM Gate V1.1.1
+                </p>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
