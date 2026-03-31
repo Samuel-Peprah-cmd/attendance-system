@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    /* 🚩 THE FIX: Forced height so the map isn't blank */
+    #map { 
+        height: 650px !important; 
+        min-height: 650px !important;
+        width: 100% !important; 
+        border-radius: 3rem;
+        background-color: #0f172a; 
+    }
+
+    .activity-feed { max-height: 650px; overflow-y: auto; }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
+
+    .pulse-red { animation: pulse-red 2s infinite; }
+    @keyframes pulse-red {
+        0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-6">
+        <div class="col-12 flex justify-between items-center">
+            <div>
+                <h2 class="font-black text-gray-800 tracking-tight uppercase" style="color: var(--brand-primary);">
+                    <i class="fas fa-satellite-dish me-2"></i>Live Security Monitor
+                </h2>
+                <p class="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em]">
+                    ADS NODE: <span id="sync-status" class="text-green-500">Connected</span>
+                </p>
+            </div>
+            <button onclick="centerOnSchool()" class="bg-white border border-gray-100 p-3 rounded-2xl shadow-sm hover:bg-gray-50 transition active:scale-95">
+                <i class="fas fa-crosshairs text-blue-600"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="bg-white p-2 rounded-[3.5rem] shadow-xl border border-gray-100 relative">
+                <div id="map"></div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="bg-white rounded-[2.5rem] shadow-xl border border-gray-100 flex flex-col overflow-hidden" style="height: 668px;">
+                <div class="p-6 border-b border-gray-50 bg-gray-50/30">
+                    <span class="font-black text-gray-400 text-[10px] uppercase tracking-[0.2em]">Live Scan Stream</span>
+                </div>
+                <div id="activity-list-container" class="flex-1 overflow-y-auto custom-scrollbar activity-feed">
+                    <ul class="divide-y divide-gray-50" id="live-log-list">
+                        </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let map, infoWindow;
+    let markers = [];
+    const schoolCoords = { 
+        lat: {{ current_user.school.latitude | default(5.620257) | float }}, 
+        lng: {{ current_user.school.longitude | default(-0.195436) | float }} 
+    };
+
+    function initMap() {
+        console.log("📍 Initializing Security Map...");
+        map = new google.maps.Map(document.getElementById("map"), {
+            zoom: 17, center: schoolCoords, mapTypeId: 'hybrid', disableDefaultUI: true, zoomControl: true
+        });
+
+        infoWindow = new google.maps.InfoWindow();
+
+        // Initial Geofence
+        new google.maps.Circle({
+            strokeColor: '#f01919', strokeOpacity: 0.8, strokeWeight: 2,
+            fillColor: '#f01919', fillOpacity: 0.1, map: map,
+            center: schoolCoords, radius: {{ current_user.school.radius_meters | default(200) }}
+        });
+
+        // First Data Load
+        syncData();
+    }
+
+    async function syncData() {
+        try {
+            const response = await fetch('/staff/api/security-data');
+            const logs = await response.json();
+            
+            updateMapMarkers(logs);
+            updateUIList(logs);
+            
+            document.getElementById('sync-status').innerText = "Last Sync: " + new Date().toLocaleTimeString();
+        } catch (err) {
+            console.error("Sync Error:", err);
+            document.getElementById('sync-status').innerText = "Sync Failed";
+        }
+    }
+
+    function updateMapMarkers(logs) {
+        // Clear old markers
+        markers.forEach(m => m.setMap(null));
+        markers = [];
+
+        logs.forEach(log => {
+            if (log.lat && log.lng) {
+                const marker = new google.maps.Marker({
+                    position: { lat: log.lat, lng: log.lng },
+                    map: map,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: 8,
+                        fillColor: log.is_safe ? "#10b981" : "#ef4444",
+                        fillOpacity: 1, strokeWeight: 2, strokeColor: "#FFFFFF"
+                    }
+                });
+
+                marker.addListener("click", () => {
+                    infoWindow.setContent(`<div style="color:black;padding:10px;"><b>${log.name}</b><br>${log.status} at ${log.time}</div>`);
+                    infoWindow.open(map, marker);
+                });
+                markers.push(marker);
+            }
+        });
+    }
+
+    function updateUIList(logs) {
+        const list = document.getElementById('live-log-list');
+        list.innerHTML = logs.map(log => `
+            <li class="p-5 hover:bg-gray-50 transition cursor-pointer group" onclick="focusMarker(${log.lat}, ${log.lng})">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <h6 class="font-black text-gray-900 text-sm mb-0 group-hover:text-blue-600">${log.name}</h6>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">${log.status}</p>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest text-white ${log.is_safe ? 'bg-green-500' : 'bg-red-500 pulse-red'}">
+                        ${log.is_safe ? 'Verified' : 'Breach'}
+                    </span>
+                </div>
+                <div class="text-[10px] text-gray-500 font-bold">
+                    <i class="fas fa-clock me-1 text-gray-300"></i> ${log.time} • ${log.place}
+                </div>
+            </li>
+        `).join('');
+    }
+
+    function focusMarker(lat, lng) { if(map && lat && lng) { map.panTo({lat, lng}); map.setZoom(19); } }
+    function centerOnSchool() { if(map) map.panTo(schoolCoords); map.setZoom(17); }
+
+    // Sync every 15 seconds (High speed, low resource usage)
+    setInterval(syncData, 15000);
+</script>
+
+<script src="https://maps.googleapis.com/maps/api/js?key={{ config.GOOGLE_MAPS_API_KEY }}&callback=initMap" async defer></script>
+{% endblock %}

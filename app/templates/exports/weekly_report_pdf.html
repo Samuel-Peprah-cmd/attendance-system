@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        /* 🎨 DYNAMIC BRANDING */
+        :root {
+            --primary: {{ school.primary_color or '#2563eb' }};
+        }
+
+        body { 
+            font-family: 'Helvetica', 'Arial', sans-serif; 
+            color: #1a1a1a; 
+            margin: 0; 
+            padding: 0; 
+            line-height: 1.4;
+        }
+
+        /* 🏛️ HIGH-FIDELITY LETTERHEAD */
+        .letterhead {
+            border-bottom: 5px solid var(--primary);
+            padding: 40px;
+            background-color: #ffffff;
+        }
+
+        .logo-container { float: left; width: 15%; }
+        .school-info { float: left; width: 55%; padding-left: 20px; }
+        .report-meta { float: right; width: 30%; text-align: right; }
+
+        .school-logo {
+            height: 80px;
+            width: 80px;
+            object-fit: contain;
+        }
+
+        .school-name {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--primary);
+            text-transform: uppercase;
+        }
+
+        .school-contact {
+            font-size: 10px;
+            color: #64748b;
+            margin-top: 4px;
+            font-weight: bold;
+        }
+
+        .audit-title {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 900;
+            color: #0f172a;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .date-range { font-size: 11px; color: #64748b; }
+        .clear { clear: both; }
+
+        /* 📊 SUMMARY WIDGETS */
+        .content { padding: 30px 40px; }
+        
+        .summary-row {
+            display: table;
+            width: 100%;
+            margin-bottom: 25px;
+            border-spacing: 10px 0;
+        }
+
+        .summary-card {
+            display: table-cell;
+            background: #f8fafc;
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+        }
+
+        .summary-val { display: block; font-size: 18px; font-weight: 900; color: var(--primary); }
+        .summary-lbl { font-size: 8px; font-weight: 900; color: #94a3b8; text-transform: uppercase; }
+
+        /* 📝 AUDIT TABLE */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        
+        th { 
+            background-color: var(--primary); 
+            color: white; 
+            text-align: left; 
+            padding: 12px; 
+            font-size: 9px; 
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        td { 
+            padding: 10px; 
+            font-size: 10px; 
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        tr:nth-child(even) { background-color: #fcfcfc; }
+
+        .face-id {
+            width: 35px;
+            height: 35px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            object-fit: cover;
+        }
+
+        .status-pill {
+            padding: 3px 7px;
+            border-radius: 4px;
+            font-weight: 900;
+            font-size: 8px;
+            text-transform: uppercase;
+        }
+
+        .pill-in { background-color: #dcfce7; color: #166534; }
+        .pill-out { background-color: #ffedd5; color: #9a3412; }
+
+        /* 🛡️ FOOTER & SECURITY */
+        .footer { 
+            margin-top: 50px; 
+            font-size: 9px; 
+            color: #94a3b8; 
+            padding: 20px 40px;
+            border-top: 1px solid #f1f5f9; 
+            text-align: center; 
+        }
+
+        .watermark { 
+            position: fixed; 
+            bottom: 20px; 
+            right: 40px; 
+            opacity: 0.2; 
+            font-size: 8px; 
+            font-weight: 900;
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="letterhead">
+        <div class="logo-container">
+            {% if abs_logo_path %}
+                <img src="{{ abs_logo_path }}" class="school-logo">
+            {% else %}
+                <div style="width: 60px; height: 60px; background: #eee; border-radius: 8px;"></div>
+            {% endif %}
+        </div>
+        
+        <div class="school-info">
+            <h1 class="school-name">{{ school.name }}</h1>
+            <p class="school-contact">
+                {{ school.address or 'Official Campus' }} | TEL: {{ school.phone or 'N/A' }}
+            </p>
+        </div>
+
+        <div class="report-meta">
+            <h2 class="audit-title">Security Audit</h2>
+            <p class="date-range">{{ start_date }} — {{ end_date }}</p>
+        </div>
+        <div class="clear"></div>
+    </div>
+
+    <div class="content">
+        <div class="summary-row">
+            <div class="summary-card"><span class="summary-val">{{ logs|length }}</span><span class="summary-lbl">Total Scans</span></div>
+            <div class="summary-card"><span class="summary-val">VERIFIED</span><span class="summary-lbl">Record Status</span></div>
+            <div class="summary-card"><span class="summary-val">{{ now.strftime('%d %b %Y') }}</span><span class="summary-lbl">Generated On</span></div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 40px;">Face ID</th>
+                    <th>Full Name</th>
+                    <th>ID Code</th>
+                    <th>Action</th>
+                    <th>Time</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>
+                        {% if log.abs_photo_path %}
+                            <img src="{{ log.abs_photo_path }}" class="face-id">
+                        {% else %}
+                            <div style="width: 35px; height: 35px; background: #f1f5f9; border-radius: 6px;"></div>
+                        {% endif %}
+                    </td>
+                    <td><strong style="color: #0f172a;">{{ log.student.full_name }}</strong></td>
+                    <td>{{ log.student.student_code }}</td>
+                    <td>
+                        <span class="status-pill {{ 'pill-in' if log.status == 'IN' else 'pill-out' }}">
+                            {{ 'Checked In' if log.status == 'IN' else 'Departure' }}
+                        </span>
+                    </td>
+                    <td>{{ log.timestamp.strftime('%I:%M %p') }}</td>
+                    <td>{{ log.timestamp.strftime('%d %b') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        <p>Official legal record of {{ school.name }}. Student ID verification via AtomDev Security Terminal.</p>
+    </div>
+    <div class="watermark">ATOMDEV SYSTEM VERIFIED</div>
+
+</body>
+</html>

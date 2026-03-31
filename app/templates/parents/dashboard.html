@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="mb-10 text-center">
+        <h2 class="text-3xl font-black text-gray-800">Family Security Portal</h2>
+        <p class="text-gray-500">Managing safety for all your children at {{ current_user.school.name }}</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {% for child in children %}
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden border-b-8 border-brand">
+            <div class="p-6 flex items-center gap-4 border-b">
+                {% if child.photo_path %}
+                    <img src="{{ url_for('static', filename='uploads/students/' + child.photo_path) }}" class="h-16 w-16 rounded-full object-cover border-2 border-brand">
+                {% else %}
+                    <div class="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center">👤</div>
+                {% endif %}
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800 uppercase">{{ child.full_name }}</h3>
+                    <p class="text-xs text-brand font-bold">{{ child.classroom.name if child.classroom else 'Processing...' }}</p>
+                </div>
+            </div>
+
+            <div class="p-6 space-y-3">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-400">Admission No:</span>
+                    <span class="font-bold">{{ child.student_code }}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-400">Safety Status:</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black {{ 'bg-green-100 text-green-700' if child.is_active else 'bg-red-100 text-red-700' }}">
+                        {{ 'ENROLLED' if child.is_active else 'SUSPENDED' }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="p-4 bg-gray-50 flex gap-2">
+                <a href="{{ url_for('parents.view_id_card', student_id=child.id) }}" class="flex-1 bg-brand text-white text-center py-2 rounded-lg font-bold text-sm shadow-md hover:opacity-90 transition">
+                    Print ID Card
+                </a>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-span-full text-center py-20 bg-white rounded-2xl border-2 border-dashed border-gray-200">
+            <p class="text-gray-400 font-medium">No children linked to your email address yet.</p>
+            <p class="text-xs text-gray-300">Please contact the school admin to verify your guardian email.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

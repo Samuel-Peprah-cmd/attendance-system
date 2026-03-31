@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mb-8">
+    <h2 class="text-2xl md:text-3xl font-black text-gray-800 tracking-tight uppercase" style="color: var(--brand-primary);">Security Command Center</h2>
+    <p class="text-gray-400 text-sm font-bold uppercase tracking-widest">Live Multi-Period Intelligence</p>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+    <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+        <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Today</p>
+        <h3 class="text-3xl font-black text-brand">{{ stats.today_count }}</h3>
+    </div>
+    <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+        <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Yesterday</p>
+        <h3 class="text-3xl font-black text-gray-800">{{ stats.yesterday_count }}</h3>
+    </div>
+    <div class="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
+        <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">This Week</p>
+        <h3 class="text-3xl font-black text-gray-800">{{ stats.weekly_count }}</h3>
+    </div>
+    <div class="bg-brand p-6 rounded-[2rem] shadow-lg shadow-brand/20">
+        <p class="text-[9px] font-black text-white/70 uppercase tracking-widest">Total Profiles</p>
+        <h3 class="text-3xl font-black text-white">{{ total_students }}</h3>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+        <div class="flex justify-between items-center mb-6">
+            <h4 class="font-black text-gray-800 uppercase text-xs tracking-widest">🚩 Boundary Alerts</h4>
+            <span class="px-3 py-1 bg-red-100 text-red-600 rounded-lg text-[9px] font-black italic">LIVE SATELLITE</span>
+        </div>
+        <div class="space-y-4">
+            {% for alert in violations %}
+            <div class="flex items-center justify-between p-4 bg-red-50 rounded-2xl border border-red-100">
+                <div class="flex items-center gap-3">
+                    <div class="h-10 w-10 bg-red-500 rounded-xl flex items-center justify-center text-white font-black text-xs shadow-sm">!</div>
+                    <div>
+                        {# 🛡️ Using the new resolved_name property #}
+                        <p class="text-xs font-black text-gray-800 mb-0.5">{{ alert.resolved_name }}</p>
+                        <p class="text-[9px] font-bold text-red-400 uppercase tracking-tighter">{{ alert.place_name or 'External Scan Detected' }}</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-[10px] font-black text-gray-800">{{ alert.timestamp.strftime('%I:%M %p') if alert.timestamp else 'Live' }}</p>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-10">
+                <div class="text-3xl mb-2 grayscale opacity-20">🛡️</div>
+                <p class="text-gray-300 font-black uppercase text-[10px] tracking-widest">No Security Breaches</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+        <div class="flex justify-between items-center mb-6">
+            <h4 class="font-black text-gray-800 uppercase text-xs tracking-widest">🕒 Punctuality Alerts</h4>
+            <a href="{{ url_for('attendance.admin_logs') }}" class="text-[9px] font-black text-brand uppercase tracking-widest hover:underline">Full History</a>
+        </div>
+        <div class="space-y-4">
+            {% for late in late_arrivals %}
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl group hover:bg-gray-100 transition duration-200">
+                <div class="flex items-center gap-3">
+                    <div class="h-10 w-10 bg-orange-100 text-orange-600 rounded-xl flex items-center justify-center font-black text-xs">🕒</div>
+                    <div>
+                        {# 🛡️ Fixed: Using the new resolved_name property instead of the complex IF/ELSE #}
+                        <p class="text-xs font-black text-gray-800 mb-0.5">{{ late.resolved_name }}</p>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">
+                            {{ late.participant_type }} • Late Check-In
+                        </p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs font-black text-orange-600">{{ late.timestamp.strftime('%I:%M %p') if late.timestamp else 'N/A' }}</p>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-10">
+                <div class="text-3xl mb-2 grayscale opacity-20">✅</div>
+                <p class="text-gray-300 font-black uppercase text-[10px] tracking-widest">All Personnel On Time</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

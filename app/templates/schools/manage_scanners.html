@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-6xl mx-auto py-10 px-4">
+    <div class="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
+        <div>
+            <h2 class="text-3xl font-black text-gray-900 tracking-tighter">Master Device Registry</h2>
+            <p class="text-gray-400 text-[10px] font-black uppercase tracking-[0.3em] mt-1">AtomDev Infrastructure Control</p>
+        </div>
+        <button onclick="document.getElementById('add-modal').classList.remove('hidden')" 
+                class="bg-brand text-white px-8 py-4 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-brand/20 hover:brightness-95 transition-all active:scale-95">
+            + Deploy New Hardware
+        </button>
+    </div>
+
+    <div class="bg-white shadow-2xl rounded-[2.5rem] border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse min-w-max">
+                <thead class="bg-gray-900 text-white">
+                    <tr>
+                        <th class="p-6 uppercase text-[10px] font-black tracking-widest">School / Client</th>
+                        <th class="p-6 uppercase text-[10px] font-black tracking-widest">Device Identity</th>
+                        <th class="p-6 uppercase text-[10px] font-black tracking-widest">Secret API Key</th>
+                        <th class="p-6 uppercase text-[10px] font-black tracking-widest">Status</th>
+                        <th class="p-6 uppercase text-[10px] font-black tracking-widest text-right">Operations</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    {% for dev in devices %}
+                    <tr class="hover:bg-gray-50/50 transition-colors {{ 'opacity-50' if not dev.is_active }}">
+                        <td class="p-5">
+                            <span class="text-[10px] font-black text-blue-500 uppercase block mb-1">
+                                {{ dev.school.name if dev.school else 'UNASSIGNED' }}
+                            </span>
+                            <p class="font-black text-gray-800">{{ dev.device_name }}</p>
+                        </td>
+                        <td class="p-6">
+                            <p class="font-black text-gray-800 text-sm leading-none">{{ dev.device_name }}</p>
+                            <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-1">{{ dev.location_name }}</p>
+                        </td>
+                        <td class="p-6">
+                            <code class="bg-gray-100 px-3 py-2 rounded-xl text-[10px] font-mono text-blue-600 border border-gray-200">
+                                {{ dev.api_key }}
+                            </code>
+                        </td>
+                        <td class="p-6">
+                            <div class="flex items-center gap-2">
+                                <span class="h-2 w-2 rounded-full {{ 'bg-green-500 animate-pulse' if dev.is_active else 'bg-red-500' }}"></span>
+                                <span class="text-[10px] font-black uppercase tracking-widest {{ 'text-green-600' if dev.is_active else 'text-red-600' }}">
+                                    {{ 'Online' if dev.is_active else 'Offline' }}
+                                </span>
+                            </div>
+                        </td>
+                        <td class="p-6 text-right space-x-2">
+                            <button onclick="openReassignModal('{{ dev.id }}', '{{ dev.device_name }}')" 
+                                    class="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition">
+                                Transfer School
+                            </button>
+    
+                            <a href="{{ url_for('schools.toggle_device', id=dev.id) }}" 
+                                class="...">
+                                {{ 'Deactivate' if dev.is_active else 'Reactivate' }}
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="add-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white p-10 rounded-[3rem] w-full max-w-md shadow-2xl transform transition-all">
+        <div class="flex justify-between items-center mb-8">
+            <h3 class="text-2xl font-black text-gray-900 tracking-tighter">Provision Device</h3>
+            <button onclick="document.getElementById('add-modal').classList.add('hidden')" class="text-gray-300 hover:text-gray-900 text-2xl">✕</button>
+        </div>
+        
+        <form action="{{ url_for('schools.add_device') }}" method="POST" class="space-y-5">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            
+            <div>
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-2">Assign to School</label>
+                <select name="school_id" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-brand/5 focus:border-brand font-bold text-gray-700" required>
+                    <option value="" disabled selected>Select a client school...</option>
+                    {% for school in schools %}
+                    <option value="{{ school.id }}">{{ school.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-2">Device Name</label>
+                <input type="text" name="device_name" placeholder="e.g. South Gate iPad" 
+                       class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-brand/5 focus:border-brand font-bold text-gray-700" required>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-2">Physical Location</label>
+                <input type="text" name="location" placeholder="e.g. Main Entrance" 
+                       class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-brand/5 focus:border-brand font-bold text-gray-700">
+            </div>
+
+            <button type="submit" class="w-full bg-brand text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl shadow-brand/30 hover:brightness-95 active:scale-[0.98] transition-all mt-4">
+                Generate Security Key
+            </button>
+        </form>
+    </div>
+</div>
+
+<div id="reassign-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white p-10 rounded-[3rem] w-full max-w-md shadow-2xl">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-2xl font-black text-gray-900 tracking-tighter">Transfer Device</h3>
+            <button onclick="closeReassignModal()" class="text-gray-300 hover:text-gray-900 text-2xl">✕</button>
+        </div>
+        
+        <p class="text-gray-500 text-xs font-bold uppercase mb-6 leading-relaxed">
+            Relocating <span id="target-device-name" class="text-blue-600 font-black"></span>. 
+            This will reset its API key and force a re-activation.
+        </p>
+
+        <form id="reassign-form" action="" method="POST" class="space-y-6">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            
+            <div>
+                <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-2">New Target School</label>
+                <select name="new_school_id" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-4 focus:ring-brand/5 focus:border-brand font-bold text-gray-700" required>
+                    <option value="" disabled selected>Select destination school...</option>
+                    {% for school in schools %}
+                    <option value="{{ school.id }}">{{ school.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-2xl shadow-blue-500/30">
+                Confirm Transfer
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openReassignModal(deviceId, deviceName) {
+        // 1. Show the modal
+        document.getElementById('reassign-modal').classList.remove('hidden');
+        
+        // 2. Set the device name in the UI
+        document.getElementById('target-device-name').innerText = deviceName;
+        
+        // 3. Dynamically set the Form Action URL
+        // We use the ID to tell Flask WHICH device we are moving
+        const form = document.getElementById('reassign-form');
+        form.action = `/schools/master/reassign-device/${deviceId}`;
+    }
+
+    function closeReassignModal() {
+        document.getElementById('reassign-modal').classList.add('hidden');
+    }
+</script>
+{% endblock %}

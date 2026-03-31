@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto py-6 md:py-10">
+    <div class="bg-white p-6 md:p-10 rounded-[2.5rem] shadow-xl border-t-[12px] border-gray-900">
+        <div class="mb-10 text-center md:text-left">
+            <h2 class="text-3xl font-black text-gray-800 tracking-tight">Onboard New School</h2>
+            <p class="text-gray-400 text-sm font-bold uppercase tracking-widest mt-1">Platform Generation Hub</p>
+        </div>
+        
+        <form method="POST" enctype="multipart/form-data" class="space-y-12">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            
+            <div>
+                <h3 class="text-[10px] font-black text-gray-400 uppercase mb-6 border-b border-gray-50 pb-2 tracking-[0.2em]">1. School Identity & Branding</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                    <div class="space-y-2">
+                        <label class="block text-xs font-black text-gray-600 uppercase tracking-tighter ml-1">Official School Name</label>
+                        <input type="text" name="school_name" placeholder="e.g. BritAcademy International" 
+                               class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-gray-900/5 focus:border-gray-900 outline-none transition" required>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-black text-gray-600 uppercase tracking-tighter ml-1">Institutional Logo</label>
+                        <input type="file" name="school_logo" 
+                               class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-gray-900 file:text-white hover:file:bg-gray-800 cursor-pointer" accept="image/*">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-black text-gray-600 uppercase tracking-tighter ml-1">Primary Color</label>
+                        <div class="flex items-center gap-3 bg-gray-50 p-2 rounded-2xl border border-gray-100">
+                            <input type="color" name="primary_color" value="#2563eb" class="w-12 h-10 rounded-lg cursor-pointer border-none bg-transparent">
+                            <span class="text-xs font-mono text-gray-400 uppercase">Brand Main</span>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-black text-gray-600 uppercase tracking-tighter ml-1">Secondary Color</label>
+                        <div class="flex items-center gap-3 bg-gray-50 p-2 rounded-2xl border border-gray-100">
+                            <input type="color" name="secondary_color" value="#1e40af" class="w-12 h-10 rounded-lg cursor-pointer border-none bg-transparent">
+                            <span class="text-xs font-mono text-gray-400 uppercase">Brand Accent</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-[10px] font-black text-gray-400 uppercase mb-6 border-b border-gray-50 pb-2 tracking-[0.2em]">2. Master Admin Account</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                    <div class="space-y-2">
+                        <label class="block text-xs font-black text-gray-600 uppercase tracking-tighter ml-1">Admin Email Address</label>
+                        <input type="email" name="admin_email" placeholder="admin@school.com"
+                               class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-gray-900/5 focus:border-gray-900 outline-none transition" required>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-black text-gray-600 uppercase tracking-tighter ml-1">Access Password</label>
+                        <input type="password" name="admin_password" placeholder="••••••••"
+                               class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-gray-900/5 focus:border-gray-900 outline-none transition" required>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full md:w-auto bg-gray-900 text-white px-12 py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] hover:bg-black transition shadow-2xl shadow-gray-900/20 active:scale-95">
+                Generate School Platform
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

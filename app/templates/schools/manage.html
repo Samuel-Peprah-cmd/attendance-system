@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
+    <div>
+        <h2 class="text-2xl md:text-3xl font-black text-gray-900 tracking-tight">Client Management</h2>
+        <p class="text-gray-400 text-sm font-bold uppercase tracking-widest">Master Oversight Panel</p>
+    </div>
+    <a href="{{ url_for('schools.create_school') }}" class="w-full md:w-auto bg-blue-600 text-white px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition text-center">
+        + Onboard School
+    </a>
+</div>
+
+<div class="table-responsive bg-white shadow-xl">
+    <table class="w-full text-left border-collapse">
+        <thead class="bg-gray-900 text-white">
+            <tr>
+                <th class="p-5 uppercase text-[10px] font-black tracking-[0.2em] whitespace-nowrap">School Identity</th>
+                <th class="p-5 uppercase text-[10px] font-black tracking-[0.2em] whitespace-nowrap">Status</th>
+                <th class="p-5 uppercase text-[10px] font-black tracking-[0.2em] whitespace-nowrap">Scanner API Key</th>
+                <th class="p-5 uppercase text-[10px] font-black tracking-[0.2em] whitespace-nowrap">Theme</th>
+                <th class="p-5 uppercase text-[10px] font-black tracking-[0.2em] whitespace-nowrap text-right">Access Control</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+            {% for school in schools %}
+            <tr class="group hover:bg-gray-50/50 transition {{ 'opacity-40 grayscale' if not school.is_active else '' }}">
+                <td class="p-5 whitespace-nowrap">
+                    <div class="flex items-center gap-4">
+                        {% if school.logo_path %}
+                            <img src="{{ school.logo_path }}" alt="School Logo" class="w-12 h-12 rounded-xl border-2 border-white shadow-sm object-cover bg-gray-50">
+                        {% else %}
+                            <div class="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-[10px] font-black text-gray-400">NO LOGO</div>
+                        {% endif %}
+                        <div>
+                            <p class="font-black text-gray-900 leading-none mb-1">{{ school.name }}</p>
+                            <p class="text-[10px] font-mono text-gray-400 uppercase tracking-tighter">/{{ school.slug }}</p>
+                        </div>
+                    </div>
+                </td>
+                <td class="p-5 whitespace-nowrap">
+                    <span class="px-3 py-1.5 rounded-lg text-[10px] font-black tracking-widest {{ 'bg-green-100 text-green-700' if school.is_active else 'bg-red-100 text-red-700' }}">
+                        {{ 'ACTIVE' if school.is_active else 'SUSPENDED' }}
+                    </span>
+                </td>
+                <td class="p-5 whitespace-nowrap">
+                    <code class="bg-gray-100/80 px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold text-blue-600 border border-blue-50">
+                        {{ school.api_key }}
+                    </code>
+                </td>
+                <td class="p-5 whitespace-nowrap">
+                    <div class="flex -space-x-2">
+                        <div class="w-7 h-7 rounded-full border-2 border-white shadow-sm" style="background-color: {{ school.primary_color }};"></div>
+                        <div class="w-7 h-7 rounded-full border-2 border-white shadow-sm" style="background-color: {{ school.secondary_color }};"></div>
+                    </div>
+                </td>
+                <td class="p-5 text-right whitespace-nowrap">
+                    <div class="flex justify-end gap-3">
+                        <a href="{{ url_for('schools.toggle_school_status', school_id=school.id) }}" 
+                           class="text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-lg transition shadow-sm {{ 'bg-red-600 text-white hover:bg-red-700' if school.is_active else 'bg-green-600 text-white hover:bg-green-700' }}">
+                            {{ 'Suspend' if school.is_active else 'Activate' }}
+                        </a>
+                        <a href="{{ url_for('schools.reset_api_key', school_id=school.id) }}" 
+                           onclick="return confirm('WARNING: Rotating the API key will disconnect all scanners for this school instantly. Proceed?')"
+                           class="text-[10px] bg-white border border-gray-200 text-gray-500 font-black uppercase tracking-widest px-4 py-2 rounded-lg hover:bg-gray-50 transition shadow-sm">
+                            Rotate Key
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="p-20 text-center">
+                    <div class="text-4xl mb-4">🏫</div>
+                    <p class="text-gray-400 font-black uppercase text-xs tracking-widest">No clients onboarded yet.</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

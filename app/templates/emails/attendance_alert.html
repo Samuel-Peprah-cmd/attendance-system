@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; margin: 0; padding: 0;">
+    <div style="max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 12px; overflow: hidden;">
+        
+        <div style="background-color: {{ school.primary_color }}; padding: 25px; text-align: center; color: white;">
+            {% if logo_url %}<img src="{{ logo_url }}" alt="Logo" style="height: 55px; margin-bottom: 10px;">{% endif %}
+            <h1 style="margin: 0; font-size: 22px;">{{ school.name }}</h1>
+        </div>
+
+        <div style="padding: 30px; line-height: 1.6; color: #333;">
+            {% if participant_type == 'staff' %}
+                <h2 style="color: {{ school.primary_color }};">Hello Tutor,</h2>
+                <p>Your attendance check <strong>{{ status }}</strong> has been verified at the campus gate.</p>
+            {% else %}
+                <h2 style="color: {{ school.primary_color }};">Hello Parent/Guardian,</h2>
+                <p>Safety alert for <strong>{{ participant.full_name }}</strong>. An attendance scan has been recorded.</p>
+            {% endif %}
+
+            <div style="background-color: #f9f9f9; padding: 20px; border-left: 5px solid {{ school.primary_color }}; margin: 25px 0;">
+                <p style="margin: 5px 0;"><strong>Movement:</strong> Checked {{ status }}</p>
+                <p style="margin: 5px 0;"><strong>Time:</strong> {{ time }}</p>
+                
+                <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+                
+                <p style="margin: 5px 0;"><strong>📍 Location:</strong> {{ location.place_name or 'Main Gate' }}</p>
+                <p style="margin: 5px 0;"><strong>🏙️ Area:</strong> {{ location.town or location.city or 'School Zone' }}</p>
+                
+                {% if location.lat %}
+                <div style="margin-top: 15px;">
+                    <a href="https://www.google.com/maps?q={{ location.lat }},{{ location.lng }}" 
+                       style="background-color: #4285F4; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 13px; display: inline-block;">
+                       📍 View Live Location
+                    </a>
+                </div>
+                <p style="margin-top: 10px; font-size: 10px; color: #aaa;">Coordinates: {{ location.lat }}, {{ location.lng }}</p>
+                {% endif %}
+            </div>
+
+            {% if notice %}
+            <div style="background-color: #fff4e5; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                <p style="margin: 0; color: #c4451a; font-weight: bold;">Campus Notice:</p>
+                <p style="margin: 5px 0 0; font-size: 13px;">{{ notice }}</p>
+            </div>
+            {% endif %}
+
+            <p style="font-size: 12px; color: #888;">For security inquiries, contact {{ school.phone or 'the admin office' }}.</p>
+        </div>
+
+        <div style="background-color: #f4f4f4; padding: 15px; text-align: center; font-size: 10px; color: #bbb; text-transform: uppercase; letter-spacing: 1px;">
+            Secured by AtomDev Studios Smart School System
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<style>
+    /* The Deep Red Line for Web View */
+    .late-divider {
+        border-top: 4px solid #be123c !important; 
+        background-color: #fff1f2 !important;
+    }
+    .late-label {
+        font-size: 9px;
+        font-weight: 900;
+        color: #be123c;
+        letter-spacing: 0.2em;
+        padding: 10px 0;
+        text-transform: uppercase;
+    }
+    @media print {
+        .no-print { display: none !important; }
+        .page-break { page-break-after: always; }
+        .report-card { border: none !important; box-shadow: none !important; }
+        .overflow-x-auto { overflow: visible !important; } 
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% macro render_table(title, logs, table_id) %}
+<div id="{{ table_id }}" class="bg-white rounded-[2.5rem] p-6 md:p-8 mb-8 shadow-sm border border-gray-50 report-card">
+    <div class="flex justify-between items-center mb-6 no-print">
+        <h3 class="text-lg md:text-xl font-black uppercase tracking-tighter">{{ title }}</h3>
+        <button onclick="printSection('{{ table_id }}', '{{ title }}')" class="text-[10px] font-black uppercase tracking-widest bg-gray-900 text-white px-4 md:px-5 py-2 rounded-xl shrink-0 hover:bg-gray-800 transition">
+            <i class="fas fa-file-pdf mr-1"></i> Download PDF
+        </button>
+    </div>
+    
+    <div class="overflow-x-auto pb-4 print-content">
+        <table class="w-full min-w-[600px]"> 
+            <thead>
+                <tr class="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b-2" style="border-color: {{ current_user.school.primary_color or '#e5e7eb' }}40;">
+                    <th class="py-4 px-2 text-left">Identity</th>
+                    <th class="text-left">Scan Time</th>
+                    <th class="text-left">Geofence Integrity</th>
+                    <th class="text-right px-2">Verification</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set late_line_drawn = namespace(drawn=false) %}
+                {% for log in logs %}
+                    
+                    {# THE DEEP RED LINE LOGIC #}
+                    {% if log.is_late and not late_line_drawn.drawn %}
+                        <tr class="late-divider">
+                            <td colspan="4" class="late-label text-center bg-red-50">
+                                ⚠️ Late Arrivals Commencing After 08:00 AM
+                            </td>
+                        </tr>
+                        {% set late_line_drawn.drawn = true %}
+                    {% endif %}
+
+                    <tr class="border-b border-gray-100 {{ 'bg-red-50/50' if not log.is_within_boundary else '' }}">
+                        <td class="py-5 px-2">
+                            <div class="font-black text-sm uppercase text-gray-900">{{ log.resolved_name }}</div>
+                            <div class="text-[9px] font-bold text-gray-400 uppercase">{{ log.participant_type }}</div>
+                        </td>
+                        <td class="text-xs font-bold text-gray-600">
+                            {{ log.timestamp.strftime('%I:%M %p') }}
+                        </td>
+                        <td>
+                            {% if log.is_within_boundary %}
+                                <span class="text-[9px] font-black uppercase text-green-600">✅ Secured</span>
+                            {% else %}
+                                <span class="text-[9px] font-black uppercase text-red-600">🚫 Boundary Breach</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-right px-2">
+                            <span class="text-[8px] font-black uppercase px-3 py-1 bg-gray-50 rounded-md text-gray-500 whitespace-nowrap">
+                                {{ log.place_name or 'Main Node' }}
+                            </span>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="4" class="py-10 text-center text-gray-400 font-bold text-xs uppercase tracking-widest">
+                            No logs found for this period
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endmacro %}
+
+
+<div class="max-w-7xl mx-auto p-4 md:p-6">
+    
+    <div class="flex flex-col md:flex-row justify-between md:items-end gap-6 mb-10 no-print">
+        <div>
+            <h2 class="text-3xl md:text-4xl font-black tracking-tighter uppercase text-gray-900">Attendance Analytics</h2>
+            <p class="text-gray-400 font-bold text-xs uppercase tracking-widest">Boundary Integrity & Punctuality Report</p>
+        </div>
+        
+        <form class="flex flex-wrap items-end gap-3 bg-white p-4 rounded-[2rem] shadow-sm border border-gray-100 w-full md:w-auto">
+            <div class="flex-1 min-w-[120px]">
+                <label class="block text-[9px] font-black uppercase text-gray-400 mb-1 ml-2">Range Start</label>
+                <input type="date" name="start_date" value="{{ start_date }}" class="w-full bg-gray-50 border-0 rounded-xl text-xs font-bold p-3">
+            </div>
+            <div class="flex-1 min-w-[120px]">
+                <label class="block text-[9px] font-black uppercase text-gray-400 mb-1 ml-2">Range End</label>
+                <input type="date" name="end_date" value="{{ end_date }}" class="w-full bg-gray-50 border-0 rounded-xl text-xs font-bold p-3">
+            </div>
+            <button type="submit" class="w-full md:w-auto bg-blue-600 text-white px-6 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-blue-700 transition">Update</button>
+        </form>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-12 no-print">
+        <div class="bg-white p-4 md:p-6 rounded-[2rem] border border-gray-100">
+            <p class="text-[8px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">On-Time (Stud)</p>
+            <h4 class="text-xl md:text-2xl font-black text-green-600">{{ stats.s_on_time }}</h4>
+        </div>
+        <div class="bg-white p-4 md:p-6 rounded-[2rem] border border-gray-100">
+            <p class="text-[8px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Late (Stud)</p>
+            <h4 class="text-xl md:text-2xl font-black text-red-600">{{ stats.s_late }}</h4>
+        </div>
+        <div class="bg-white p-4 md:p-6 rounded-[2rem] border border-gray-100">
+            <p class="text-[8px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">On-Time (Staff)</p>
+            <h4 class="text-xl md:text-2xl font-black text-blue-600">{{ stats.st_on_time }}</h4>
+        </div>
+        <div class="bg-white p-4 md:p-6 rounded-[2rem] border border-gray-100">
+            <p class="text-[8px] md:text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">Late (Staff)</p>
+            <h4 class="text-xl md:text-2xl font-black text-orange-600">{{ stats.st_late }}</h4>
+        </div>
+        <div class="col-span-2 md:col-span-1 bg-white p-4 md:p-6 rounded-[2rem] border-2 border-red-100 bg-red-50/30">
+            <p class="text-[8px] md:text-[9px] font-black text-red-400 uppercase tracking-widest mb-1">Geofence Breaches</p>
+            <h4 class="text-xl md:text-2xl font-black text-red-600">{{ stats.breaches }}</h4>
+        </div>
+    </div>
+
+    {{ render_table("Student Morning Entry", tables.student_morning, "stud-in") }}
+    {{ render_table("Staff Morning Entry", tables.staff_morning, "staff-in") }}
+    {{ render_table("Student Closing Scans", tables.student_closing, "stud-out") }}
+    {{ render_table("Staff Closing Scans", tables.staff_closing, "staff-out") }}
+
+    <div id="missing-audit" class="bg-white rounded-[2.5rem] p-6 md:p-8 mb-8 shadow-sm border-2 border-orange-100 report-card">
+        <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
+            <div>
+                <h3 class="text-lg md:text-xl font-black uppercase tracking-tighter text-orange-600">Missing Exit Verification</h3>
+                <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Students present in morning but NOT scanned out</p>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <span class="text-2xl font-black text-gray-900">{{ missing_students|length }}</span>
+                    <p class="text-[9px] font-black text-gray-400 uppercase">Unaccounted</p>
+                </div>
+                <button onclick="printSection('missing-audit', 'Missing Exit Verification')" class="no-print text-[10px] font-black uppercase tracking-widest bg-orange-600 text-white px-4 py-2 rounded-xl hover:bg-orange-700 transition">
+                    Download PDF
+                </button>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto pb-4 print-content">
+            <table class="w-full min-w-[500px]">
+                <thead>
+                    <tr class="text-[10px] font-black text-gray-400 uppercase tracking-widest border-b-2" style="border-color: {{ current_user.school.primary_color or '#e5e7eb' }}40;">
+                        <th class="py-4 text-left">Student Name</th>
+                        <th class="text-left">Class</th>
+                        <th class="text-right">Morning Check-In</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in missing_students %}
+                    <tr class="border-b border-gray-100 bg-orange-50/20">
+                        <td class="py-4 font-black text-sm uppercase text-gray-800">{{ student.full_name }}</td>
+                        <td class="text-xs font-bold text-gray-500">{{ student.classroom.name if student.classroom else 'N/A' }}</td>
+                        <td class="text-right">
+                            <span class="text-[9px] font-black uppercase text-orange-600 italic">No Exit Log Found</span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="py-10 text-center">
+                            <span class="text-green-600 font-black text-xs uppercase tracking-widest">✅ All students accounted for</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+function printSection(id, reportTitle) {
+    // 1. Grab the School Data injected from Python
+    const schoolName = "{{ current_user.school.name | default('Campus Gateway', true) }}";
+    const primaryColor = "{{ current_user.school.primary_color | default('#000000', true) }}";
+    const logoPath = "{{ current_user.school.logo_path | default('', true) }}";
+    const logoUrl = logoPath ? window.location.origin + "/static/uploads/logos/" + logoPath : "";
+    const dateRange = "{{ start_date }} to {{ end_date }}";
+
+    // 2. Grab only the table content, strip out the surrounding card styles
+    const container = document.getElementById(id);
+    const tableHtml = container.querySelector('.print-content').innerHTML;
+
+    // 3. Build the PDF Window HTML
+    const win = window.open('', '', 'height=800,width=1000');
+    win.document.write(`
+        <html>
+        <head>
+            <title>${schoolName} - ${reportTitle}</title>
+            <link rel="stylesheet" href="https://cdn.tailwindcss.com">
+            <style>
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+                
+                /* EXACT PDF PRINT SETTINGS */
+                body { 
+                    font-family: 'Inter', sans-serif; 
+                    padding: 40px; 
+                    background: white;
+                    color: #111;
+                    /* Force browsers to print backgrounds (The Red Line & Colors) */
+                    -webkit-print-color-adjust: exact !important; 
+                    print-color-adjust: exact !important; 
+                }
+                
+                /* Letterhead Styling */
+                .letterhead {
+                    display: flex;
+                    align-items: center;
+                    gap: 20px;
+                    border-bottom: 4px solid ${primaryColor};
+                    padding-bottom: 20px;
+                    margin-bottom: 30px;
+                }
+                .letterhead img {
+                    height: 80px;
+                    max-width: 150px;
+                    object-fit: contain;
+                }
+                .letterhead h1 {
+                    color: ${primaryColor};
+                    font-size: 28px;
+                    font-weight: 900;
+                    margin: 0;
+                    text-transform: uppercase;
+                    letter-spacing: -0.5px;
+                }
+                .letterhead h2 {
+                    font-size: 14px;
+                    font-weight: 700;
+                    color: #555;
+                    margin: 4px 0 0 0;
+                    text-transform: uppercase;
+                    letter-spacing: 2px;
+                }
+                .letterhead p {
+                    font-size: 10px;
+                    color: #888;
+                    font-weight: 700;
+                    margin: 4px 0 0 0;
+                }
+
+                /* Table Print Overrides */
+                table { width: 100%; border-collapse: collapse; }
+                th { color: ${primaryColor} !important; border-bottom: 2px solid ${primaryColor}40 !important; }
+                td { border-bottom: 1px solid #f3f4f6; }
+                .late-divider { border-top: 4px solid #be123c !important; }
+                .late-label { background-color: #fef2f2 !important; color: #be123c !important; }
+                .no-print { display: none !important; }
+            </style>
+        </head>
+        <body>
+            <div class="letterhead">
+                ${logoUrl ? `<img src="${logoUrl}" alt="School Logo"/>` : ''}
+                <div>
+                    <h1>${schoolName}</h1>
+                    <h2>${reportTitle}</h2>
+                    <p>GENERATED ON: ${new Date().toLocaleDateString()} &bull; PERIOD: ${dateRange}</p>
+                </div>
+            </div>
+
+            ${tableHtml}
+
+            <div style="margin-top: 50px; text-align: center; font-size: 9px; color: #aaa; text-transform: uppercase; letter-spacing: 1px;">
+                Official Digital Attendance Record &bull; Verified via AtomDev Gateway
+            </div>
+        </body>
+        </html>
+    `);
+    
+    win.document.close();
+    
+    // Give Tailwind 1.5 seconds to load via CDN before automatically calling print()
+    setTimeout(() => { 
+        win.print(); 
+        win.close(); 
+    }, 1500);
+}
+</script>
+{% endblock %}

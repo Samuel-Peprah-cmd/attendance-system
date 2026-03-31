@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+    <div>
+        <h2 class="text-2xl md:text-3xl font-black text-gray-800 tracking-tight">Security Directory</h2>
+        <p class="text-gray-400 text-sm font-medium">Manage student profiles and safety access.</p>
+    </div>
+    <a href="{{ url_for('students.add_student') }}" class="w-full md:w-auto bg-brand text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-brand/20 hover:brightness-95 transition text-center">
+        + Enroll Student
+    </a>
+</div>
+
+<div class="table-responsive custom-scrollbar bg-white shadow-sm">
+    <table class="w-full text-left border-collapse">
+        <thead class="bg-gray-50 border-b border-gray-100">
+            <tr>
+                <th class="p-4 font-black text-gray-400 uppercase text-[10px] tracking-widest whitespace-nowrap">Identity</th>
+                <th class="p-4 font-black text-gray-400 uppercase text-[10px] tracking-widest whitespace-nowrap">Security Code</th>
+                <th class="p-4 font-black text-gray-400 uppercase text-[10px] tracking-widest whitespace-nowrap">Full Name</th>
+                <th class="p-4 font-black text-gray-400 uppercase text-[10px] tracking-widest whitespace-nowrap text-center">Grade</th>
+                <th class="p-4 font-black text-gray-400 uppercase text-[10px] tracking-widest whitespace-nowrap">Guardian Info</th>
+                <th class="p-4 font-black text-gray-400 uppercase text-[10px] tracking-widest whitespace-nowrap text-right">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-50">
+            {% for student in students %}
+            <tr class="hover:bg-gray-50/50 transition duration-200">
+                <td class="p-4 whitespace-nowrap">
+                    {% if student.photo_path %}
+                        <img src="{{ student.photo_path }}" alt="Photo"
+                             class="w-10 h-10 rounded-xl object-cover border-2 border-white shadow-sm">
+                    {% else %}
+                        <div class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-[9px] font-black text-gray-400 uppercase">NO PIC</div>
+                    {% endif %}
+                </td>
+
+                <td class="p-4 whitespace-nowrap">
+                    <span class="font-mono text-xs text-brand font-black bg-brand/5 px-2 py-1 rounded-md tracking-tighter">
+                        {{ student.student_code }}
+                    </span>
+                </td>
+
+                <td class="p-4 whitespace-nowrap">
+                    <div class="font-black text-gray-900 text-sm">{{ student.full_name }}</div>
+                    <div class="text-[9px] text-red-500 font-black uppercase tracking-widest">
+                        {{ student.blood_group or 'No Medical Data' }}
+                    </div>
+                </td>
+
+                <td class="p-4 text-center whitespace-nowrap">
+                    <span class="px-3 py-1 bg-gray-100 rounded-lg text-[10px] font-black text-gray-600 uppercase">
+                        {{ student.classroom.name if student.classroom else 'Unassigned' }}
+                    </span>
+                </td>
+
+                <td class="p-4 whitespace-nowrap">
+                    <div class="text-xs font-black text-gray-800">{{ student.guardian_one_name }}</div>
+                    <div class="text-[10px] text-brand font-bold">{{ student.guardian_one_phone }}</div>
+                </td>
+
+                <td class="p-4 text-right whitespace-nowrap">
+                    <div class="flex items-center justify-end gap-2 md:gap-3">
+                        <a href="{{ url_for('students.view_id_card', student_id=student.id) }}" 
+                           class="bg-gray-900 text-white px-3 py-2 rounded-lg text-[10px] font-black hover:bg-brand transition uppercase tracking-widest shadow-sm">
+                            Card
+                        </a>
+
+                        <a href="{{ url_for('students.toggle_student', student_id=student.id) }}" 
+                           class="p-2 transition rounded-xl hover:bg-gray-100 flex items-center justify-center {{ 'text-green-500' if student.is_active else 'text-gray-300' }}" 
+                           title="{{ 'Deactivate Student' if student.is_active else 'Activate Student' }}">
+                            <span class="text-xl leading-none">{{ '●' if student.is_active else '○' }}</span>
+                        </a>
+
+                        <a href="{{ url_for('students.edit_student', student_id=student.id) }}" 
+                           class="p-2 hover:bg-blue-50 text-gray-400 hover:text-blue-600 rounded-xl transition" title="Edit Profile">
+                            <span class="text-sm">✏️</span>
+                        </a>
+
+                        <a href="{{ url_for('students.delete_student', student_id=student.id) }}" 
+                           onclick="return confirm('Erase this security profile permanently?')" 
+                           class="p-2 text-gray-300 hover:text-red-500 transition rounded-xl" title="Delete Permanent">
+                            <span class="text-sm">🗑️</span>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="p-20 text-center">
+                    <div class="text-4xl mb-4">📭</div>
+                    <div class="text-gray-400 font-bold uppercase text-xs tracking-widest">No Security Profiles Found</div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

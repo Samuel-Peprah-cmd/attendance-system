@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Personnel - {{ staff.full_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white p-8 rounded-lg shadow-xl border-t-4 border-yellow-500">
+    <h2 class="text-3xl font-bold mb-8 text-gray-800">Edit Personnel Profile: {{ staff.full_name }}</h2>
+
+    <form method="POST" action="{{ url_for('staff.edit_staff', staff_id=staff.id) }}" enctype="multipart/form-data">
+        <div class="mb-10 bg-gray-50 p-6 rounded-lg border border-gray-100 flex items-center space-x-6">
+            <div class="shrink-0">
+                {% if staff.photo_path %}
+                    <img class="h-28 w-28 object-cover rounded-full shadow-md border-4 border-yellow-500" src="{{ staff.photo_path }}" alt="Current photo" />
+                {% else %}
+                    <div class="h-28 w-28 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 shadow-inner border-4 border-white">
+                        <svg class="h-14 w-14" fill="currentColor" viewBox="0 0 24 24"><path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    </div>
+                {% endif %}
+            </div>
+            <label class="block">
+                <span class="sr-only">Choose profile photo</span>
+                <span class="block text-sm font-bold text-gray-700 mb-2">Update Personnel Photo</span>
+                <input type="file" name="photo" accept=".png, .jpg, .jpeg" class="block w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-lg file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-yellow-100 file:text-yellow-800
+                    hover:file:bg-yellow-200 cursor-pointer transition-colors
+                "/>
+                <p class="mt-2 text-xs text-gray-400">Leave blank to keep the current photo. Supports JPG and PNG.</p>
+            </label>
+        </div>
+
+        <div class="mb-10">
+            <h3 class="text-lg font-semibold text-gray-500 mb-4 border-b pb-2 uppercase text-xs tracking-widest">1. Employment Details</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700">Full Name <span class="text-red-500">*</span></label>
+                    <input type="text" name="full_name" value="{{ staff.full_name }}" class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-yellow-500 outline-none" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700">Staff Code / ID <span class="text-red-500">*</span></label>
+                    <input type="text" name="staff_code" value="{{ staff.staff_code }}" class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-yellow-500 outline-none" required>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-bold text-gray-700">Designation / Role <span class="text-red-500">*</span></label>
+                    <input type="text" name="designation" value="{{ staff.designation }}" class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-yellow-500 outline-none" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-10">
+            <h3 class="text-lg font-semibold text-gray-500 mb-4 border-b pb-2 uppercase text-xs tracking-widest">2. Contact Information</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700">Email Address <span class="text-red-500">*</span></label>
+                    <input type="email" name="email" value="{{ staff.email }}" class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-yellow-500 outline-none" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700">Phone Number <span class="text-red-500">*</span></label>
+                    <input type="tel" name="phone" value="{{ staff.phone }}" class="w-full mt-1 p-2 border rounded focus:ring-2 focus:ring-yellow-500 outline-none" required>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center pt-6 border-t">
+            <a href="{{ url_for('staff.list_staff') }}" class="text-gray-400 hover:text-gray-600 font-medium transition-colors">Cancel</a>
+            <button type="submit" class="bg-yellow-600 text-white px-10 py-3 rounded-lg font-bold shadow-lg hover:bg-yellow-700 hover:shadow-xl transition-all">
+                Save Personnel Profile
+            </button>
+        </div>
+
+    </form>
+</div>
+{% endblock %}

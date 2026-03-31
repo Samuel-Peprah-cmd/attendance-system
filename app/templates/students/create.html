@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto py-6 md:py-10">
+    <div class="bg-white p-6 md:p-10 rounded-[2.5rem] shadow-xl border-t-[12px] border-brand">
+        <div class="mb-10 text-center md:text-left">
+            <h2 class="text-3xl font-black text-gray-800 tracking-tight">Safety Enrollment</h2>
+            <p class="text-gray-400 text-sm font-bold uppercase tracking-widest mt-1">Register new student security profile</p>
+        </div>
+        
+        <form method="POST" enctype="multipart/form-data" class="space-y-12">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            
+            <div>
+                <h3 class="text-[10px] font-black text-brand uppercase mb-6 border-b border-gray-50 pb-2 tracking-[0.2em]">1. Student Identification</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                    <div class="space-y-2">
+                        <label class="block text-xs font-black text-gray-600 uppercase tracking-tighter ml-1">Full Name</label>
+                        <input type="text" name="full_name" placeholder="Samuel P..." 
+                               class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-brand/10 focus:border-brand outline-none transition" required>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-black text-gray-600 uppercase tracking-tighter ml-1">Assign Class/Grade</label>
+                        <select name="class_room_id" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-brand/10 focus:border-brand outline-none transition cursor-pointer" required>
+                            <option value="">-- Select Class --</option>
+                            {% for cls in classes %}
+                                <option value="{{ cls.id }}">{{ cls.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-black text-gray-600 uppercase tracking-tighter ml-1">Admission Number</label>
+                        <input type="text" name="student_code" placeholder="ADS-001-19..." 
+                               class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-brand/10 focus:border-brand outline-none transition" required>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-black text-gray-600 uppercase tracking-tighter ml-1">Gender</label>
+                        <select name="gender" class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-brand/10 focus:border-brand outline-none transition cursor-pointer">
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-black text-gray-600 uppercase tracking-tighter ml-1">Date of Birth</label>
+                        <input type="date" name="date_of_birth" 
+                               class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-brand/10 focus:border-brand outline-none transition" required>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-black text-gray-600 uppercase tracking-tighter ml-1">Profile Photo (Visual Security)</label>
+                        <input type="file" name="student_photo" 
+                               class="w-full p-3 bg-gray-50 border border-gray-100 rounded-2xl file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-[10px] file:font-black file:bg-brand file:text-white hover:file:brightness-95 cursor-pointer" accept="image/*">
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-[10px] font-black text-brand uppercase mb-6 border-b border-gray-50 pb-2 tracking-[0.2em]">2. Primary Guardian (Safety Contact)</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                    <div class="space-y-2">
+                        <label class="block text-xs font-black text-gray-600 uppercase tracking-tighter ml-1">Guardian Name</label>
+                        <input type="text" name="guardian_one_name" placeholder="Full Name" 
+                               class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-brand/10 focus:border-brand outline-none transition" required>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-black text-gray-600 uppercase tracking-tighter ml-1">Relationship</label>
+                        <input type="text" name="guardian_one_relation" placeholder="e.g. Mother" 
+                               class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-brand/10 focus:border-brand outline-none transition" required>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-black text-gray-600 uppercase tracking-tighter ml-1">Phone (SMS/WhatsApp Alerts)</label>
+                        <input type="text" name="guardian_one_phone" placeholder="+233..." 
+                               class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-brand/10 focus:border-brand outline-none transition" required>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-black text-gray-600 uppercase tracking-tighter ml-1">Email (Login & Alerts)</label>
+                        <input type="email" name="guardian_one_email" placeholder="guardian@email.com" 
+                               class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-brand/10 focus:border-brand outline-none transition" required>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-[10px] font-black text-red-500 uppercase mb-6 border-b border-gray-50 pb-2 tracking-[0.2em]">3. Critical Safety Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                    <div class="space-y-2">
+                        <label class="block text-xs font-black text-gray-600 uppercase tracking-tighter ml-1">Blood Group</label>
+                        <input type="text" name="blood_group" placeholder="e.g. O+" 
+                               class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-red-500/10 focus:border-red-500 outline-none transition font-black text-red-600">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="block text-xs font-black text-gray-600 uppercase tracking-tighter ml-1">Medical Notes / Allergies</label>
+                        <textarea name="medical_notes" rows="2" placeholder="List any chronic conditions or allergies..." 
+                                  class="w-full p-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-red-500/10 focus:border-red-500 outline-none transition"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-brand text-white px-12 py-5 rounded-2xl font-black uppercase text-xs tracking-[0.2em] shadow-2xl shadow-brand/20 hover:brightness-95 active:scale-[0.98] transition-all">
+                Complete Secure Enrollment
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

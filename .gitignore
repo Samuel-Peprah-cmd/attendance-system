@@ -1,0 +1,16 @@
+# Sensitive Data
+.env
+
+# Python junk
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+
+# Database
+instance/
+*.db
+
+# Local uploads (don't upload test photos to GitHub)
+app/static/uploads/

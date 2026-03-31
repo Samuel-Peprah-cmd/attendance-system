@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto py-6 md:py-10 px-2 md:px-0">
+    
+    <div class="mb-10 text-center md:text-left">
+        <h2 class="text-3xl md:text-4xl font-black text-gray-800 tracking-tighter">Classroom Management</h2>
+        <p class="text-brand text-[10px] md:text-xs font-black uppercase tracking-[0.3em] mt-2 flex items-center justify-center md:justify-start gap-2">
+            <span class="h-1.5 w-1.5 bg-brand rounded-full animate-pulse"></span> 
+            {{ current_user.school.name }} Infrastructure
+        </p>
+    </div>
+
+    <div class="bg-white p-6 md:p-10 rounded-[2.5rem] shadow-xl border border-gray-100 mb-12 relative overflow-hidden">
+        <h3 class="text-[10px] font-black text-brand uppercase mb-8 border-b border-gray-50 pb-3 tracking-[0.2em] flex items-center gap-2">
+            🏫 Register New Class
+        </h3>
+        
+        <form method="POST" class="flex flex-col md:flex-row gap-4 relative z-10">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div class="flex-1">
+                <input type="text" name="class_name" placeholder="e.g. JHS 1, Grade 10, A-Level..." 
+                       class="w-full p-5 bg-gray-50 border border-gray-100 rounded-[1.5rem] focus:ring-4 focus:ring-brand/10 focus:border-brand outline-none transition-all duration-300 font-bold text-gray-700" 
+                       required>
+            </div>
+            <button type="submit" class="bg-brand text-white px-12 py-5 rounded-[1.5rem] font-black uppercase text-xs tracking-widest shadow-lg shadow-brand/20 hover:brightness-90 active:scale-95 transition-all duration-300">
+                Create Class
+            </button>
+        </form>
+    </div>
+
+    <div class="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 overflow-hidden">
+        <div class="w-full overflow-x-auto block custom-scrollbar scroll-smooth">
+            <table class="w-full min-w-max text-left border-collapse">
+                <thead class="bg-brand text-white">
+                    <tr>
+                        <th class="p-6 uppercase text-[10px] font-black tracking-[0.2em] whitespace-nowrap">Class Designation</th>
+                        <th class="p-6 uppercase text-[10px] font-black tracking-[0.2em] whitespace-nowrap">Student Population</th>
+                        <th class="p-6 uppercase text-[10px] font-black tracking-[0.2em] whitespace-nowrap text-right">System Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    {% for cls in classes %}
+                    <tr class="group hover:bg-gray-50 transition duration-300">
+                        <td class="p-6 whitespace-nowrap">
+                            <div class="flex items-center gap-4">
+                                <div class="h-12 w-12 bg-brand text-white rounded-2xl flex items-center justify-center font-black text-lg border-2 border-white shadow-md transition-all duration-300">
+                                    {{ cls.name[0] | upper }}
+                                </div>
+                                <div>
+                                    <p class="font-black text-gray-900 text-base tracking-tight leading-none mb-1">{{ cls.name }}</p>
+                                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Active Class</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="p-6 whitespace-nowrap">
+                            <div class="flex items-center gap-3">
+                                <div class="px-4 py-2 bg-brand/5 rounded-xl">
+                                    <span class="text-sm font-black text-brand">{{ cls.students|length }}</span>
+                                </div>
+                                <span class="text-[10px] font-black text-gray-300 uppercase tracking-tighter">Profiles Enrolled</span>
+                            </div>
+                        </td>
+                        <td class="p-6 text-right whitespace-nowrap">
+                            <span class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-brand/5 text-brand border border-brand/10">
+                                <span class="h-1.5 w-1.5 bg-brand rounded-full animate-ping"></span>
+                                Active Node
+                            </span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" class="p-24 text-center">
+                            <p class="text-gray-400 font-black uppercase text-xs tracking-[0.3em]">Infrastructure Empty</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-4 md:hidden text-center">
+        <p class="text-[10px] font-black text-brand/40 uppercase tracking-[0.2em] animate-pulse">
+            Swipe Table Side-to-Side ↔️
+        </p>
+    </div>
+</div>
+{% endblock %}

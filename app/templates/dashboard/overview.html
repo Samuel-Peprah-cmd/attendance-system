@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="fw-bold">Welcome, {{ current_user.username }}</h2>
+            <p class="text-muted">{{ current_user.school.name }} Control Panel</p>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-5">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-primary text-white p-3">
+                <small class="text-uppercase opacity-75">Active Students</small>
+                <h2 class="mb-0">{{ total_students }}</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-dark text-white p-3">
+                <small class="text-uppercase opacity-75">Active Staff</small>
+                <h2 class="mb-0">{{ total_staff }}</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 bg-success text-white p-3">
+                <small class="text-uppercase opacity-75">Scans Today</small>
+                <h2 class="mb-0">{{ scans_today }}</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 {% if gps_alerts > 0 %}bg-danger text-white{% else %}bg-light text-dark{% endif %} p-3">
+                <small class="text-uppercase opacity-75">Boundary Alerts</small>
+                <h2 class="mb-0">{{ gps_alerts }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white fw-bold">Quick Actions</div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <a href="{{ url_for('staff.register_staff') }}" class="btn btn-outline-primary w-100 py-3">
+                                <i class="fas fa-user-tie d-block mb-2 fa-2x"></i> + Add Staff
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{{ url_for('staff.list_staff') }}" class="btn btn-outline-dark w-100 py-3">
+                                <i class="fas fa-id-card d-block mb-2 fa-2x"></i> Staff Directory
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="{{ url_for('staff.security_dashboard') }}" class="btn btn-outline-danger w-100 py-3">
+                                <i class="fas fa-map-marked-alt d-block mb-2 fa-2x"></i> Security Map
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="#" class="btn btn-outline-success w-100 py-3">
+                                <i class="fas fa-bullhorn d-block mb-2 fa-2x"></i> Post Notice
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white fw-bold d-flex justify-content-between">
+                    Latest Activity
+                    <a href="#" class="small text-decoration-none">View All</a>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        {% for log in recent_logs %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong class="d-block">{{ log.staff.full_name if log.staff_id else log.student.full_name }}</strong>
+                                <small class="text-muted">{{ log.status }} • {{ log.timestamp.strftime('%I:%M %p') }}</small>
+                            </div>
+                            {% if log.is_within_boundary %}
+                            <span class="badge bg-success">In Bounds</span>
+                            {% else %}
+                            <span class="badge bg-danger">Off Campus</span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

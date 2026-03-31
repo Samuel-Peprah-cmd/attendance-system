@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mb-8">
+    <h2 class="text-2xl md:text-3xl font-black text-gray-800 tracking-tight text-brand uppercase">Guardian Directory</h2>
+    <p class="text-gray-400 text-sm font-bold uppercase tracking-widest">Manage family portal access and credentials.</p>
+</div>
+
+<div class="bg-white shadow-sm border border-gray-100 rounded-[2rem]">
+    <div class="w-full overflow-x-auto custom-scrollbar rounded-[2rem]">
+        <table class="min-w-[900px] w-full text-left border-collapse">
+            <thead class="bg-gray-50 border-b border-gray-100">
+                <tr>
+                    <th class="p-6 font-black text-gray-400 uppercase text-[10px] tracking-[0.2em] whitespace-nowrap">Guardian Identity</th>
+                    <th class="p-6 font-black text-gray-400 uppercase text-[10px] tracking-[0.2em] whitespace-nowrap">Primary Contact</th>
+                    <th class="p-6 font-black text-gray-400 uppercase text-[10px] tracking-[0.2em] whitespace-nowrap">Linked Children</th>
+                    <th class="p-6 font-black text-gray-400 uppercase text-[10px] tracking-[0.2em] whitespace-nowrap text-right">System Control</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+                {% for parent in parents %}
+                <tr class="hover:bg-gray-50/50 transition duration-200">
+                    <td class="p-6 whitespace-nowrap">
+                        <div class="flex items-center gap-4">
+                            <div class="h-12 w-12 bg-brand text-white rounded-2xl flex items-center justify-center font-black text-base shadow-sm shadow-brand/20 flex-shrink-0">
+                                {{ parent.name[0] if parent.name else parent.email[0] | upper }}
+                            </div>
+                            <div>
+                                <div class="font-black text-gray-900 text-sm leading-none mb-1">{{ parent.name or 'Unnamed Guardian' }}</div>
+                                <div class="text-[11px] font-bold text-gray-400 uppercase tracking-tight">{{ parent.email }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    
+                    <td class="p-6 whitespace-nowrap">
+                        <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-xl">
+                            <span class="text-xs">📞</span>
+                            <span class="font-black text-gray-700 text-xs">{{ parent.phone or 'No Phone Logged' }}</span>
+                        </div>
+                    </td>
+                    
+                    <td class="p-6">
+                        <div class="flex flex-wrap gap-2 min-w-[220px]">
+                            {% for student in parent.children %}
+                                <span class="bg-brand/10 text-brand px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest whitespace-nowrap border border-brand/10">
+                                    👤 {{ student.full_name }}
+                                </span>
+                            {% endfor %}
+                        </div>
+                    </td>
+
+                    <td class="p-6 text-right whitespace-nowrap">
+                        {% if parent.id %}
+                            <a href="{{ url_for('students.admin_reset_parent_password', user_id=parent.id) }}" 
+                               class="inline-block bg-gray-900 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] hover:bg-brand transition shadow-lg shadow-gray-900/10 active:scale-95"
+                               onclick="return confirm('WARNING: You are about to override security credentials for {{ parent.name }}. Continue?')">
+                                 Reset Access
+                            </a>
+                        {% else %}
+                            <span class="inline-block bg-gray-100 text-gray-400 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] cursor-not-allowed">
+                                 No Portal Account
+                            </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="p-24 text-center">
+                        <div class="text-6xl mb-6 grayscale opacity-20">👨‍👩‍👧‍👦</div>
+                        <p class="text-gray-400 font-black uppercase text-xs tracking-[0.3em]">No family accounts identified</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    .custom-scrollbar {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+</style>
+{% endblock %}

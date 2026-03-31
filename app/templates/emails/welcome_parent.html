@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f4f4f7;">
+    <div style="max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; shadow: 0 4px 6px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;">
+        
+        <div style="background-color: {{ school.primary_color }}; padding: 40px 20px; text-align: center; color: white;">
+            {% if logo_url %}
+                <img src="{{ logo_url }}" alt="School Logo" style="height: 60px; margin-bottom: 15px; border-radius: 8px;">
+            {% endif %}
+            <h1 style="margin: 0; font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: -0.025em;">
+                {{ school.name }}
+            </h1>
+            <p style="margin-top: 5px; font-size: 14px; opacity: 0.9;">Official Safety & Attendance Portal</p>
+        </div>
+
+        <div style="padding: 40px; color: #2d3748; line-height: 1.6;">
+            <h2 style="color: {{ school.primary_color }}; margin-top: 0;">Enrollment Confirmed</h2>
+            <p>Dear Parent/Guardian,</p>
+            <p>The security profile for <strong>{{ student.full_name }}</strong> has been successfully created and linked to your dashboard.</p>
+    
+            {% if temp_password %}
+                <div style="background-color: #f8fafc; border: 2px dashed {{ school.primary_color }}; border-radius: 8px; padding: 25px; margin: 30px 0;">
+                    <p style="margin: 0 0 10px 0; font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase;">New Account Created</p>
+                    <p style="margin: 5px 0;"><strong>Username:</strong> {{ email }}</p>
+                    <p style="margin: 5px 0;"><strong>Temporary Password:</strong> <span style="color: #c53030; font-family: monospace; font-size: 18px;">{{ temp_password }}</span></p>
+                </div>
+            {% else %}
+                <div style="background-color: #f0fff4; border: 1px solid #c6f6d5; border-radius: 8px; padding: 20px; margin: 30px 0; text-align: center;">
+                    <p style="margin: 0; color: #2f855a; font-weight: bold;">
+                        This child has been added to your existing Family Portal account. 
+                        Login with your current credentials to view their activity.
+                    </p>
+                </div>
+            {% endif %}
+
+            <div style="text-align: center; margin: 40px 0;">
+                <a href="{{ login_url }}" style="background-color: {{ school.primary_color }}; color: #ffffff; padding: 15px 35px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                    Open Family Portal
+                </a>
+            </div>
+        </div>
+
+        <div style="background-color: #1a202c; padding: 20px; text-align: center; color: #a0aec0; font-size: 11px;">
+            <p style="margin: 0;">&copy; 2026 {{ school.name }} Security Team</p>
+            <p style="margin: 5px 0 0 0; opacity: 0.6;">Powered by AtomDev Studios attendance-system</p>
+        </div>
+    </div>
+</body>
+</html>

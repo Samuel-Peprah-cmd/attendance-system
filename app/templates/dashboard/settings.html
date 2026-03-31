@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<div class="max-w-5xl mx-auto">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <div class="bg-white p-8 rounded-[2.5rem] shadow-lg border-t-4 border-brand">
+            <h2 class="text-2xl font-black mb-6 tracking-tight text-gray-800">School Branding</h2>
+            
+            <form id="settings-form" method="POST" enctype="multipart/form-data" class="space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Display Name</label>
+                    <input type="text" name="name" value="{{ current_user.school.name }}" class="w-full p-3 bg-gray-50 border-0 rounded-2xl focus:ring-2 focus:ring-brand font-bold">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Primary Color</label>
+                        <input type="color" name="primary_color" value="{{ current_user.school.primary_color }}" class="w-full h-14 rounded-2xl cursor-pointer border-4 border-white shadow-sm">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Secondary Color</label>
+                        <input type="color" name="secondary_color" value="{{ current_user.school.secondary_color }}" class="w-full h-14 rounded-2xl cursor-pointer border-4 border-white shadow-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Campus Logo</label>
+                    <input type="file" name="logo" class="w-full p-3 text-xs bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                </div>
+
+                <div class="mb-3">
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Official Opening Time</label>
+                    <input type="time" name="opening_time" class="w-full p-3 bg-gray-50 border-0 rounded-2xl font-bold" 
+                        value="{{ school.opening_time.strftime('%H:%M') if school.opening_time else '07:30' }}">
+                </div>
+
+                <div class="mb-3">
+                    <label class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Official Closing Time</label>
+                    <input type="time" name="closing_time" class="w-full p-3 bg-gray-50 border-0 rounded-2xl font-bold" 
+                        value="{{ school.closing_time.strftime('%H:%M') if school.closing_time else '15:00' }}">
+                </div>
+
+                <input type="hidden" id="lat_input" name="latitude" value="{{ school.latitude }}">
+                <input type="hidden" id="lng_input" name="longitude" value="{{ school.longitude }}">
+                
+                <div class="pt-4">
+                    <button type="submit" class="w-full bg-brand text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-brand/20 hover:scale-[1.02] transition-all">
+                        Update System Data
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="bg-white p-8 rounded-[2.5rem] shadow-lg border-t-4 border-brand">
+            <h2 class="text-2xl font-black mb-1 tracking-tight text-gray-800">Campus Geofence</h2>
+            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">Search or Click Map to Set Center</p>
+            
+            <div class="flex gap-2 mb-4">
+                <input type="text" id="location-search" placeholder="Enter city, landmark, or school..." 
+                       class="flex-1 p-3 bg-gray-50 border-0 rounded-2xl focus:ring-2 focus:ring-brand font-bold text-xs"
+                       onkeypress="if(event.key === 'Enter') { event.preventDefault(); searchLocation(); }">
+                <button type="button" onclick="searchLocation()" id="search-btn"
+                        class="bg-gray-900 text-white px-5 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-gray-800 transition shadow-md">
+                    Search
+                </button>
+            </div>
+
+            <div id="map-picker" class="h-64 w-full rounded-3xl mb-6 shadow-inner overflow-hidden border-4 border-gray-50"></div>
+            
+            <div>
+                <label class="block text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Safety Radius (Meters)</label>
+                <input type="number" id="radius_input" name="radius_meters" form="settings-form" value="{{ school.radius_meters }}" class="w-full p-4 bg-gray-950 text-brand font-black text-2xl rounded-2xl border-0 focus:ring-0">
+                <p class="text-[9px] text-gray-400 mt-2 font-bold uppercase">Current Lock: <span id="coords-display">{{ school.latitude }}, {{ school.longitude }}</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    var lat = {{ school.latitude or 5.6037 }};
+    var lng = {{ school.longitude or -0.1870 }};
+    var rad = {{ school.radius_meters or 200 }};
+
+    var map = L.map('map-picker').setView([lat, lng], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    var marker = L.marker([lat, lng]).addTo(map);
+    var circle = L.circle([lat, lng], { radius: rad, color: '{{ school.primary_color }}', fillOpacity: 0.2 }).addTo(map);
+
+    // Update coordinates when clicking the map
+    map.on('click', function(e) {
+        updateMapLocation(e.latlng.lat, e.latlng.lng);
+    });
+
+    // Update radius size instantly
+    document.getElementById('radius_input').addEventListener('input', function(e) {
+        circle.setRadius(e.target.value);
+    });
+
+    // 🚩 ADDED: OpenStreetMap Geocoding Search Function
+    function searchLocation() {
+        var query = document.getElementById('location-search').value.trim();
+        if (!query) return;
+        
+        var btn = document.getElementById('search-btn');
+        var originalText = btn.innerText;
+        btn.innerText = "⏳...";
+
+        // Uses the free OpenStreetMap Nominatim API (No API key needed!)
+        var url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.length > 0) {
+                    // Grab the first result
+                    var newLat = parseFloat(data[0].lat);
+                    var newLng = parseFloat(data[0].lon);
+                    
+                    // Fly to the new location and zoom in closely
+                    map.flyTo([newLat, newLng], 17);
+                    
+                    // Update the marker, circle, and hidden form inputs
+                    updateMapLocation(newLat, newLng);
+                } else {
+                    alert("Location not found! Try adding the city name to your search.");
+                }
+            })
+            .catch(error => {
+                console.error('Error searching:', error);
+                alert("Failed to connect to the search service.");
+            })
+            .finally(() => {
+                btn.innerText = originalText;
+            });
+    }
+
+    // Helper function to update all UI elements when location changes
+    function updateMapLocation(newLat, newLng) {
+        marker.setLatLng([newLat, newLng]);
+        circle.setLatLng([newLat, newLng]);
+        
+        // Format to 6 decimal places for cleanliness
+        var latStr = newLat.toFixed(6);
+        var lngStr = newLng.toFixed(6);
+        
+        document.getElementById('lat_input').value = latStr;
+        document.getElementById('lng_input').value = lngStr;
+        document.getElementById('coords-display').innerText = latStr + ", " + lngStr;
+    }
+</script>
+{% endblock %}

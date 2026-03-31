@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mb-8">
+    <h2 class="text-3xl font-black text-gray-800 tracking-tight">Family Security Portal</h2>
+    <p class="text-gray-500 text-sm">Active security profiles linked to your account.</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for child in children %}
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition group">
+        <div class="p-6">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="h-16 w-16 rounded-2xl overflow-hidden border-2 border-brand/20">
+                    {% if child.photo_path %}
+                        <img src="{{ child.photo_path }}" class="h-full w-full object-cover">
+                    {% else %}
+                        <div class="h-full w-full bg-brand/10 flex items-center justify-center text-brand font-black text-xl">
+                            {{ child.full_name[0] }}
+                        </div>
+                    {% endif %}
+                </div>
+                <div>
+                    <h3 class="font-black text-gray-900 leading-tight">{{ child.full_name }}</h3>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">{{ child.student_code }}</p>
+                </div>
+            </div>
+
+            <div class="space-y-3 mb-6">
+                <div class="flex justify-between text-xs">
+                    <span class="text-gray-400 font-bold uppercase tracking-tighter">School</span>
+                    <span class="text-gray-900 font-black">{{ child.school.name }}</span>
+                </div>
+    
+                <div class="flex justify-between text-xs">
+                    <span class="text-gray-400 font-bold uppercase tracking-tighter">Last Seen</span>
+                    <span class="text-gray-900 font-black">
+                        {% set last_scan = child.attendance | sort(attribute='timestamp', reverse=True) | first %}
+                        {% if last_scan %}
+                            <span class="{{ 'text-green-600' if last_scan.status == 'IN' else 'text-orange-600' }}">
+                                Checked {{ last_scan.status }}
+                            </span> 
+                            at {{ last_scan.timestamp.strftime('%I:%M %p') }}
+                        {% else %}
+                            <span class="text-gray-400">No scans recorded</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            <div class="flex justify-between text-xs">
+                <span class="text-gray-400 font-bold uppercase tracking-tighter">Profile Status</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-black {{ 'bg-green-100 text-green-700' if child.is_active else 'bg-red-100 text-red-700' }}">
+                    {{ 'SECURED' if child.is_active else 'INACTIVE' }}
+                </span>
+            </div>
+        </div>
+
+            <a href="{{ url_for('students.view_id_card', student_id=child.id) }}" 
+               class="block w-full text-center py-3 bg-gray-50 rounded-xl text-xs font-black text-gray-600 hover:bg-brand hover:text-white transition">
+               VIEW SECURITY ID
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

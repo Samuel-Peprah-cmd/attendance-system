@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AtomDev Security | {{ current_user.school.name if (current_user.is_authenticated and current_user.school) else 'System' }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/png" href="/static/icon/favicon-96x96.png?v=v.1.1.1" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/static/icon/favicon.svg?v=v.1.1.1" />
+    <link rel="shortcut icon" href="/static/icon/favicon.ico?v=v.1.1.1" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/icon/apple-touch-icon.png?v=v.1.1.1" />
+    <meta name="apple-mobile-web-app-title" content="ATOM Gate" />
+    <link rel="manifest" href="/static/icon/site.webmanifest?v=v.1.1.1" />
+    <style>
+        :root {
+            --brand-primary: {{ current_user.school.primary_color if (current_user.is_authenticated and current_user.school) else '#2563eb' }};
+            --brand-secondary: {{ current_user.school.secondary_color if (current_user.is_authenticated and current_user.school) else '#1e40af' }};
+        }
+        .bg-brand { background-color: var(--brand-primary) !important; }
+        .text-brand { color: var(--brand-primary) !important; }
+        .hover-brand:hover { background-color: var(--brand-secondary) !important; }
+
+        /* Custom Scrollbar for Sidebar and Tables */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
+        
+        /* Global Table Wrapper Utility */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            border-radius: 1rem;
+            border: 1px solid #f3f4f6;
+        }
+        
+        table { border-collapse: collapse; min-width: 600px; } /* Ensures table doesn't squish too small */
+    </style>
+</head>
+<body class="bg-gray-50 flex h-screen overflow-hidden">
+
+    {% if current_user.is_authenticated %}
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 z-40 hidden md:hidden transition-opacity duration-300"></div>
+
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white flex flex-col shadow-2xl transform -translate-x-full md:translate-x-0 md:static transition-transform duration-300 ease-in-out">
+        
+        <div class="p-6 text-center border-b border-gray-800 bg-gray-950/50 flex-shrink-0">
+            <h1 class="text-xl font-black italic text-brand uppercase tracking-tighter leading-none mb-1 truncate">
+                {{ current_user.school.name if current_user.school else 'ATOMDEV' }}
+            </h1>
+            <p class="text-[9px] font-bold uppercase opacity-50 tracking-widest">Security Suite</p>
+        </div>
+        
+        <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto custom-scrollbar">
+    
+            {# 💡 THE MACRO: This handles the "Active" state automatically #}
+            {% macro nav_link(endpoint, icon, text, color='') %}
+                <a href="{{ url_for(endpoint) }}" 
+                    class="flex items-center gap-3 p-3 rounded-xl transition-all duration-200 text-sm 
+                    {{ 'bg-gray-800 border-l-4 border-brand text-white shadow-lg' if request.endpoint == endpoint else 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-100' }} {{ color }}">
+                    <span class="text-lg">{{ icon }}</span>
+                    <span class="font-bold tracking-tight">{{ text }}</span>
+                </a>
+            {% endmacro %}
+
+            {% if current_user.role == 'super_admin' %}
+                <p class="text-[10px] text-gray-500 font-bold uppercase px-3 mb-2 tracking-widest">Master Control</p>
+                {{ nav_link('schools.manage_schools', '🏢', 'Manage Schools') }}
+                {{ nav_link('schools.create_school', '🚀', 'Onboard School') }}
+                {{ nav_link('schools.manage_devices', '📱', 'Master Registry') }}
+
+            {% elif current_user.role in ('admin', 'school_admin') %}
+                <p class="text-[10px] text-gray-500 font-bold uppercase px-3 mb-2 tracking-widest">School Management</p>
+                {{ nav_link('dashboard.index', '🏠', 'Dashboard') }}
+                {{ nav_link('students.list_students', '👥', 'Student Directory') }}
+                {{ nav_link('students.add_student', '➕', 'Enroll Student') }}
+                {{ nav_link('dashboard.manage_classes', '🏫', 'Manage Classes') }}
+                {{ nav_link('students.list_parents', '🛡️', 'Guardians/Parents') }}
+                
+                <p class="text-[10px] text-gray-500 font-bold uppercase px-3 mt-6 mb-2 tracking-widest">Medical</p>
+                {{ nav_link('students.medical_records', '💊', 'View Students Medical Report') }}
+
+                <p class="text-[10px] text-gray-500 font-bold uppercase px-3 mt-6 mb-2 tracking-widest">Staff & Security</p>
+                {{ nav_link('staff.list_staff', '👥', 'Staff Directory') }}
+                {{ nav_link('staff.register_staff', '➕', 'Add Staff Member') }}
+                {{ nav_link('staff.security_dashboard', '🛡️', 'Live Scan Monitor', 'text-yellow-500' if request.endpoint != 'staff.security_dashboard') }}
+
+                <p class="text-[10px] text-gray-500 font-bold uppercase px-3 mt-6 mb-2 tracking-widest">Security Logs</p>
+                {{ nav_link('attendance.admin_logs', '🕒', 'Daily Attendance') }}
+                {# 🕒 New: Link for the History Reports we just built #}
+                {{ nav_link('staff.attendance_report', '📊', 'History & Reports') }}
+
+                <p class="text-[10px] text-gray-500 font-bold uppercase px-3 mt-6 mb-2 tracking-widest">System</p>
+                {{ nav_link('dashboard.settings', '🎨', 'Branding & Geofence') }}
+
+            {% elif current_user.role == 'parent' %}
+                <p class="text-[10px] text-gray-500 font-bold uppercase px-3 mb-2 tracking-widest">Family Portal</p>
+                {{ nav_link('dashboard.parent_dashboard', '👨‍👩‍👧‍👦', 'My Children') }}
+                {{ nav_link('attendance.parent_logs', '🕒', 'Safety History') }}
+            {% endif %}
+        </nav>
+
+        <div class="p-4 border-t border-gray-800 flex-shrink-0">
+            <a href="{{ url_for('auth.logout') }}" class="block w-full text-center bg-red-600/90 p-2.5 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-red-700 transition shadow-lg">Logout</a>
+        </div>
+    </aside>
+    {% endif %}
+
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+        
+        <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-8 shadow-sm flex-shrink-0 z-30">
+            <div class="flex items-center gap-3">
+                {% if current_user.is_authenticated %}
+                <button id="mobile-toggle" class="md:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100 transition active:scale-95">
+                    <span class="text-xl">☰</span>
+                </button>
+                {% endif %}
+
+                <div class="flex items-center gap-3">
+                    {% if current_user.is_authenticated and current_user.school and current_user.school.logo_path %}
+                        <img src="{{ current_user.school.logo_path if current_user.school.logo_path.startswith('http') else url_for('static', filename='uploads/logos/' + current_user.school.logo_path) }}" 
+                            class="h-8 w-auto rounded shadow-sm">
+                    {% endif %}
+                    <span class="font-bold text-gray-800 truncate max-w-[150px] md:max-w-none">
+                        {{ current_user.school.name if (current_user.is_authenticated and current_user.school) else 'AtomDev Studios' }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                {% if current_user.is_authenticated %}
+                    <div class="text-right hidden sm:block">
+                        <p class="text-[10px] font-black text-gray-400 leading-none mb-1 uppercase tracking-tighter">
+                            {{ current_user.role | replace('_', ' ') }}
+                        </p>
+                        <p class="text-xs font-bold text-gray-700 truncate max-w-[120px]">{{ current_user.email }}</p>
+                    </div>
+            
+                    <a href="{{ url_for('auth.profile') }}" class="group relative flex-shrink-0">
+                        <div class="h-9 w-9 rounded-xl bg-brand flex items-center justify-center text-white font-black text-base border-2 border-white shadow-sm group-hover:scale-105 transition transform duration-200">
+                            {{ current_user.email[0] | upper }}
+                        </div>
+                        <span class="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-green-500 border-2 border-white rounded-full"></span>
+                    </a>
+                {% else %}
+                    <div class="text-[10px] font-black text-brand uppercase tracking-[0.2em]">
+                        Portal Login
+                    </div>
+                {% endif %}
+            </div>
+        </header>
+
+        <section class="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="max-w-5xl mx-auto">
+                        {% for category, message in messages %}
+                            <div class="p-4 mb-6 rounded-2xl shadow-sm text-white bg-{{ 'red' if category == 'danger' else 'green' }}-500 flex justify-between items-center animate-pulse">
+                                <span class="font-bold text-sm">{{ message }}</span>
+                                <button onclick="this.parentElement.remove()" class="text-white/70 hover:text-white text-xl font-bold">&times;</button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <div class="max-w-7xl mx-auto">
+                {% block content %}{% endblock %}
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const btn = document.getElementById('mobile-toggle');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+
+        function toggleMenu() {
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        if (btn) btn.addEventListener('click', toggleMenu);
+        if (overlay) overlay.addEventListener('click', toggleMenu);
+
+        // Auto-close sidebar on mobile when a link is clicked
+        sidebar.querySelectorAll('nav a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth < 768) toggleMenu();
+            });
+        });
+    </script>
+</body>
+</html>
