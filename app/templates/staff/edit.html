@@ -7,6 +7,7 @@
     <h2 class="text-3xl font-bold mb-8 text-gray-800">Edit Personnel Profile: {{ staff.full_name }}</h2>
 
     <form method="POST" action="{{ url_for('staff.edit_staff', staff_id=staff.id) }}" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <div class="mb-10 bg-gray-50 p-6 rounded-lg border border-gray-100 flex items-center space-x-6">
             <div class="shrink-0">
                 {% if staff.photo_path %}

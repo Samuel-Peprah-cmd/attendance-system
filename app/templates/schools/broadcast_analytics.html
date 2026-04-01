@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-6xl mx-auto py-6 md:py-10">
+    <div class="mb-8 flex justify-between items-center">
+        <div>
+            <h2 class="text-3xl font-black text-gray-800 tracking-tight uppercase">Campaign Report</h2>
+            <p class="text-gray-400 text-sm font-bold uppercase tracking-widest mt-1">{{ broadcast.subject }}</p>
+        </div>
+        <a href="{{ url_for('communications.history') }}" class="bg-gray-100 text-gray-600 px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-gray-200 transition">
+            &larr; Back to History
+        </a>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm text-center">
+            <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Total Targeted</p>
+            <p class="text-3xl font-black text-gray-900">{{ total }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-green-100 shadow-sm text-center">
+            <p class="text-[10px] font-black text-green-500 uppercase tracking-widest mb-2">Delivered</p>
+            <p class="text-3xl font-black text-green-600">{{ sent }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-red-100 shadow-sm text-center">
+            <p class="text-[10px] font-black text-red-400 uppercase tracking-widest mb-2">Failed</p>
+            <p class="text-3xl font-black text-red-500">{{ failed }}</p>
+        </div>
+        <div class="bg-white p-6 rounded-2xl border border-brand/20 shadow-sm text-center">
+            <p class="text-[10px] font-black text-brand uppercase tracking-widest mb-2">Success Rate</p>
+            <p class="text-3xl font-black text-brand">{{ success_rate }}%</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
+        <div class="p-6 border-b border-gray-50 bg-gray-50/50">
+            <h3 class="text-xs font-black text-gray-600 uppercase tracking-[0.2em]">Detailed Delivery Log</h3>
+        </div>
+        <div class="table-responsive custom-scrollbar max-h-96">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-white border-b border-gray-100 sticky top-0">
+                    <tr>
+                        <th class="p-4 font-black text-gray-400 uppercase text-[10px] tracking-widest">Recipient Name</th>
+                        <th class="p-4 font-black text-gray-400 uppercase text-[10px] tracking-widest">Contact Info</th>
+                        <th class="p-4 font-black text-gray-400 uppercase text-[10px] tracking-widest">Role</th>
+                        <th class="p-4 font-black text-gray-400 uppercase text-[10px] tracking-widest text-right">Delivery Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    {% for r in recipients %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="p-4 font-bold text-gray-800 text-sm">{{ r.name or 'Unknown' }}</td>
+                        <td class="p-4">
+                            <p class="text-xs font-bold text-gray-600">{{ r.email or 'No Email' }}</p>
+                            <p class="text-[10px] font-bold text-gray-400">{{ r.phone or 'No Phone' }}</p>
+                        </td>
+                        <td class="p-4 text-xs font-bold text-gray-500 uppercase">{{ r.recipient_type }}</td>
+                        <td class="p-4 text-right">
+                            {% if r.status == 'sent' %}
+                                <span class="text-green-500 font-black text-[10px] uppercase tracking-widest flex items-center justify-end gap-1">✅ Delivered</span>
+                            {% elif r.status == 'failed' %}
+                                <span class="text-red-500 font-black text-[10px] uppercase tracking-widest flex items-center justify-end gap-1">❌ Failed</span>
+                            {% else %}
+                                <span class="text-yellow-500 font-black text-[10px] uppercase tracking-widest flex items-center justify-end gap-1">⏳ Pending</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

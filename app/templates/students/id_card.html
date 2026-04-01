@@ -10,6 +10,10 @@
             <button onclick="window.print()" class="bg-brand text-white px-5 py-2 rounded-lg font-bold shadow-md text-xs hover:brightness-95">
                 Print Card
             </button>
+            <a href="{{ url_for('students.download_id_card', student_id=student.id) }}"
+                class="bg-brand text-white px-5 py-2 rounded-lg font-bold shadow-md text-xs hover:brightness-95">
+                Download PVC Card
+            </a>
             <a href="{{ url_for('students.list_students') }}" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-bold text-xs border border-gray-200">
                 Exit
             </a>
@@ -93,7 +97,7 @@
                         <div class="min-w-0">
                             <p class="text-[9px] font-black text-brand uppercase">Class</p>
                             <p class="text-[12px] font-bold text-gray-800 leading-tight break-words">
-                                {{ student.classroom.name if student.classroom else 'N/A' }}
+                                {{ student.student_class.name if student.student_class else 'N/A' }}
                             </p>
                         </div>
 
@@ -137,7 +141,7 @@
                 <!-- QR -->
                 <div class="flex flex-col items-center justify-center border-l border-gray-200 pl-4">
                     <div class="bg-white border-2 border-gray-200 rounded-lg p-2 shadow-sm">
-                        <img src="https://pub-af7e5e6c052547d28d3e28cf045d7c8f.r2.dev/qr_codes/qr_{{ student.qr_token }}.png" alt="QR Code"
+                        <img src="{{ config.CF_PUBLIC_URL_PREFIX }}/qr_codes/qr_{{ student.qr_token }}.png" alt="QR Code"
                              class="w-[145px] h-[145px] object-contain">
                     </div>
 

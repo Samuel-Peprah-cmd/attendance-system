@@ -42,6 +42,8 @@ def create_app():
     from app.routes.parents import parents_bp
     from app.routes.attendance import attendance_bp
     from app.routes.staff import staff_bp
+    from app.routes.communications import communications_bp
+    
     
     if not app.debug:
         from flask_talisman import Talisman
@@ -55,6 +57,8 @@ def create_app():
     app.register_blueprint(parents_bp, url_prefix="/parents")
     app.register_blueprint(attendance_bp, url_prefix='/attendance')
     app.register_blueprint(staff_bp, url_prefix='/staff')
+    app.register_blueprint(communications_bp, url_prefix='/communications')
+    
 
     csrf.exempt(scanner_api_bp)
     

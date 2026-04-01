@@ -68,7 +68,7 @@
                     <tr class="hover:bg-gray-50/50 transition">
                         <td class="p-6">
                             <div class="flex items-center gap-4">
-                                <img src="{{ url_for('static', filename='uploads/students/' + (log.student.photo_path or 'default.png')) }}" 
+                                <img src="{{ log.student.photo_path }}" 
                                      class="w-12 h-12 rounded-2xl object-cover shadow-sm border-2 border-white">
                                 <div>
                                     <p class="font-black text-gray-900 leading-none">{{ log.student.full_name }}</p>

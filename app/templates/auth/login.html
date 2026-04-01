@@ -94,7 +94,6 @@
                         </div>
 
                         <h2 class="text-3xl font-black text-gray-900 tracking-tight">System Access</h2>
-                        <p class="text-sm text-gray-500 mt-2">Enter your administrative credentials</p>
                     </div>
 
                     <form method="POST" class="space-y-5">
@@ -102,7 +101,7 @@
 
                         <div class="space-y-2">
                             <label class="block text-[10px] font-black uppercase text-gray-400 tracking-[0.22em] ml-1">
-                                Identity (Email)
+                                Email
                             </label>
                             <div class="relative group">
                                 <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-yellow-700/70 group-focus-within:text-yellow-600 transition-colors">
@@ -117,7 +116,7 @@
                         <div class="space-y-2">
                             <div class="flex justify-between items-center px-1">
                                 <label class="block text-[10px] font-black uppercase text-gray-400 tracking-[0.22em]">
-                                    Security Key
+                                    Password
                                 </label>
                                 <a href="{{ url_for('auth.forgot_password') }}"
                                    class="text-[10px] font-black text-yellow-700 hover:text-yellow-600 uppercase tracking-wide">
@@ -141,21 +140,6 @@
                             <span class="text-lg">→</span>
                         </button>
                     </form>
-
-                    <div class="mt-8 pt-6 border-t border-gray-100 grid grid-cols-3 gap-3">
-                        <div class="text-center">
-                            <div class="text-[9px] font-black text-gray-400 uppercase tracking-tight">Super Admin</div>
-                            <div class="h-1.5 w-full bg-gradient-to-r from-yellow-700 to-yellow-400 rounded-full mt-2 opacity-70"></div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-[9px] font-black text-gray-400 uppercase tracking-tight">School Admin</div>
-                            <div class="h-1.5 w-full bg-gradient-to-r from-yellow-700 to-yellow-400 rounded-full mt-2 opacity-70"></div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-[9px] font-black text-gray-400 uppercase tracking-tight">Parent Portal</div>
-                            <div class="h-1.5 w-full bg-gradient-to-r from-yellow-700 to-yellow-400 rounded-full mt-2 opacity-70"></div>
-                        </div>
-                    </div>
                 </div>
             </div>
 

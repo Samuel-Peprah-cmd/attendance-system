@@ -18,14 +18,18 @@ dashboard_bp = Blueprint("dashboard", __name__)
 # @login_required
 # def index():
 #     school_id = current_user.school_id
+#     school = School.query.get(school_id) # Grab the school to get the dynamic time
     
-#     # 1. Setup Timeframes
-#     today = datetime.utcnow().date()
+#     # 1. Setup Exact Timeframes
+#     now = datetime.utcnow()
+#     today = now.date()
 #     yesterday = today - timedelta(days=1)
-#     # Get the Monday of the current week
-#     start_of_week = today - timedelta(days=today.weekday())
+    
+#     # Get Monday of the current week at exactly 00:00:00
+#     start_of_week_date = today - timedelta(days=today.weekday())
+#     start_of_week = datetime.combine(start_of_week_date, dt_time.min) 
 
-#     # 2. Build the 'stats' dictionary for the frontend widgets
+#     # 2. Build the 'stats' dictionary
 #     stats = {
 #         "today_count": Attendance.query.filter(
 #             Attendance.school_id == school_id, 
@@ -39,7 +43,7 @@ dashboard_bp = Blueprint("dashboard", __name__)
         
 #         "weekly_count": Attendance.query.filter(
 #             Attendance.school_id == school_id, 
-#             Attendance.timestamp >= start_of_week
+#             Attendance.timestamp >= start_of_week # Now compares datetime to datetime accurately!
 #         ).count(),
         
 #         "current_in": Attendance.query.filter(
@@ -52,15 +56,16 @@ dashboard_bp = Blueprint("dashboard", __name__)
 #     # 3. Global Stats
 #     total_students = Student.query.filter_by(school_id=school_id).count()
     
-#     # 4. Geofence Violations (Scans outside the boundary today)
+#     # 4. Geofence Violations
 #     violations = Attendance.query.filter(
 #         Attendance.school_id == school_id,
 #         Attendance.is_within_boundary == False,
 #         db.func.date(Attendance.timestamp) == today
 #     ).order_by(Attendance.timestamp.desc()).limit(5).all()
 
-#     # 5. Top Late Arrivals (Scans after 08:00 AM today)
-#     late_threshold = datetime.combine(today, time(8, 0))
+#     # 5. Top Late Arrivals (Dynamic calculation based on school settings)
+#     opening = school.opening_time if school.opening_time else dt_time(7, 30)
+#     late_threshold = datetime.combine(today, opening)
 #     late_arrivals = Attendance.query.filter(
 #         Attendance.school_id == school_id,
 #         Attendance.status == 'IN',
@@ -71,18 +76,31 @@ dashboard_bp = Blueprint("dashboard", __name__)
 #     # 6. Final Data Hand-off
 #     return render_template("dashboard/index.html", 
 #                            total_students=total_students, 
-#                            stats=stats,  # <--- This fixes the Jinja2 error
+#                            stats=stats,  
 #                            violations=violations,
 #                            late_arrivals=late_arrivals)
 
 
+from flask import redirect, url_for
+
 @dashboard_bp.route("/")
 @login_required
 def index():
+    # 🚨 1. SUPER ADMIN REDIRECT 
+    # If the master account logs in, send them straight to the global management page
+    if current_user.role == 'super_admin':
+        # Note: If your route is just 'schools.manage', change the line below to match it!
+        return redirect(url_for('schools.manage_schools')) 
+        
     school_id = current_user.school_id
-    school = School.query.get(school_id) # Grab the school to get the dynamic time
+    school = School.query.get(school_id)
     
-    # 1. Setup Exact Timeframes
+    # 🚨 2. SAFETY CATCH
+    # Prevents the 'NoneType' error if a user somehow isn't linked to a school
+    if not school:
+        return "Error: Your account is not linked to a school. Please contact support.", 403
+
+    # 3. Setup Exact Timeframes
     now = datetime.utcnow()
     today = now.date()
     yesterday = today - timedelta(days=1)
@@ -91,7 +109,7 @@ def index():
     start_of_week_date = today - timedelta(days=today.weekday())
     start_of_week = datetime.combine(start_of_week_date, dt_time.min) 
 
-    # 2. Build the 'stats' dictionary
+    # 4. Build the 'stats' dictionary
     stats = {
         "today_count": Attendance.query.filter(
             Attendance.school_id == school_id, 
@@ -115,17 +133,17 @@ def index():
         ).count()
     }
 
-    # 3. Global Stats
+    # 5. Global Stats
     total_students = Student.query.filter_by(school_id=school_id).count()
     
-    # 4. Geofence Violations
+    # 6. Geofence Violations
     violations = Attendance.query.filter(
         Attendance.school_id == school_id,
         Attendance.is_within_boundary == False,
         db.func.date(Attendance.timestamp) == today
     ).order_by(Attendance.timestamp.desc()).limit(5).all()
 
-    # 5. Top Late Arrivals (Dynamic calculation based on school settings)
+    # 7. Top Late Arrivals (Dynamic calculation based on school settings)
     opening = school.opening_time if school.opening_time else dt_time(7, 30)
     late_threshold = datetime.combine(today, opening)
     late_arrivals = Attendance.query.filter(
@@ -135,12 +153,13 @@ def index():
         db.func.date(Attendance.timestamp) == today
     ).order_by(Attendance.timestamp.desc()).limit(5).all()
 
-    # 6. Final Data Hand-off
+    # 8. Final Data Hand-off
     return render_template("dashboard/index.html", 
                            total_students=total_students, 
                            stats=stats,  
                            violations=violations,
                            late_arrivals=late_arrivals)
+
 
 # @dashboard_bp.route("/settings", methods=["GET", "POST"])
 # @login_required

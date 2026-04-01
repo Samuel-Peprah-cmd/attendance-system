@@ -6,3 +6,6 @@ from app.models.class_room import ClassRoom
 from app.models.staff import Staff
 from app.models.scanner_device import ScannerDevice
 from app.models.notices import SchoolNotice
+from app.models.broadcast import Broadcast
+from app.models.broadcast import BroadcastAttachment
+from app.models.broadcast import BroadcastRecipient

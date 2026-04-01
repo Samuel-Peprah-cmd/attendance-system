@@ -11,6 +11,11 @@ class Config:
     # Path for student photos
     UPLOAD_FOLDER = os.path.join(os.getcwd(), 'app/static/uploads/students')
     GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY')
+    CF_PUBLIC_URL_PREFIX = os.getenv("CF_PUBLIC_URL_PREFIX", "")
+    CF_BUCKET_NAME = os.getenv("CF_BUCKET_NAME", "")
+    CF_SECRET_KEY = os.getenv("CF_SECRET_KEY", "")
+    CF_ACCESS_KEY = os.getenv("CF_ACCESS_KEY", "")
+    CF_ACCOUNT_ID = os.getenv("CF_ACCOUNT_ID", "")
     
     # MAIL CONFIGURATION
     MAIL_SERVER = os.environ.get('MAIL_SERVER')

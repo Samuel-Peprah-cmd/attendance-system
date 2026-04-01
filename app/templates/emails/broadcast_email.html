@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; background-color: #f4f4f7;">
+    <div style="max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;">
+        
+        <div style="background-color: {{ school.primary_color }}; padding: 40px 20px; text-align: center; color: white;">
+            {% if logo_url %}
+                <img src="{{ logo_url }}" alt="School Logo" style="height: 60px; margin-bottom: 15px; border-radius: 8px;">
+            {% endif %}
+            <h1 style="margin: 0; font-size: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: -0.025em;">
+                {{ school.name }}
+            </h1>
+            <p style="margin-top: 5px; font-size: 14px; opacity: 0.9;">Official Communication</p>
+        </div>
+
+        <div style="padding: 40px; color: #2d3748; line-height: 1.6;">
+            <h2 style="color: {{ school.primary_color }}; margin-top: 0; margin-bottom: 20px;">{{ subject }}</h2>
+            
+            <div style="font-size: 15px; color: #4a5568;">
+                {{ message_body | safe }}
+            </div>
+    
+            {% if attachments %}
+                <div style="background-color: #f8fafc; border: 2px dashed {{ school.primary_color }}; border-radius: 8px; padding: 25px; margin: 30px 0;">
+                    <p style="margin: 0 0 10px 0; font-size: 12px; font-weight: bold; color: #64748b; text-transform: uppercase;">Attached Documents</p>
+                    <ul style="list-style-type: none; padding: 0; margin: 0;">
+                        {% for att in attachments %}
+                            {% set file_url = att.file_url if att.file_url.startswith('http') else cf_prefix + '/' + att.file_url %}
+                            <li style="margin-bottom: 10px;">
+                                📎 <a href="{{ file_url }}" target="_blank" style="color: {{ school.primary_color }}; text-decoration: none; font-weight: bold; margin-left: 5px;">
+                                    {{ att.original_name }}
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+
+        <div style="background-color: #1a202c; padding: 20px; text-align: center; color: #a0aec0; font-size: 11px;">
+            <p style="margin: 0;">&copy; 2026 {{ school.name }} Administration</p>
+            <p style="margin: 5px 0 0 0; opacity: 0.6;">Powered by AtomDev Studios Smart School System</p>
+        </div>
+    </div>
+</body>
+</html>

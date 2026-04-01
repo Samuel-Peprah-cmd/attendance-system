@@ -44,6 +44,17 @@ def register_staff():
             
         #     qr_img = qrcode.make(qr_token)
         #     qr_img.save(qr_path)
+        staff_code = request.form.get('staff_code')
+        email = request.form.get('email')
+
+        # 🚨 THE PRE-CHECK: Look before we leap!
+        if Staff.query.filter_by(staff_code=staff_code).first():
+            flash(f"Error: The Staff Code '{staff_code}' is already registered.", "danger")
+            return render_template('staff/staff_register.html')
+            
+        if Staff.query.filter_by(email=email).first():
+            flash(f"Error: The Email '{email}' is already in use.", "danger")
+            return render_template('staff/staff_register.html')
         
         file = request.files.get('photo')
         photo_url = None
@@ -330,3 +341,52 @@ def edit_staff(staff_id):
             print(f"Error: {e}")
 
     return render_template("staff/edit.html", staff=staff)
+
+@staff_bp.route('/delete/<int:staff_id>', methods=['POST'])
+@login_required
+def delete_staff(staff_id):
+    # Ensure the staff belongs to the current user's school
+    staff = Staff.query.filter_by(id=staff_id, school_id=current_user.school_id).first_or_404()
+    
+    try:
+        # Note: If you want to delete their photo/QR from Cloudflare R2, you would trigger that here!
+        db.session.delete(staff)
+        db.session.commit()
+        flash(f"{staff.full_name} has been permanently deleted.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash("Cannot delete this staff member because they have associated attendance logs.", "danger")
+        
+    return redirect(url_for('staff.list_staff'))
+
+from flask import send_file
+from app.services.staff_id_export_service import generate_staff_id_png
+
+@staff_bp.route('/id-card/<int:staff_id>/download')
+@login_required
+def download_staff_id_card(staff_id):
+    staff = Staff.query.filter_by(id=staff_id, school_id=current_user.school_id).first_or_404()
+
+    today = datetime.utcnow()
+    issued_date = today.strftime("%d %b %Y")
+    expiry_date = (today + timedelta(days=365)).strftime("%d %b %Y")
+    session_text = f"{today.year}/{today.year + 1}"
+
+    card_file = generate_staff_id_png(
+        staff=staff,
+        issued_date=issued_date,
+        expiry_date=expiry_date,
+        session_text=session_text,
+        public_r2_base_url=current_app.config["CF_PUBLIC_URL_PREFIX"],
+    )
+
+    safe_name = (staff.full_name or "staff").replace(" ", "_")
+    filename = f"{safe_name}_Staff_ID_Card.png"
+
+    return send_file(
+        card_file,
+        mimetype="image/png",
+        as_attachment=True,
+        download_name=filename,
+        max_age=0
+    )

@@ -111,7 +111,7 @@ def add_student():
 
             return redirect(url_for("students.list_students"))
 
-        db.session.commit()
+        # db.session.commit()
         flash(f"Security Enrollment Complete for {new_student.full_name}!", "success")
         return redirect(url_for("students.list_students"))
             
@@ -147,6 +147,41 @@ def view_id_card(student_id):
         return redirect(url_for('students.list_students'))
         
     return render_template("students/id_card.html", student=student, session_text=session_text, today=datetime.utcnow(), issued_date=issued_date)
+
+
+from flask import send_file
+from app.services.id_card_export_service import generate_student_id_png
+
+@students_bp.route("/id-card/<int:student_id>/download")
+@login_required
+def download_id_card(student_id):
+    student = Student.query.filter_by(id=student_id, school_id=current_user.school_id).first()
+
+    if not student:
+        flash("Unauthorized Access Attempt Detected.", "danger")
+        return redirect(url_for("students.list_students"))
+
+    now = datetime.now()
+    issued_date = now.strftime("%B %d, %Y")
+    session_text = f"{now.year}-{now.year + 1}"
+
+    card_file = generate_student_id_png(
+        student=student,
+        issued_date=issued_date,
+        session_text=session_text,
+        public_r2_base_url=current_app.config["CF_PUBLIC_URL_PREFIX"],
+    )
+
+    safe_name = (student.full_name or "student").replace(" ", "_")
+    filename = f"{safe_name}_ID_Card.png"
+
+    return send_file(
+        card_file,
+        mimetype="image/png",
+        as_attachment=True,
+        download_name=filename,
+        max_age=0
+    )
 
 # @students_bp.route("/edit/<int:student_id>", methods=["GET", "POST"])
 # @login_required
@@ -231,6 +266,21 @@ def edit_student(student_id):
             
     return render_template("students/edit.html", student=student, classes=classes)
 
+@students_bp.route('/delete/<int:student_id>', methods=['POST'])
+@login_required
+def delete_student(student_id):
+    student = Student.query.filter_by(id=student_id, school_id=current_user.school_id).first_or_404()
+    
+    try:
+        db.session.delete(student)
+        db.session.commit()
+        flash(f"Student {student.full_name} has been permanently deleted.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash("Error: Cannot delete this student (likely due to existing attendance logs).", "danger")
+        
+    return redirect(url_for('students.list_students'))
+
 @students_bp.route("/toggle/<int:student_id>")
 @login_required
 def toggle_student(student_id):
@@ -241,18 +291,6 @@ def toggle_student(student_id):
     flash(f"Student {student.full_name} has been {status}.", "info")
     return redirect(url_for("students.list_students"))
 
-@students_bp.route("/delete/<int:student_id>")
-@login_required
-def delete_student(student_id):
-    student = Student.query.filter_by(id=student_id, school_id=current_user.school_id).first_or_404()
-    
-    # Delete associated photo and QR code files first
-    # (Good for production cleanup)
-    
-    db.session.delete(student)
-    db.session.commit()
-    flash("Student record permanently removed.", "danger")
-    return redirect(url_for("students.list_students"))
 
 @students_bp.route("/parents")
 @login_required

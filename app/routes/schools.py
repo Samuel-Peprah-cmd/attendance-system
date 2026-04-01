@@ -9,6 +9,11 @@ from app.models.user import User
 from app.extensions import db
 from functools import wraps
 from app.models.scanner_device import ScannerDevice
+from app.models.attendance import Attendance
+from app.models.student import Student
+from app.models.staff import Staff
+from app.models.class_room import ClassRoom
+from app.models.scanner_device import ScannerDevice
 
 # ☁️ CLOUDFLARE UPLOADER IMPORTED
 from app.services.storage_helper import upload_file_to_r2
@@ -87,6 +92,92 @@ def create_school():
             flash(f"Error creating school: {str(e)}", "danger")
 
     return render_template("schools/create.html")
+
+@schools_bp.route('/edit/<int:school_id>', methods=['GET', 'POST'])
+@login_required
+def edit_school(school_id):
+    # Security: ONLY the Super Admin (Master Account) can edit a school
+    if current_user.role != 'super_admin':
+        abort(403)
+        
+    school = School.query.get_or_404(school_id)
+    
+    if request.method == 'POST':
+        # 1. BULLETPROOF NAME CHECK: 
+        # Tries to get 'school_name', falls back to 'name' if HTML differs
+        new_name = request.form.get('school_name') or request.form.get('name')
+        
+        if not new_name or new_name.strip() == "":
+            flash("Error: Official School Name cannot be empty.", "danger")
+            return redirect(url_for('schools.edit_school', school_id=school.id))
+            
+        # Update text/color fields
+        school.name = new_name.strip()
+        school.primary_color = request.form.get('primary_color')
+        school.secondary_color = request.form.get('secondary_color')
+        
+        # 2. HANDLE CLOUDFLARE R2 LOGO UPLOAD
+        file = request.files.get('school_logo')
+        if file and file.filename != '':
+            ext = file.filename.rsplit('.', 1)[1].lower()
+            photo_filename = f"schools/logo_{uuid.uuid4().hex}.{ext}"
+            
+            # Read into memory and upload
+            file_bytes = file.read()
+            photo_url = upload_file_to_r2(file_bytes, photo_filename, content_type=file.mimetype)
+            
+            if photo_url:
+                school.logo_path = photo_url
+        
+        # 3. SAVE TO DATABASE
+        try:
+            db.session.commit()
+            flash(f"'{school.name}' identity updated successfully.", "success")
+            return redirect(url_for('schools.manage_schools')) # Adjust if your route is named differently
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Database Error: Could not update school.", "danger")
+            print(f"Error: {e}")
+            
+    return render_template('schools/edit.html', school=school)
+
+@schools_bp.route('/delete/<int:school_id>', methods=['POST'])
+@login_required
+def delete_school(school_id):
+    # Security: ONLY the Super Admin
+    if current_user.role != 'super_admin':
+        abort(403)
+        
+    school = School.query.get_or_404(school_id)
+    
+    try:
+        # 1. Wipe all Attendance Logs for this school
+        Attendance.query.filter_by(school_id=school_id).delete()
+        
+        # 2. Wipe all Students and Staff
+        Student.query.filter_by(school_id=school_id).delete()
+        Staff.query.filter_by(school_id=school_id).delete()
+        
+        ScannerDevice.query.filter_by(school_id=school_id).delete()
+        # 🚨 THE FIX: Uncomment these so they actually get deleted!
+        # 3. Wipe all Classrooms
+        ClassRoom.query.filter_by(school_id=school_id).delete()
+        
+        # 4. Wipe all School Admins and Parents (Except Super Admins)
+        User.query.filter(User.school_id == school_id, User.role != 'super_admin').delete() 
+        
+        # 5. FINALLY, delete the empty school
+        db.session.delete(school)
+        db.session.commit()
+        
+        flash(f"School '{school.name}' and ALL associated data have been permanently wiped.", "success")
+        
+    except Exception as e:
+        db.session.rollback()
+        print(f"Delete Error: {e}")
+        flash("System Error: Could not wipe the school data. Check the terminal.", "danger")
+        
+    return redirect(url_for('schools.manage_schools'))
 
 @schools_bp.route("/reset-key/<int:school_id>")
 @login_required

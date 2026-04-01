@@ -10,6 +10,10 @@
             <button onclick="window.print()" class="bg-brand text-white px-5 py-2 rounded-lg font-bold shadow-md text-xs hover:brightness-95">
                 Print Card
             </button>
+            <a href="{{ url_for('staff.download_staff_id_card', staff_id=staff.id) }}"
+                class="bg-brand text-white px-5 py-2 rounded-lg font-bold shadow-md text-xs hover:brightness-95">
+                    Download PVC Card
+            </a>
             <a href="{{ url_for('staff.list_staff') }}" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-bold text-xs border border-gray-200">
                 Exit
             </a>
@@ -28,8 +32,7 @@
         <!-- Center watermark -->
         {% if staff.school.logo_path %}
         <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-            <img src="{{ staff.school.logo_path }}"
-                 class="w-[180px] h-[180px] object-contain opacity-[0.06]">
+            <img src="{{ staff.school.logo_path if staff.school.logo_path.startswith('http') else config.CF_PUBLIC_URL_PREFIX + '/' + staff.school.logo_path }}" class="w-[180px] h-[180px] object-contain opacity-[0.06]">
         </div>
         {% endif %}
         
@@ -37,8 +40,7 @@
         <div class="relative z-10 bg-brand text-white px-5 py-3 flex items-center justify-between">
             <div class="flex items-center gap-3 min-w-0">
                 {% if staff.school.logo_path %}
-                    <img src="{{ staff.school.logo_path }}"
-                         class="w-10 h-10 rounded-full bg-white p-1 object-contain shadow-sm">
+                    <img src="{{ staff.school.logo_path if staff.school.logo_path.startswith('http') else config.CF_PUBLIC_URL_PREFIX + '/' + staff.school.logo_path }}" class="w-10 h-10 rounded-full bg-white p-1 object-contain shadow-sm">
                 {% endif %}
                 <div class="min-w-0">
                     <h2 class="text-[15px] font-black uppercase leading-none truncate">
@@ -62,8 +64,7 @@
             <div class="flex flex-col items-center justify-start">
                 <div class="w-[105px] h-[125px] border-2 border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
                     {% if staff.photo_path %}
-                        <img src="{{ staff.photo_path }}"
-                             class="w-full h-full object-cover">
+                        <img src="{{ staff.photo_path if staff.photo_path.startswith('http') else config.CF_PUBLIC_URL_PREFIX + '/' + staff.photo_path }}" class="w-full h-full object-cover">
                     {% else %}
                         <div class="w-full h-full bg-gray-100 flex items-center justify-center text-[10px] text-gray-400 font-bold text-center">
                             NO PHOTO
@@ -136,9 +137,9 @@
             <!-- QR -->
             <div class="flex flex-col items-center justify-center border-l border-gray-200 pl-4">
                 <div class="bg-white border-2 border-gray-200 rounded-lg p-2 shadow-sm">
-                    <img src="{{ url_for('static', filename='qr_codes/qr_' + staff.qr_token + '.png') }}"
-                         class="w-[145px] h-[145px] object-contain"
-                         alt="Staff QR Code">
+                    <img src="{{ config.CF_PUBLIC_URL_PREFIX }}/qr_codes/staff_qr_{{ staff.qr_token }}.png"
+                        class="w-[145px] h-[145px] object-contain"
+                        alt="Staff QR Code">
                 </div>
 
                 <p class="text-[10px] font-black text-brand uppercase tracking-wider mt-3 text-center">

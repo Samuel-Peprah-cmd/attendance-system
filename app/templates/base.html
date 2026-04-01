@@ -34,137 +34,170 @@
             border: 1px solid #f3f4f6;
         }
         
-        table { border-collapse: collapse; min-width: 600px; } /* Ensures table doesn't squish too small */
+        table { border-collapse: collapse; min-width: 600px; }
+        
+        /* Toast Animation */
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .toast-enter { animation: slideInRight 0.3s ease-out forwards; }
     </style>
 </head>
-<body class="bg-gray-50 flex h-screen overflow-hidden">
+<body class="bg-gray-50 flex h-screen overflow-hidden font-sans text-gray-900">
 
     {% if current_user.is_authenticated %}
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black/60 z-40 hidden md:hidden transition-opacity duration-300"></div>
+    <div id="sidebar-overlay" class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-40 hidden md:hidden transition-opacity duration-300"></div>
 
-    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-gray-900 text-white flex flex-col shadow-2xl transform -translate-x-full md:translate-x-0 md:static transition-transform duration-300 ease-in-out">
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-[#0f172a] text-gray-300 flex flex-col shadow-2xl transform -translate-x-full md:translate-x-0 md:static transition-transform duration-300 ease-in-out border-r border-gray-800/50">
         
-        <div class="p-6 text-center border-b border-gray-800 bg-gray-950/50 flex-shrink-0">
-            <h1 class="text-xl font-black italic text-brand uppercase tracking-tighter leading-none mb-1 truncate">
+        <div class="p-6 text-center border-b border-gray-800/50 bg-[#0b1120] flex-shrink-0">
+            <h1 class="text-xl font-black text-white uppercase tracking-tighter leading-none mb-1 truncate">
                 {{ current_user.school.name if current_user.school else 'ATOMDEV' }}
             </h1>
-            <p class="text-[9px] font-bold uppercase opacity-50 tracking-widest">Security Suite</p>
+            <p class="text-[9px] font-bold text-brand uppercase tracking-[0.2em]">Security Suite</p>
         </div>
         
-        <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto custom-scrollbar">
+        <nav class="flex-1 p-4 space-y-1 overflow-y-auto custom-scrollbar">
     
-            {# 💡 THE MACRO: This handles the "Active" state automatically #}
+            {# 💡 THE MACRO: Clean, standardized navigation links #}
             {% macro nav_link(endpoint, icon, text, color='') %}
                 <a href="{{ url_for(endpoint) }}" 
-                    class="flex items-center gap-3 p-3 rounded-xl transition-all duration-200 text-sm 
-                    {{ 'bg-gray-800 border-l-4 border-brand text-white shadow-lg' if request.endpoint == endpoint else 'text-gray-400 hover:bg-gray-800/50 hover:text-gray-100' }} {{ color }}">
-                    <span class="text-lg">{{ icon }}</span>
-                    <span class="font-bold tracking-tight">{{ text }}</span>
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-semibold
+                    {{ 'bg-brand/10 text-white shadow-sm' if request.endpoint == endpoint else 'hover:bg-gray-800/50 hover:text-white' }} {{ color }}">
+                    <span class="text-lg opacity-80">{{ icon }}</span>
+                    <span class="tracking-tight">{{ text }}</span>
+                    {% if request.endpoint == endpoint %}
+                        <div class="ml-auto w-1.5 h-1.5 rounded-full bg-brand"></div>
+                    {% endif %}
                 </a>
             {% endmacro %}
 
             {% if current_user.role == 'super_admin' %}
-                <p class="text-[10px] text-gray-500 font-bold uppercase px-3 mb-2 tracking-widest">Master Control</p>
+                <p class="text-[9px] text-gray-500 font-bold uppercase px-3 mt-4 mb-2 tracking-[0.2em]">Master Control</p>
                 {{ nav_link('schools.manage_schools', '🏢', 'Manage Schools') }}
                 {{ nav_link('schools.create_school', '🚀', 'Onboard School') }}
                 {{ nav_link('schools.manage_devices', '📱', 'Master Registry') }}
 
             {% elif current_user.role in ('admin', 'school_admin') %}
-                <p class="text-[10px] text-gray-500 font-bold uppercase px-3 mb-2 tracking-widest">School Management</p>
+                <p class="text-[9px] text-gray-500 font-bold uppercase px-3 mt-2 mb-2 tracking-[0.2em]">Core</p>
                 {{ nav_link('dashboard.index', '🏠', 'Dashboard') }}
-                {{ nav_link('students.list_students', '👥', 'Student Directory') }}
-                {{ nav_link('students.add_student', '➕', 'Enroll Student') }}
                 {{ nav_link('dashboard.manage_classes', '🏫', 'Manage Classes') }}
-                {{ nav_link('students.list_parents', '🛡️', 'Guardians/Parents') }}
                 
-                <p class="text-[10px] text-gray-500 font-bold uppercase px-3 mt-6 mb-2 tracking-widest">Medical</p>
-                {{ nav_link('students.medical_records', '💊', 'View Students Medical Report') }}
-
-                <p class="text-[10px] text-gray-500 font-bold uppercase px-3 mt-6 mb-2 tracking-widest">Staff & Security</p>
-                {{ nav_link('staff.list_staff', '👥', 'Staff Directory') }}
+                <p class="text-[9px] text-gray-500 font-bold uppercase px-3 mt-6 mb-2 tracking-[0.2em]">Directory</p>
+                {{ nav_link('students.list_students', '🎓', 'Student Directory') }}
+                {{ nav_link('students.add_student', '➕', 'Enroll Student') }}
+                {{ nav_link('staff.list_staff', '👔', 'Staff Directory') }}
                 {{ nav_link('staff.register_staff', '➕', 'Add Staff Member') }}
-                {{ nav_link('staff.security_dashboard', '🛡️', 'Live Scan Monitor', 'text-yellow-500' if request.endpoint != 'staff.security_dashboard') }}
-
-                <p class="text-[10px] text-gray-500 font-bold uppercase px-3 mt-6 mb-2 tracking-widest">Security Logs</p>
-                {{ nav_link('attendance.admin_logs', '🕒', 'Daily Attendance') }}
-                {# 🕒 New: Link for the History Reports we just built #}
+                {{ nav_link('students.list_parents', '👨‍👩‍👧‍👦', 'Guardians / Parents') }}
+                
+                <p class="text-[9px] text-gray-500 font-bold uppercase px-3 mt-6 mb-2 tracking-[0.2em]">Operations</p>
+                {{ nav_link('staff.security_dashboard', '🛡️', 'Live Scanner', 'text-yellow-500' if request.endpoint != 'staff.security_dashboard') }}
+                {{ nav_link('attendance.admin_logs', '🕒', 'Daily Logs') }}
                 {{ nav_link('staff.attendance_report', '📊', 'History & Reports') }}
+                {{ nav_link('students.medical_records', '🏥', 'Medical Records') }}
 
-                <p class="text-[10px] text-gray-500 font-bold uppercase px-3 mt-6 mb-2 tracking-widest">System</p>
-                {{ nav_link('dashboard.settings', '🎨', 'Branding & Geofence') }}
+                <p class="text-[9px] text-gray-500 font-bold uppercase px-3 mt-6 mb-2 tracking-[0.2em]">Communications</p>
+                {{ nav_link('communications.compose', '📢', 'Broadcast Hub') }}
+                {{ nav_link('communications.history', '📜', 'Broadcast History') }}
+
+                <p class="text-[9px] text-gray-500 font-bold uppercase px-3 mt-6 mb-2 tracking-[0.2em]">System</p>
+                {{ nav_link('dashboard.settings', '⚙️', 'Branding & Geofence') }}
 
             {% elif current_user.role == 'parent' %}
-                <p class="text-[10px] text-gray-500 font-bold uppercase px-3 mb-2 tracking-widest">Family Portal</p>
+                <p class="text-[9px] text-gray-500 font-bold uppercase px-3 mt-4 mb-2 tracking-[0.2em]">Family Portal</p>
                 {{ nav_link('dashboard.parent_dashboard', '👨‍👩‍👧‍👦', 'My Children') }}
                 {{ nav_link('attendance.parent_logs', '🕒', 'Safety History') }}
             {% endif %}
         </nav>
 
-        <div class="p-4 border-t border-gray-800 flex-shrink-0">
-            <a href="{{ url_for('auth.logout') }}" class="block w-full text-center bg-red-600/90 p-2.5 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-red-700 transition shadow-lg">Logout</a>
+        <div class="p-4 border-t border-gray-800/50 bg-[#0b1120] flex-shrink-0">
+            <a href="{{ url_for('auth.logout') }}" class="flex items-center justify-center gap-2 w-full text-center bg-gray-800 hover:bg-red-500/10 text-gray-400 hover:text-red-500 p-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-200">
+                <span>🚪</span> Logout
+            </a>
         </div>
     </aside>
     {% endif %}
 
-    <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+    <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50/50">
         
-        <header class="h-16 bg-white border-b flex items-center justify-between px-4 md:px-8 shadow-sm flex-shrink-0 z-30">
-            <div class="flex items-center gap-3">
+        <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-8 flex-shrink-0 z-30">
+            <div class="flex items-center gap-4">
                 {% if current_user.is_authenticated %}
-                <button id="mobile-toggle" class="md:hidden p-2 -ml-2 rounded-lg hover:bg-gray-100 transition active:scale-95">
-                    <span class="text-xl">☰</span>
+                <button id="mobile-toggle" class="md:hidden p-2 -ml-2 text-gray-500 rounded-lg hover:bg-gray-100 transition active:scale-95">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
                 {% endif %}
 
                 <div class="flex items-center gap-3">
                     {% if current_user.is_authenticated and current_user.school and current_user.school.logo_path %}
                         <img src="{{ current_user.school.logo_path if current_user.school.logo_path.startswith('http') else url_for('static', filename='uploads/logos/' + current_user.school.logo_path) }}" 
-                            class="h-8 w-auto rounded shadow-sm">
+                             class="h-8 w-auto rounded object-contain">
                     {% endif %}
-                    <span class="font-bold text-gray-800 truncate max-w-[150px] md:max-w-none">
+                    <span class="font-black text-gray-800 tracking-tight hidden sm:block">
                         {{ current_user.school.name if (current_user.is_authenticated and current_user.school) else 'AtomDev Studios' }}
                     </span>
                 </div>
             </div>
 
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-4">
                 {% if current_user.is_authenticated %}
                     <div class="text-right hidden sm:block">
-                        <p class="text-[10px] font-black text-gray-400 leading-none mb-1 uppercase tracking-tighter">
+                        <p class="text-[9px] font-black text-gray-400 leading-none mb-1 uppercase tracking-widest">
                             {{ current_user.role | replace('_', ' ') }}
                         </p>
-                        <p class="text-xs font-bold text-gray-700 truncate max-w-[120px]">{{ current_user.email }}</p>
+                        <p class="text-xs font-bold text-gray-800 truncate max-w-[150px]">{{ current_user.email }}</p>
                     </div>
             
                     <a href="{{ url_for('auth.profile') }}" class="group relative flex-shrink-0">
-                        <div class="h-9 w-9 rounded-xl bg-brand flex items-center justify-center text-white font-black text-base border-2 border-white shadow-sm group-hover:scale-105 transition transform duration-200">
+                        <div class="h-10 w-10 rounded-full bg-brand flex items-center justify-center text-white font-black text-sm border-2 border-white shadow-sm group-hover:shadow-md transition-all">
                             {{ current_user.email[0] | upper }}
                         </div>
-                        <span class="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-green-500 border-2 border-white rounded-full"></span>
+                        <span class="absolute bottom-0 right-0 h-3 w-3 bg-green-500 border-2 border-white rounded-full"></span>
                     </a>
                 {% else %}
-                    <div class="text-[10px] font-black text-brand uppercase tracking-[0.2em]">
-                        Portal Login
+                    <div class="text-[10px] font-black text-brand uppercase tracking-[0.2em] bg-brand/10 px-4 py-2 rounded-full">
+                        Secure Portal
                     </div>
                 {% endif %}
             </div>
         </header>
 
-        <section class="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
+        <section class="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar relative">
+            
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
-                    <div class="max-w-5xl mx-auto">
+                    <div class="fixed top-20 right-4 md:right-8 z-50 flex flex-col gap-2 pointer-events-none">
                         {% for category, message in messages %}
-                            <div class="p-4 mb-6 rounded-2xl shadow-sm text-white bg-{{ 'red' if category == 'danger' else 'green' }}-500 flex justify-between items-center animate-pulse">
-                                <span class="font-bold text-sm">{{ message }}</span>
-                                <button onclick="this.parentElement.remove()" class="text-white/70 hover:text-white text-xl font-bold">&times;</button>
+                            <div class="toast-enter pointer-events-auto flex items-center gap-3 min-w-[300px] max-w-sm p-4 rounded-2xl shadow-xl border-l-4 {{ 'bg-white border-red-500 text-gray-800' if category == 'danger' else 'bg-white border-green-500 text-gray-800' }}">
+                                <div class="flex-shrink-0 text-xl">
+                                    {{ '🚨' if category == 'danger' else '✅' }}
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-bold">{{ message }}</p>
+                                </div>
+                                <button onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-800 transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
                             </div>
                         {% endfor %}
                     </div>
+                    
+                    <script>
+                        setTimeout(() => {
+                            const toasts = document.querySelectorAll('.toast-enter');
+                            toasts.forEach(t => {
+                                t.style.opacity = '0';
+                                t.style.transform = 'translateX(100%)';
+                                t.style.transition = 'all 0.5s ease';
+                                setTimeout(() => t.remove(), 500);
+                            });
+                        }, 5000);
+                    </script>
                 {% endif %}
             {% endwith %}
 
-            <div class="max-w-7xl mx-auto">
+            <div class="max-w-7xl mx-auto pb-12">
                 {% block content %}{% endblock %}
             </div>
         </section>
