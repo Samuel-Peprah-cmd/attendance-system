@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, flash, redirect, url_for
 from config import Config
 from app.extensions import db, migrate, mail, login_manager
 from app.extensions import csrf, limiter, cors
@@ -87,5 +87,29 @@ def create_app():
                 return FeatureGateService.can_use_feature(current_user.school_id, feature_name)
             return False
         return dict(has_feature=has_feature)
+    
+    from flask import request, redirect, url_for, flash
+    from flask_login import current_user
+    from app.models.billing import SchoolSubscription
+
+# Add this inside your app initialization / create_app function:
+    @app.before_request
+    def enforce_paywall():
+        # 1. Only check logged-in users who are School Admins
+        if current_user.is_authenticated and current_user.role in ['admin', 'school_admin']:
+        
+            # 2. Allow them to access Auth (logout), Billing, and Static files (CSS/Images)
+            # If we don't whitelist these, they will get stuck in an infinite redirect loop!
+            allowed_blueprints = ['auth', 'billing', 'finance', 'static']
+        
+            if request.blueprint not in allowed_blueprints:
+            
+                # 3. Check their subscription status
+                sub = SchoolSubscription.query.filter_by(school_id=current_user.school_id).first()
+            
+                if sub and sub.status == 'past_due':
+                    flash("Your billing cycle has ended. Please renew your package to restore system access.", "danger")
+                    # 4. Trap them on the pricing page!
+                    return redirect(url_for('billing.pricing_page'))
 
     return app
