@@ -47,76 +47,91 @@
 <body class="bg-gray-50 flex h-screen overflow-hidden font-sans text-gray-900">
 
     {% if current_user.is_authenticated %}
-    <div id="sidebar-overlay" class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-40 hidden md:hidden transition-opacity duration-300"></div>
+        <div id="sidebar-overlay" class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-40 hidden md:hidden transition-opacity duration-300"></div>
 
-    <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-[#0f172a] text-gray-300 flex flex-col shadow-2xl transform -translate-x-full md:translate-x-0 md:static transition-transform duration-300 ease-in-out border-r border-gray-800/50">
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-64 bg-[#0f172a] text-gray-300 flex flex-col shadow-2xl transform -translate-x-full md:translate-x-0 md:static transition-transform duration-300 ease-in-out border-r border-gray-800/50">
         
-        <div class="p-6 text-center border-b border-gray-800/50 bg-[#0b1120] flex-shrink-0">
-            <h1 class="text-xl font-black text-white uppercase tracking-tighter leading-none mb-1 truncate">
-                {{ current_user.school.name if current_user.school else 'ATOMDEV' }}
-            </h1>
-            <p class="text-[9px] font-bold text-brand uppercase tracking-[0.2em]">Security Suite</p>
-        </div>
+            <div class="p-6 text-center border-b border-gray-800/50 bg-[#0b1120] flex-shrink-0">
+                <h1 class="text-xl font-black text-white uppercase tracking-tighter leading-none mb-1 truncate">
+                    {{ current_user.school.name if current_user.school else 'ATOMDEV' }}
+                </h1>
+                <p class="text-[9px] font-bold text-brand uppercase tracking-[0.2em]">Security Suite</p>
+            </div>
         
-        <nav class="flex-1 p-4 space-y-1 overflow-y-auto custom-scrollbar">
+            <nav class="flex-1 p-4 space-y-1 overflow-y-auto custom-scrollbar">
     
-            {# 💡 THE MACRO: Clean, standardized navigation links #}
-            {% macro nav_link(endpoint, icon, text, color='') %}
-                <a href="{{ url_for(endpoint) }}" 
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-semibold
-                    {{ 'bg-brand/10 text-white shadow-sm' if request.endpoint == endpoint else 'hover:bg-gray-800/50 hover:text-white' }} {{ color }}">
-                    <span class="text-lg opacity-80">{{ icon }}</span>
-                    <span class="tracking-tight">{{ text }}</span>
-                    {% if request.endpoint == endpoint %}
-                        <div class="ml-auto w-1.5 h-1.5 rounded-full bg-brand"></div>
+                {# 💡 THE UPGRADED MACRO: Now handles Padlocks automatically! #}
+                {% macro nav_link(endpoint, icon, text, color='', locked=False) %}
+                    {% if locked %}
+                        <a href="{{ url_for('finance.school_finance_page') }}" 
+                            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-semibold hover:bg-gray-800/30 text-gray-500 opacity-60 cursor-pointer">
+                            <span class="text-lg opacity-50">🔒</span>
+                            <span class="tracking-tight">{{ text }}</span>
+                            <span class="ml-auto text-[9px] text-blue-400 font-bold uppercase tracking-wider">Upgrade</span>
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for(endpoint) }}" 
+                            class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-semibold
+                            {{ 'bg-brand/10 text-white shadow-sm' if request.endpoint == endpoint else 'hover:bg-gray-800/50 hover:text-white' }} {{ color }}">
+                            <span class="text-lg opacity-80">{{ icon }}</span>
+                            <span class="tracking-tight">{{ text }}</span>
+                            {% if request.endpoint == endpoint %}
+                                <div class="ml-auto w-1.5 h-1.5 rounded-full bg-brand"></div>
+                            {% endif %}
+                        </a>
                     {% endif %}
+                {% endmacro %}
+
+                {% if current_user.role == 'super_admin' %}
+                    <p class="text-[9px] text-gray-500 font-bold uppercase px-3 mt-4 mb-2 tracking-[0.2em]">Master Control</p>
+                    {{ nav_link('schools.manage_schools', '🏢', 'Manage Schools') }}
+                    {{ nav_link('finance.superadmin_dashboard', '💰', 'Revenue Control') }}
+                    {{ nav_link('schools.create_school', '🚀', 'Onboard School') }}
+                    {{ nav_link('schools.manage_devices', '📱', 'Master Registry') }}
+
+                {% elif current_user.role in ('admin', 'school_admin') %}
+                    <p class="text-[9px] text-gray-500 font-bold uppercase px-3 mt-2 mb-2 tracking-[0.2em]">Core</p>
+                    {{ nav_link('dashboard.index', '🏠', 'Dashboard') }}
+                    {{ nav_link('dashboard.manage_classes', '🏫', 'Manage Classes') }}
+                
+                    <p class="text-[9px] text-gray-500 font-bold uppercase px-3 mt-6 mb-2 tracking-[0.2em]">Directory</p>
+                    {{ nav_link('students.list_students', '🎓', 'Student Directory') }}
+                    {{ nav_link('students.add_student', '➕', 'Enroll Student') }}
+                
+                    {# LOCKING STAFF ATTENDANCE FOR STARTER PLANS #}
+                    {{ nav_link('staff.list_staff', '👔', 'Staff Directory', locked=not has_feature('staff_attendance')) }}
+                    {{ nav_link('staff.register_staff', '➕', 'Add Staff Member', locked=not has_feature('staff_attendance')) }}
+                
+                    {{ nav_link('students.list_parents', '👨‍👩‍👧‍👦', 'Guardians / Parents') }}
+                
+                    <p class="text-[9px] text-gray-500 font-bold uppercase px-3 mt-6 mb-2 tracking-[0.2em]">Operations</p>
+                    {{ nav_link('staff.security_dashboard', '🛡️', 'Live Scanner', 'text-yellow-500' if request.endpoint != 'staff.security_dashboard') }}
+                    {{ nav_link('attendance.admin_logs', '🕒', 'Daily Logs') }}
+                    {{ nav_link('staff.attendance_report', '📊', 'History & Reports') }}
+                    {{ nav_link('students.medical_records', '🏥', 'Medical Records') }}
+
+                    <p class="text-[9px] text-gray-500 font-bold uppercase px-3 mt-6 mb-2 tracking-[0.2em]">Communications</p>
+                    {# LOCKING BROADCASTS IF THEY DONT HAVE THE FEATURE #}
+                    {{ nav_link('communications.compose', '📢', 'Broadcast Hub', locked=not has_feature('broadcasts')) }}
+                    {{ nav_link('communications.history', '📜', 'Broadcast History', locked=not has_feature('broadcasts')) }}
+
+                    <p class="text-[9px] text-gray-500 font-bold uppercase px-3 mt-6 mb-2 tracking-[0.2em]">System</p>
+                    {{ nav_link('dashboard.settings', '⚙️', 'Branding & Geofence') }}
+                    {{ nav_link('finance.school_finance_page', '💳', 'Billing & Plans', 'text-emerald-500' if request.endpoint != 'finance.school_finance_page') }}
+
+                {% elif current_user.role == 'parent' %}
+                    <p class="text-[9px] text-gray-500 font-bold uppercase px-3 mt-4 mb-2 tracking-[0.2em]">Family Portal</p>
+                    {{ nav_link('dashboard.parent_dashboard', '👨‍👩‍👧‍👦', 'My Children') }}
+                    {{ nav_link('attendance.parent_logs', '🕒', 'Safety History') }}
+                {% endif %}
+            </nav>
+
+            <div class="p-4 border-t border-gray-800/50 bg-[#0b1120] flex-shrink-0">
+                <a href="{{ url_for('auth.logout') }}" class="flex items-center justify-center gap-2 w-full text-center bg-gray-800 hover:bg-red-500/10 text-gray-400 hover:text-red-500 p-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-200">
+                    <span>🚪</span> Logout
                 </a>
-            {% endmacro %}
-
-            {% if current_user.role == 'super_admin' %}
-                <p class="text-[9px] text-gray-500 font-bold uppercase px-3 mt-4 mb-2 tracking-[0.2em]">Master Control</p>
-                {{ nav_link('schools.manage_schools', '🏢', 'Manage Schools') }}
-                {{ nav_link('schools.create_school', '🚀', 'Onboard School') }}
-                {{ nav_link('schools.manage_devices', '📱', 'Master Registry') }}
-
-            {% elif current_user.role in ('admin', 'school_admin') %}
-                <p class="text-[9px] text-gray-500 font-bold uppercase px-3 mt-2 mb-2 tracking-[0.2em]">Core</p>
-                {{ nav_link('dashboard.index', '🏠', 'Dashboard') }}
-                {{ nav_link('dashboard.manage_classes', '🏫', 'Manage Classes') }}
-                
-                <p class="text-[9px] text-gray-500 font-bold uppercase px-3 mt-6 mb-2 tracking-[0.2em]">Directory</p>
-                {{ nav_link('students.list_students', '🎓', 'Student Directory') }}
-                {{ nav_link('students.add_student', '➕', 'Enroll Student') }}
-                {{ nav_link('staff.list_staff', '👔', 'Staff Directory') }}
-                {{ nav_link('staff.register_staff', '➕', 'Add Staff Member') }}
-                {{ nav_link('students.list_parents', '👨‍👩‍👧‍👦', 'Guardians / Parents') }}
-                
-                <p class="text-[9px] text-gray-500 font-bold uppercase px-3 mt-6 mb-2 tracking-[0.2em]">Operations</p>
-                {{ nav_link('staff.security_dashboard', '🛡️', 'Live Scanner', 'text-yellow-500' if request.endpoint != 'staff.security_dashboard') }}
-                {{ nav_link('attendance.admin_logs', '🕒', 'Daily Logs') }}
-                {{ nav_link('staff.attendance_report', '📊', 'History & Reports') }}
-                {{ nav_link('students.medical_records', '🏥', 'Medical Records') }}
-
-                <p class="text-[9px] text-gray-500 font-bold uppercase px-3 mt-6 mb-2 tracking-[0.2em]">Communications</p>
-                {{ nav_link('communications.compose', '📢', 'Broadcast Hub') }}
-                {{ nav_link('communications.history', '📜', 'Broadcast History') }}
-
-                <p class="text-[9px] text-gray-500 font-bold uppercase px-3 mt-6 mb-2 tracking-[0.2em]">System</p>
-                {{ nav_link('dashboard.settings', '⚙️', 'Branding & Geofence') }}
-
-            {% elif current_user.role == 'parent' %}
-                <p class="text-[9px] text-gray-500 font-bold uppercase px-3 mt-4 mb-2 tracking-[0.2em]">Family Portal</p>
-                {{ nav_link('dashboard.parent_dashboard', '👨‍👩‍👧‍👦', 'My Children') }}
-                {{ nav_link('attendance.parent_logs', '🕒', 'Safety History') }}
-            {% endif %}
-        </nav>
-
-        <div class="p-4 border-t border-gray-800/50 bg-[#0b1120] flex-shrink-0">
-            <a href="{{ url_for('auth.logout') }}" class="flex items-center justify-center gap-2 w-full text-center bg-gray-800 hover:bg-red-500/10 text-gray-400 hover:text-red-500 p-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all duration-200">
-                <span>🚪</span> Logout
-            </a>
-        </div>
-    </aside>
+            </div>
+        </aside>
     {% endif %}
 
     <main class="flex-1 flex flex-col min-w-0 overflow-hidden bg-gray-50/50">

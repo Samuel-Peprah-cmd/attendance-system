@@ -1,0 +1,128 @@
+{% extends "admin_base.html" %} 
+
+{% block content %}
+<div class="container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1>Master Finance Dashboard</h1>
+        <p style="color: #666;">Real-time revenue, pricing, & promo controls</p>
+    </div>
+
+    <div style="display: flex; gap: 20px; margin-bottom: 40px;">
+        <div style="flex: 1; background: #f8f9fa; padding: 20px; border-left: 4px solid #007bff; border-radius: 5px;">
+            <h4 style="margin: 0; color: #666;">Monthly Recurring Revenue (MRR)</h4>
+            <h2 style="margin: 10px 0 0 0;">GHS {{ "%.2f"|format(mrr) }}</h2>
+        </div>
+        <div style="flex: 1; background: #f8f9fa; padding: 20px; border-left: 4px solid #28a745; border-radius: 5px;">
+            <h4 style="margin: 0; color: #666;">Total Collected Revenue</h4>
+            <h2 style="margin: 10px 0 0 0;">GHS {{ "%.2f"|format(total_revenue) }}</h2>
+        </div>
+        <div style="flex: 1; background: #f8f9fa; padding: 20px; border-left: 4px solid #17a2b8; border-radius: 5px;">
+            <h4 style="margin: 0; color: #666;">Paying Schools</h4>
+            <h2 style="margin: 10px 0 0 0;">{{ paying_schools }} <small style="font-size: 14px; color: #999;">/ {{ total_schools }} total</small></h2>
+        </div>
+    </div>
+
+    <hr style="margin: 40px 0; border: 0; border-top: 1px solid #ddd;">
+
+    <div style="margin-bottom: 40px;">
+        <h3>Live Pricing Controls</h3>
+        <p style="color: #666; margin-bottom: 20px;">Changes here instantly update the checkout page for all new schools.</p>
+        
+        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+            {% for plan in plans %}
+            <div style="flex: 1; min-width: 250px; background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 5px;">
+                <h4 style="margin-top: 0; color: #333;">{{ plan.name }} Package</h4>
+                
+                <form action="{{ url_for('superadmin_finance.update_plan_pricing', plan_id=plan.id) }}" method="POST">
+                    <div style="margin-bottom: 10px;">
+                        <label style="font-size: 12px; color: #666;">Monthly Price (GHS)</label>
+                        <input type="number" step="0.01" name="price_monthly" value="{{ plan.price_monthly }}" 
+                               style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label style="font-size: 12px; color: #666;">Annual Price (GHS)</label>
+                        <input type="number" step="0.01" name="price_annual" value="{{ plan.price_annual }}" 
+                               style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <button type="submit" style="width: 100%; padding: 8px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        Update {{ plan.name }}
+                    </button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div style="display: flex; gap: 30px;">
+        
+        <div style="flex: 1; background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 5px;">
+            <h3>Generate Promo Code</h3>
+            <form action="{{ url_for('superadmin_finance.create_coupon') }}" method="POST">
+                <div style="margin-bottom: 10px;">
+                    <label style="font-size: 12px; color: #666;">Coupon Code (e.g., LAUNCH50)</label>
+                    <input type="text" name="code" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; text-transform: uppercase;">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label style="font-size: 12px; color: #666;">Discount Percentage (%)</label>
+                    <input type="number" step="1" max="100" name="discount_percentage" required placeholder="e.g. 50" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="font-size: 12px; color: #666;">Usage Limit (-1 for unlimited)</label>
+                    <input type="number" name="usage_limit" value="-1" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                </div>
+                <button type="submit" style="width: 100%; padding: 10px; background: #6f42c1; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    Create Promo Code
+                </button>
+            </form>
+
+            <h4 style="margin-top: 30px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Active Promos</h4>
+            <ul style="list-style: none; padding: 0; font-size: 14px;">
+                {% for coupon in coupons %}
+                <li style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f4f4f4;">
+                    <strong>{{ coupon.code }}</strong> 
+                    <span style="color: #28a745;">{{ coupon.discount_percentage }}% OFF</span>
+                    <span style="color: #666;">Used: {{ coupon.times_used }}/{{ coupon.usage_limit if coupon.usage_limit != -1 else '∞' }}</span>
+                </li>
+                {% else %}
+                <li style="color: #888;">No active promo codes.</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div style="flex: 2; background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 5px;">
+            <h3>Recent Transactions</h3>
+            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #ddd; background: #f4f4f4;">
+                        <th style="padding: 10px;">Date</th>
+                        <th style="padding: 10px;">School ID</th>
+                        <th style="padding: 10px;">Amount</th>
+                        <th style="padding: 10px;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for txn in recent_transactions %}
+                    <tr style="border-bottom: 1px solid #eee;">
+                        <td style="padding: 10px;">{{ txn.paid_at.strftime('%Y-%m-%d %H:%M') if txn.paid_at else 'N/A' }}</td>
+                        <td style="padding: 10px;">School #{{ txn.school_id }}</td>
+                        <td style="padding: 10px;">GHS {{ "%.2f"|format(txn.amount) }}</td>
+                        <td style="padding: 10px;">
+                            {% if txn.status == 'success' %}
+                                <span style="color: green;">✔ Success</span>
+                            {% else %}
+                                <span style="color: red;">✘ {{ txn.status }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" style="padding: 20px; text-align: center; color: #888;">No recent transactions found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

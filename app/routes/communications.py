@@ -7,6 +7,8 @@ from app.models.broadcast import Broadcast, BroadcastAttachment, BroadcastRecipi
 from app.models.student import Student
 from app.models.staff import Staff
 from app.services.storage_helper import upload_file_to_r2
+from app.utils.decorators import requires_feature
+from app.services.feature_gate_service import FeatureGateService
 
 communications_bp = Blueprint("communications", __name__, url_prefix="/communications")
 
@@ -17,6 +19,8 @@ def compose():
 
 @communications_bp.route('/broadcast/send', methods=['POST'])
 @login_required
+@requires_feature('braodcast')
+@requires_feature('broadcast_center')
 def send_broadcast():
     school_id = current_user.school_id
     
@@ -25,6 +29,15 @@ def send_broadcast():
     message_html = request.form.get('message_html')
     audience = request.form.get('audience')
     channels = request.form.getlist('channels') # returns ['email', 'whatsapp'] etc.
+    
+    # 🚨 PRODUCTION LOCK: Strip channels they haven't paid for
+    if 'whatsapp' in channels and not FeatureGateService.can_use_feature(school_id, 'whatsapp'):
+        channels.remove('whatsapp')
+        flash("WhatsApp was skipped. Upgrade to Premium for WhatsApp broadcasts.", "warning")
+        
+    if 'sms' in channels and not FeatureGateService.can_use_feature(school_id, 'sms'):
+        channels.remove('sms')
+        flash("SMS was skipped. Upgrade to Growth/Premium for SMS broadcasts.", "warning")
 
     # 2. Create the Broadcast Record
     broadcast = Broadcast(

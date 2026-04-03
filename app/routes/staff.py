@@ -11,6 +11,7 @@ from app.models.staff import Staff
 from app.models.attendance import Attendance
 from math import radians, cos, sin, asin, sqrt
 from app.services.storage_helper import upload_file_to_r2
+from app.utils.decorators import requires_feature
 
 staff_bp = Blueprint("staff", __name__, url_prefix="/staff")
 
@@ -21,29 +22,9 @@ def allowed_file(filename):
 
 @staff_bp.route('/register', methods=['GET', 'POST'])
 @login_required
+@requires_feature('staff_attendance')
 def register_staff():
     if request.method == 'POST':
-        # file = request.files.get('photo')
-        # photo_filename = "default_avatar.png"
-
-        # if file and allowed_file(file.filename):
-        #     ext = file.filename.rsplit('.', 1)[1].lower()
-        #     photo_filename = f"{uuid.uuid4().hex}.{ext}"
-        #     upload_path = os.path.join(current_app.root_path, 'static', 'uploads', 'staff', photo_filename)
-        #     os.makedirs(os.path.dirname(upload_path), exist_ok=True)
-        #     file.save(upload_path)
-        
-        # try:
-        #     # Generate Unique Security Token
-        #     qr_token = str(uuid.uuid4().hex[:12]).upper()
-            
-        #     # 🚩 GENERATE PHYSICAL QR FILE FOR ID CARD
-        #     qr_dir = os.path.join(current_app.root_path, 'static', 'qr_codes')
-        #     os.makedirs(qr_dir, exist_ok=True)
-        #     qr_path = os.path.join(qr_dir, f"qr_{qr_token}.png")
-            
-        #     qr_img = qrcode.make(qr_token)
-        #     qr_img.save(qr_path)
         staff_code = request.form.get('staff_code')
         email = request.form.get('email')
 
@@ -161,51 +142,6 @@ def security_data_api():
         'time': log.timestamp.strftime('%I:%M %p'),
         'place': log.place_name or "Campus Node"
     } for log in logs])
-
-# @staff_bp.route('/reports')
-# @login_required
-# def attendance_report():
-#     school_id = current_user.school_id
-    
-#     # 1. Date Filters
-#     start_date_str = request.args.get('start_date')
-#     end_date_str = request.args.get('end_date')
-    
-#     if start_date_str:
-#         start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
-#     else:
-#         start_date = datetime.utcnow() - timedelta(days=30)
-        
-#     if end_date_str:
-#         end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
-#     else:
-#         end_date = datetime.utcnow()
-
-#     # 2. 🚩 FIXED: Query Attendance for logs, filtering by participant_type
-#     logs = Attendance.query.filter(
-#         Attendance.school_id == school_id,
-#         Attendance.participant_type == 'staff',
-#         Attendance.timestamp >= start_date,
-#         Attendance.timestamp <= end_date + timedelta(days=1)
-#     ).order_by(Attendance.timestamp.desc()).all()
-
-#     # 3. Analytics Logic
-#     late_threshold = time(8, 0) # 8:00 AM
-#     total_scans = len(logs)
-    
-#     # Using safety checks for timestamps
-#     late_count = len([l for l in logs if l.status == 'IN' and l.timestamp and l.timestamp.time() > late_threshold])
-#     violation_count = len([l for l in logs if not l.is_within_boundary])
-
-#     return render_template(
-#         'staff/reports.html',
-#         logs=logs,
-#         start_date=start_date.strftime('%Y-%m-%d'),
-#         end_date=end_date.strftime('%Y-%m-%d'),
-#         total_scans=total_scans,
-#         late_count=late_count,
-#         violation_count=violation_count
-#     )
 
 def haversine(lon1, lat1, lon2, lat2):
     """Calculate the great circle distance between two points on the earth."""

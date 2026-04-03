@@ -13,6 +13,7 @@ from app.extensions import db
 from app.services.notification_service import  send_parent_welcome
 from collections import defaultdict
 from app.services.storage_helper import upload_file_to_r2
+from app.utils.decorators import requires_limit
 
 students_bp = Blueprint("students", __name__)
 
@@ -30,6 +31,7 @@ def list_students():
 
 @students_bp.route("/add", methods=["GET", "POST"])
 @login_required
+@requires_limit('student', Student)
 def add_student():
     available_classes = ClassRoom.query.filter_by(school_id=current_user.school_id).all()
     
@@ -44,15 +46,6 @@ def add_student():
         # 2. Handle Photo & DOB
         dob_str = request.form.get('date_of_birth')
         dob = datetime.strptime(dob_str, '%Y-%m-%d').date() if dob_str else None
-        
-        # file = request.files.get('student_photo')
-        # photo_filename = f"{uuid.uuid4().hex}.{file.filename.rsplit('.', 1)[1].lower()}" if file else None
-        # if file:
-        #     file.save(os.path.join(current_app.root_path, 'static/uploads/students', photo_filename))
-
-        # # 3. Create Student
-        # unique_token = str(uuid.uuid4())
-        # generate_student_qr(unique_token)
         
         file = request.files.get('student_photo')
         photo_url = None
@@ -117,16 +110,6 @@ def add_student():
             
     return render_template("students/create.html", classes=available_classes)
 
-# # NEW ROUTE: View the Printable ID Card
-# @students_bp.route("/id-card/<int:student_id>")
-# @login_required
-# def view_id_card(student_id):
-#     student = Student.query.get_or_404(student_id)
-#     # Security check: Ensure this admin belongs to the student's school
-#     if student.school_id != current_user.school_id:
-#         return "Access Denied", 403
-        
-#     return render_template("students/id_card.html", student=student)
 
 @students_bp.route("/id-card/<int:student_id>")
 @login_required
@@ -182,39 +165,6 @@ def download_id_card(student_id):
         download_name=filename,
         max_age=0
     )
-
-# @students_bp.route("/edit/<int:student_id>", methods=["GET", "POST"])
-# @login_required
-# def edit_student(student_id):
-#     student = Student.query.filter_by(id=student_id, school_id=current_user.school_id).first_or_404()
-#     classes = ClassRoom.query.filter_by(school_id=current_user.school_id).all()
-
-#     if request.method == "POST":
-#         dob_str = request.form.get("date_of_birth")
-#         if dob_str:
-#             student.date_of_birth = datetime.strptime(dob_str, '%Y-%m-%d').date()
-
-#         # Pulling data from the form
-#         student.full_name = request.form.get("full_name")
-#         student.student_code = request.form.get("student_code")
-#         student.class_room_id = request.form.get("class_room_id")
-#         student.gender = request.form.get("gender")
-#         student.guardian_one_name = request.form.get("guardian_one_name")
-#         student.guardian_one_relation = request.form.get("guardian_one_relation")
-#         student.guardian_one_phone = request.form.get("guardian_one_phone")
-#         student.guardian_one_email = request.form.get("guardian_one_email")
-#         student.blood_group = request.form.get("blood_group")
-#         student.medical_notes = request.form.get("medical_notes")
-
-#         try:
-#             db.session.commit()
-#             flash("Student profile updated successfully.", "success")
-#             return redirect(url_for("students.list_students"))
-#         except Exception as e:
-#             db.session.rollback()
-#             flash("Database Error: Could not update profile.", "danger")
-            
-#     return render_template("students/edit.html", student=student, classes=classes)
 
 @students_bp.route("/edit/<int:student_id>", methods=["GET", "POST"])
 @login_required

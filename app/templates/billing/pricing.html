@@ -1,0 +1,82 @@
+{% extends "base.html" %} {% block content %}
+<div class="container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
+    <div style="text-align: center; margin-bottom: 40px;">
+        <h1>Choose Your ATOM Gate Package</h1>
+        <p>Unlock premium features and scale your school's security.</p>
+    </div>
+
+    <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+        {% for plan in plans %}
+        <div style="border: 1px solid #ddd; border-radius: 8px; padding: 20px; width: 300px; text-align: center;">
+            
+            {% if current_sub and current_sub.plan_id == plan.id %}
+                <span style="background: #28a745; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px;">Active Plan</span>
+            {% endif %}
+
+            <h2 style="margin-top: 15px;">{{ plan.name }}</h2>
+            <h3 style="color: #007bff;">GHS {{ plan.price_monthly }}<small>/mo</small></h3>
+            <p style="color: #666; font-size: 14px;">or GHS {{ plan.price_annual }}/year</p>
+            
+            <hr style="margin: 20px 0;">
+            
+            <ul style="list-style: none; padding: 0; text-align: left; font-size: 14px; line-height: 2;">
+                <li>✅ <strong>{{ plan.student_limit if plan.student_limit != -1 else 'Unlimited' }}</strong> Students</li>
+                <li>✅ <strong>{{ plan.admin_limit if plan.admin_limit != -1 else 'Unlimited' }}</strong> Admins</li>
+                <li>✅ <strong>{{ plan.scanner_limit if plan.scanner_limit != -1 else 'Unlimited' }}</strong> Scanner Devices</li>
+                
+                {% if plan.sms_enabled %}<li>✅ SMS Notifications</li>{% else %}<li style="color:#aaa;">❌ SMS Notifications</li>{% endif %}
+                {% if plan.whatsapp_enabled %}<li>✅ WhatsApp Alerts</li>{% else %}<li style="color:#aaa;">❌ WhatsApp Alerts</li>{% endif %}
+                {% if plan.gps_enabled %}<li>✅ GPS Intelligence</li>{% else %}<li style="color:#aaa;">❌ GPS Intelligence</li>{% endif %}
+            </ul>
+
+            <div style="margin-top: 30px;">
+                {% if current_sub and current_sub.plan_id == plan.id %}
+                    <button disabled style="width: 100%; padding: 10px; background: #ccc; border: none; border-radius: 5px;">Current Plan</button>
+                {% else %}
+                    <button onclick="startCheckout({{ plan.id }}, 'monthly')" 
+                            style="width: 100%; padding: 10px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 10px;">
+                        Upgrade Monthly
+                    </button>
+                    <button onclick="startCheckout({{ plan.id }}, 'annual')" 
+                            style="width: 100%; padding: 10px; background: #f8f9fa; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer;">
+                        Upgrade Annually
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+function startCheckout(planId, billingCycle) {
+    // Alert the user that we are redirecting them to Paystack
+    alert("Taking you to Paystack secure checkout...");
+
+    // Send the chosen plan to our backend 'initialize' route
+    fetch('{{ url_for("billing.initialize_checkout") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            plan_id: planId,
+            billing_cycle: billingCycle
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.success && data.checkout_url) {
+            // Paystack generated the link securely, redirect the user!
+            window.location.href = data.checkout_url;
+        } else {
+            alert("Error connecting to payment gateway: " + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert("A network error occurred. Please try again.");
+    });
+}
+</script>
+{% endblock %}

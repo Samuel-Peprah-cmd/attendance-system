@@ -43,7 +43,9 @@ def create_app():
     from app.routes.attendance import attendance_bp
     from app.routes.staff import staff_bp
     from app.routes.communications import communications_bp
-    
+    from app.routes.billing import billing_bp
+    from app.routes.superadmin_finance import superadmin_finance_bp
+    from app.routes.school_finance import finance_bp
     
     if not app.debug:
         from flask_talisman import Talisman
@@ -58,6 +60,10 @@ def create_app():
     app.register_blueprint(attendance_bp, url_prefix='/attendance')
     app.register_blueprint(staff_bp, url_prefix='/staff')
     app.register_blueprint(communications_bp, url_prefix='/communications')
+    app.register_blueprint(billing_bp)
+    app.register_blueprint(superadmin_finance_bp)
+    app.register_blueprint(finance_bp)
+    
     
 
     csrf.exempt(scanner_api_bp)
@@ -69,5 +75,17 @@ def create_app():
         response.headers.add("Access-Control-Allow-Headers", "Content-Type,X-Device-Key,ngrok-skip-browser-warning")
         response.headers.add("Access-Control-Allow-Methods", "GET,POST,OPTIONS")
         return response
+    
+    from app.services.feature_gate_service import FeatureGateService
+    from flask_login import current_user
+
+    # This makes the 'has_feature' function available in EVERY HTML file automatically
+    @app.context_processor
+    def inject_feature_checker():
+        def has_feature(feature_name):
+            if current_user.is_authenticated and hasattr(current_user, 'school_id'):
+                return FeatureGateService.can_use_feature(current_user.school_id, feature_name)
+            return False
+        return dict(has_feature=has_feature)
 
     return app
