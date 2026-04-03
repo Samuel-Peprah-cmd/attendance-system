@@ -85,7 +85,7 @@
                 {% if current_user.role == 'super_admin' %}
                     <p class="text-[9px] text-gray-500 font-bold uppercase px-3 mt-4 mb-2 tracking-[0.2em]">Master Control</p>
                     {{ nav_link('schools.manage_schools', '🏢', 'Manage Schools') }}
-                    {{ nav_link('finance.superadmin_dashboard', '💰', 'Revenue Control') }}
+                    {{ nav_link('superadmin_finance.finance_dashboard', '💰', 'Revenue Control') }}
                     {{ nav_link('schools.create_school', '🚀', 'Onboard School') }}
                     {{ nav_link('schools.manage_devices', '📱', 'Master Registry') }}
 
