@@ -14,7 +14,10 @@ class User(UserMixin, db.Model):
     school_id = db.Column(db.Integer, db.ForeignKey('schools.id'), nullable=True) 
     email = db.Column(db.String(150), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
-    role = db.Column(db.String(20), default="school_admin") # 'super_admin' or 'school_admin'
+    role = db.Column(db.String(20), default="school_admin")
+    webauthn_id = db.Column(db.String(255), nullable=True)
+    webauthn_public_key = db.Column(db.Text, nullable=True)
+    webauthn_sign_count = db.Column(db.Integer, default=0)
 
     def is_super_admin(self):
         return self.role == 'super_admin'

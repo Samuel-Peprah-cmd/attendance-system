@@ -78,6 +78,17 @@
                 <p class="text-[9px] text-gray-400 mt-2 font-bold uppercase">Current Lock: <span id="coords-display">{{ school.latitude }}, {{ school.longitude }}</span></p>
             </div>
         </div>
+        <div style="margin-top: 20px; padding: 20px; background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <h3>🔐 ATOM Gate Secure Terminal</h3>
+            <p>Register this device's fingerprint or Face ID to quickly unlock the security terminal.</p>
+    
+            <input type="hidden" id="csrf_token" value="{{ csrf_token() }}">
+    
+            <button type="button" id="btn-register-biometric" style="background-color: #2563eb; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
+                Register Fingerprint / Face ID
+            </button>
+            <p id="biometric-status" style="margin-top: 10px; font-weight: bold; color: #16a34a;"></p>
+        </div>
     </div>
 </div>
 
@@ -154,5 +165,61 @@
         document.getElementById('lng_input').value = lngStr;
         document.getElementById('coords-display').innerText = latStr + ", " + lngStr;
     }
+</script>
+
+<script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
+
+<script>
+    const { startRegistration } = SimpleWebAuthnBrowser;
+
+    document.getElementById('btn-register-biometric').addEventListener('click', async () => {
+        const statusText = document.getElementById('biometric-status');
+        const csrfToken = document.getElementById('csrf_token').value; // Grab the VIP pass!
+        
+        statusText.innerText = "Requesting secure challenge...";
+        statusText.style.color = "#2563eb";
+
+        try {
+            // Step 1: Send request WITH the CSRF token
+            const resp = await fetch('/api/biometric/register-options', { 
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken // Show the VIP pass to Flask
+                }
+            });
+            
+            if (!resp.ok) throw new Error("Server rejected the request. Status: " + resp.status);
+            const options = await resp.json();
+
+            // Step 2: WAKE UP THE DEVICE'S FINGERPRINT SCANNER!
+            statusText.innerText = "Please scan your fingerprint or face...";
+            const attResp = await startRegistration(options);
+
+            // Step 3: Send the signature back WITH the CSRF token
+            statusText.innerText = "Verifying signature...";
+            const verificationResp = await fetch('/api/biometric/register-verify', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken // Show the VIP pass again
+                },
+                body: JSON.stringify(attResp),
+            });
+
+            const verificationJSON = await verificationResp.json();
+
+            if (verificationJSON.success) {
+                statusText.innerText = "✅ Device successfully registered! You can now use it to unlock the terminal.";
+                statusText.style.color = "#16a34a";
+            } else {
+                statusText.innerText = "❌ Verification failed: " + verificationJSON.message;
+                statusText.style.color = "#dc2626";
+            }
+        } catch (error) {
+            console.error(error);
+            statusText.innerText = "❌ Error: Could not access biometric hardware.";
+            statusText.style.color = "#dc2626";
+        }
+    });
 </script>
 {% endblock %}

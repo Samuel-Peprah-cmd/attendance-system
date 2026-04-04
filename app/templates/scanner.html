@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ATOMDEV | Security Terminal</title>
+    <title>ATOM Gate | Security Terminal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -28,6 +28,20 @@
         #reader video { object-fit: cover !important; border-radius: 2.5rem; }
     </style>
 </head>
+<div id="biometric-lock-screen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #0f172a; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white;">
+    <h1 style="font-size: 2.5rem; margin-bottom: 10px;">🔒 Terminal Locked</h1>
+    <p style="color: #94a3b8; margin-bottom: 30px;">Authorized Guards Only</p>
+    
+    <input type="hidden" id="csrf_token_auth" value="{{ csrf_token() }}">
+    
+    <button id="btn-unlock-terminal" style="background-color: #3b82f6; color: white; border: none; padding: 15px 30px; font-size: 1.2rem; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
+        👆 Tap to Unlock
+    </button>
+    <p id="unlock-status" style="margin-top: 15px; color: #ef4444; font-weight: bold;"></p>
+</div>
+<div id="secure-scanner-content" style="display: none;">
+    </div>
+
 <body class="bg-[#0a0a0c] text-white antialiased min-h-screen flex flex-col">
 
     <!-- <div id="api-config" data-url="http://127.0.0.1:5000"></div> -->
@@ -165,6 +179,79 @@
                 // window.location.reload();
             }
         }
+    </script>
+    <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
+
+    <script>
+        const { startAuthentication } = SimpleWebAuthnBrowser;
+
+        document.getElementById('btn-unlock-terminal').addEventListener('click', async () => {
+            const statusText = document.getElementById('unlock-status');
+            const csrfToken = document.getElementById('csrf_token_auth').value;
+        
+            statusText.innerText = "Requesting secure challenge...";
+        
+            try {
+                // 1. Get the challenge
+                const resp = await fetch('/api/biometric/authenticate-options', {
+                    method: 'POST',
+                    headers: { 
+                        'X-CSRFToken': csrfToken,
+                        'ngrok-skip-browser-warning': 'true'
+                    }
+                });
+            
+                // 🚨 BULLETPROOF FIX: Read the raw text first!
+                const rawText = await resp.text();
+            
+                // If the server sent back an HTML Webpage (starts with '<'), we are logged out!
+                if (rawText.trim().startsWith('<')) {
+                    throw new Error("You are logged out! Please refresh the page and log in.");
+                }
+            
+                // Now it is safe to convert to JSON
+                const options = JSON.parse(rawText);
+            
+                if (!resp.ok) {
+                    throw new Error(options.message || "Server rejected request.");
+                }
+
+                // 2. TRIGGER THE FINGERPRINT SCANNER!
+                statusText.innerText = "Please scan your fingerprint or face...";
+                const authResp = await startAuthentication(options);
+
+                // 3. Verify the signature
+                statusText.innerText = "Verifying signature...";
+                const verifyResp = await fetch('/api/biometric/authenticate-verify', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                        'ngrok-skip-browser-warning': 'true'
+                    },
+                    body: JSON.stringify(authResp),
+                });
+
+                const verifyText = await verifyResp.text();
+                if (verifyText.trim().startsWith('<')) {
+                    throw new Error("Session expired during verification. Please log in.");
+                }
+            
+                const verifyJSON = JSON.parse(verifyText);
+
+                if (verifyJSON.success) {
+                    // 🟢 UNLOCK THE VAULT!
+                    document.getElementById('biometric-lock-screen').style.display = 'none';
+                    document.getElementById('secure-scanner-content').style.display = 'block';
+                } else {
+                    statusText.innerText = "❌ Fingerprint did not match.";
+                }
+            
+            } catch (error) {
+                console.error(error);
+                statusText.innerText = "❌ " + error.message;
+            }
+        });
     </script>
 </body>
 </html>

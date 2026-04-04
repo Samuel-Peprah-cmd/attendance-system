@@ -47,7 +47,8 @@ def create_app():
     from app.routes.superadmin_finance import superadmin_finance_bp
     from app.routes.school_finance import finance_bp
     from app.routes.payment_webhooks import webhook_bp
-    
+    from app.routes.biometric import biometric_bp
+
     if not app.debug:
         from flask_talisman import Talisman
         Talisman(app, content_security_policy=None)
@@ -61,6 +62,7 @@ def create_app():
     app.register_blueprint(attendance_bp, url_prefix='/attendance')
     app.register_blueprint(staff_bp, url_prefix='/staff')
     app.register_blueprint(communications_bp, url_prefix='/communications')
+    app.register_blueprint(biometric_bp, url_prefix="/api/biometric")
     app.register_blueprint(billing_bp)
     app.register_blueprint(superadmin_finance_bp)
     app.register_blueprint(finance_bp)
