@@ -1,4 +1,5 @@
 import uuid
+import traceback
 from flask import Blueprint, flash, render_template, request, jsonify, redirect, url_for
 from flask_login import login_required, current_user
 from app.extensions import db
@@ -14,11 +15,19 @@ billing_bp = Blueprint('billing', __name__)
 @billing_bp.route('/pricing', methods=['GET'])
 @login_required
 def pricing_page():
-    """Displays the Starter, Growth, Premium, Enterprise plans"""
-    plans = Plan.query.filter_by(is_active=True).all()
-    current_sub = SchoolSubscription.query.filter_by(school_id=current_user.school_id).first()
-    
-    return render_template('billing/pricing.html', plans=plans, current_sub=current_sub)
+    try:
+        """Displays the Starter, Growth, Premium, Enterprise plans"""
+        # Suspect 1: Does the Plan table actually have an 'is_active' column?
+        plans = Plan.query.filter_by(is_active=True).all()
+        
+        current_sub = SchoolSubscription.query.filter_by(school_id=current_user.school_id).first()
+        
+        # Suspect 2: Is the HTML template crashing because current_sub is None?
+        return render_template('billing/pricing.html', plans=plans, current_sub=current_sub)
+        
+    except Exception as e:
+        # 🚨 This will print the EXACT crash reason directly onto your screen!
+        return f"<h1>Pricing Page Crash:</h1><pre>{traceback.format_exc()}</pre>", 500
 
 @billing_bp.route('/promo/validate', methods=['POST'])
 @login_required
