@@ -9,6 +9,7 @@ from app.models.billing import SchoolSubscription
 from app.services.paystack_service import PaystackService
 from app.models.coupon import Coupon
 from datetime import datetime, timedelta
+import json
 
 billing_bp = Blueprint('billing', __name__)
 
@@ -120,51 +121,120 @@ def initialize_checkout():
     
     return jsonify({"success": False, "message": "Gateway connection failed."}), 500
 
+# @billing_bp.route('/checkout/callback', methods=['GET'])
+# @login_required
+# def checkout_callback():
+#     reference = request.args.get('reference')
+#     if not reference:
+#         return redirect(url_for('billing.pricing_page'))
+
+#     paystack_data = PaystackService.verify_transaction(reference)
+    
+#     if paystack_data and paystack_data.get('status') == 'success':
+#         # Paystack verification puts the ID inside the 'data' key
+#         actual_txn_info = paystack_data.get('data', paystack_data)
+        
+#         metadata = actual_txn_info.get('metadata', {})
+#         plan_id = metadata.get('plan_id')
+#         billing_cycle = metadata.get('billing_cycle', 'monthly')
+        
+#         # ALWAYS Upgrade Subscription
+#         sub = SchoolSubscription.query.filter_by(school_id=current_user.school_id).first()
+#         if sub and plan_id:
+#             sub.plan_id = plan_id
+#             sub.status = 'active'
+#             sub.billing_cycle = billing_cycle
+#             sub.start_date = datetime.utcnow()
+#             days = 365 if billing_cycle == 'annual' else 30
+#             sub.end_date = sub.start_date + timedelta(days=days)
+
+#         # Handle Transaction Ledger
+#         existing_txn = PaymentTransaction.query.filter_by(provider_reference=reference).first()
+#         if not existing_txn:
+#             new_txn = PaymentTransaction(
+#                 school_id=current_user.school_id,
+#                 subscription_id=sub.id if sub else None,
+#                 amount=actual_txn_info.get('amount') / 100, 
+#                 provider_reference=reference,
+#                 status='success',
+#                 paid_at=datetime.utcnow(),
+#                 metadata_json=actual_txn_info # 🚨 SAVES THE NESTED DATA (Fixes Receipt)
+#             )
+#             db.session.add(new_txn)
+#         else:
+#             # Update existing record with the full data if it was missing
+#             existing_txn.metadata_json = actual_txn_info
+#             existing_txn.status = 'success'
+        
+#         db.session.commit()
+
+#     return render_template('billing/checkout_success.html', reference=reference)
+
 @billing_bp.route('/checkout/callback', methods=['GET'])
 @login_required
 def checkout_callback():
-    reference = request.args.get('reference')
-    if not reference:
-        return redirect(url_for('billing.pricing_page'))
+    try:
+        reference = request.args.get('reference')
+        if not reference:
+            return redirect(url_for('billing.pricing_page'))
 
-    paystack_data = PaystackService.verify_transaction(reference)
-    
-    if paystack_data and paystack_data.get('status') == 'success':
-        # Paystack verification puts the ID inside the 'data' key
-        actual_txn_info = paystack_data.get('data', paystack_data)
+        paystack_data = PaystackService.verify_transaction(reference)
         
-        metadata = actual_txn_info.get('metadata', {})
-        plan_id = metadata.get('plan_id')
-        billing_cycle = metadata.get('billing_cycle', 'monthly')
-        
-        # ALWAYS Upgrade Subscription
-        sub = SchoolSubscription.query.filter_by(school_id=current_user.school_id).first()
-        if sub and plan_id:
-            sub.plan_id = plan_id
-            sub.status = 'active'
-            sub.billing_cycle = billing_cycle
-            sub.start_date = datetime.utcnow()
-            days = 365 if billing_cycle == 'annual' else 30
-            sub.end_date = sub.start_date + timedelta(days=days)
+        if paystack_data and paystack_data.get('status') == 'success':
+            # Paystack verification puts the ID inside the 'data' key
+            actual_txn_info = paystack_data.get('data', paystack_data)
+            
+            # 🚨 FIX 1: Safely handle metadata if Paystack returns it as a string!
+            metadata = actual_txn_info.get('metadata', {})
+            if isinstance(metadata, str):
+                try:
+                    metadata = json.loads(metadata)
+                except:
+                    metadata = {}
+                    
+            plan_id = metadata.get('plan_id')
+            billing_cycle = metadata.get('billing_cycle', 'monthly')
+            
+            # 🚨 FIX 2: If the school has NO subscription yet, CREATE ONE!
+            sub = SchoolSubscription.query.filter_by(school_id=current_user.school_id).first()
+            if not sub:
+                sub = SchoolSubscription(school_id=current_user.school_id)
+                db.session.add(sub)
 
-        # Handle Transaction Ledger
-        existing_txn = PaymentTransaction.query.filter_by(provider_reference=reference).first()
-        if not existing_txn:
-            new_txn = PaymentTransaction(
-                school_id=current_user.school_id,
-                subscription_id=sub.id if sub else None,
-                amount=actual_txn_info.get('amount') / 100, 
-                provider_reference=reference,
-                status='success',
-                paid_at=datetime.utcnow(),
-                metadata_json=actual_txn_info # 🚨 SAVES THE NESTED DATA (Fixes Receipt)
-            )
-            db.session.add(new_txn)
-        else:
-            # Update existing record with the full data if it was missing
-            existing_txn.metadata_json = actual_txn_info
-            existing_txn.status = 'success'
-        
-        db.session.commit()
+            if plan_id:
+                sub.plan_id = plan_id
+                sub.status = 'active'
+                sub.billing_cycle = billing_cycle
+                sub.start_date = datetime.utcnow()
+                days = 365 if billing_cycle == 'annual' else 30
+                sub.end_date = sub.start_date + timedelta(days=days)
 
-    return render_template('billing/checkout_success.html', reference=reference)
+            # 🚨 FIX 3: Safely calculate the amount to avoid Math/Type errors
+            raw_amount = actual_txn_info.get('amount', 0)
+            amount_val = float(raw_amount) / 100 if raw_amount else 0.0
+
+            # Handle Transaction Ledger
+            existing_txn = PaymentTransaction.query.filter_by(provider_reference=reference).first()
+            if not existing_txn:
+                new_txn = PaymentTransaction(
+                    school_id=current_user.school_id,
+                    subscription_id=sub.id if sub.id else None,
+                    amount=amount_val, 
+                    provider_reference=reference,
+                    status='success',
+                    paid_at=datetime.utcnow(),
+                    metadata_json=actual_txn_info 
+                )
+                db.session.add(new_txn)
+            else:
+                existing_txn.metadata_json = actual_txn_info
+                existing_txn.status = 'success'
+            
+            db.session.commit()
+
+        return render_template('billing/checkout_success.html', reference=reference)
+
+    except Exception as e:
+        db.session.rollback()
+        # 🚨 THIS WILL PRINT THE EXACT ERROR ON YOUR SCREEN!
+        return f"<h1>Callback Crash:</h1><pre>{traceback.format_exc()}</pre>", 500
