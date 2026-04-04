@@ -92,7 +92,7 @@ function applyPromo() {
         },
         body: JSON.stringify({
             code: code,
-            plan_id: {{ plans[0].id }}, // Test against the first plan for preview
+            plan_id: {{ plans[0].id if plans else 'null' }}, // Test against the first plan for preview
             cycle: 'monthly'
         })
     })
