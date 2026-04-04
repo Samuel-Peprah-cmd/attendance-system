@@ -3,11 +3,37 @@
     <div style="text-align: center; margin-bottom: 40px;">
         <h1>Choose Your ATOM Gate Package</h1>
         <p>Unlock premium features and scale your school's security.</p>
+        
+        <div style="margin-top: 20px; max-width: 450px; margin-left: auto; margin-right: auto; background: #fff; padding: 20px; border: 2px solid #eef0f2; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+            <label style="display: block; font-size: 11px; font-weight: bold; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Promotional Discount</label>
+            
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="promo_code_input" placeholder="Enter Code (e.g. ATOM50)" 
+                       style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; text-transform: uppercase; font-weight: bold;">
+                <button onclick="applyPromo()" style="padding: 10px 20px; background: #1a1a1a; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+                    Validate
+                </button>
+            </div>
+
+            <div id="price_breakdown" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; text-align: left;">
+                <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 5px;">
+                    <span>Discount Applied:</span>
+                    <span id="discount_tag" style="color: #28a745; font-weight: bold;"></span>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; color: #1a1a1a;">
+                    <span>New Total Preview:</span>
+                    <span id="new_total_display"></span>
+                </div>
+                <p style="font-size: 10px; color: #999; margin-top: 5px;">*Preview based on Monthly selection. Discount applies to all cycles.</p>
+            </div>
+            
+            <p id="promo_status" style="font-size: 12px; margin-top: 10px; color: #dc3545; font-weight: 500;"></p>
+        </div>
     </div>
 
     <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
         {% for plan in plans %}
-        <div style="border: 1px solid #ddd; border-radius: 8px; padding: 20px; width: 300px; text-align: center;">
+        <div style="border: 1px solid #ddd; border-radius: 8px; padding: 20px; width: 300px; text-align: center; background: white;">
             
             {% if current_sub and current_sub.plan_id == plan.id %}
                 <span style="background: #28a745; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px;">Active Plan</span>
@@ -21,9 +47,7 @@
             
             <ul style="list-style: none; padding: 0; text-align: left; font-size: 14px; line-height: 2;">
                 <li>✅ <strong>{{ plan.student_limit if plan.student_limit != -1 else 'Unlimited' }}</strong> Students</li>
-                <li>✅ <strong>{{ plan.admin_limit if plan.admin_limit != -1 else 'Unlimited' }}</strong> Admins</li>
-                <li>✅ <strong>{{ plan.scanner_limit if plan.scanner_limit != -1 else 'Unlimited' }}</strong> Scanner Devices</li>
-                
+                <li>✅ <strong>{{ plan.scanner_limit if plan.scanner_limit != -1 else 'Unlimited' }}</strong> Devices</li>
                 {% if plan.sms_enabled %}<li>✅ SMS Notifications</li>{% else %}<li style="color:#aaa;">❌ SMS Notifications</li>{% endif %}
                 {% if plan.whatsapp_enabled %}<li>✅ WhatsApp Alerts</li>{% else %}<li style="color:#aaa;">❌ WhatsApp Alerts</li>{% endif %}
                 {% if plan.gps_enabled %}<li>✅ GPS Intelligence</li>{% else %}<li style="color:#aaa;">❌ GPS Intelligence</li>{% endif %}
@@ -34,11 +58,11 @@
                     <button disabled style="width: 100%; padding: 10px; background: #ccc; border: none; border-radius: 5px;">Current Plan</button>
                 {% else %}
                     <button onclick="startCheckout({{ plan.id }}, 'monthly')" 
-                            style="width: 100%; padding: 10px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 10px;">
+                            style="width: 100%; padding: 10px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 10px; font-weight: bold;">
                         Upgrade Monthly
                     </button>
                     <button onclick="startCheckout({{ plan.id }}, 'annual')" 
-                            style="width: 100%; padding: 10px; background: #f8f9fa; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer;">
+                            style="width: 100%; padding: 10px; background: #f8f9fa; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; font-weight: bold;">
                         Upgrade Annually
                     </button>
                 {% endif %}
@@ -49,28 +73,72 @@
 </div>
 
 <script>
+// 1. Function to simply VALIDATE and show the price drop
+function applyPromo() {
+    const code = document.getElementById('promo_code_input').value.trim();
+    const status = document.getElementById('promo_status');
+    const breakdown = document.getElementById('price_breakdown');
+    
+    if (!code) {
+        status.innerText = "Please enter a code first.";
+        return;
+    }
+
+    fetch('{{ url_for("billing.validate_promo") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            code: code,
+            plan_id: {{ plans[0].id }}, // Test against the first plan for preview
+            cycle: 'monthly'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            status.style.color = "#28a745";
+            status.innerText = "Promo code verified!";
+            breakdown.style.display = "block";
+            document.getElementById('discount_tag').innerText = `-${data.discount_percent}% (Save GHS ${data.savings})`;
+            document.getElementById('new_total_display').innerText = `GHS ${data.new_total}`;
+        } else {
+            status.style.color = "#dc3545";
+            status.innerText = data.message;
+            breakdown.style.display = "none";
+        }
+    })
+    .catch(err => {
+        status.innerText = "Error connecting to server.";
+    });
+}
+
+// 2. Function to actually start the PAYSTACK flow
 function startCheckout(planId, billingCycle) {
-    // Alert the user that we are redirecting them to Paystack
+    const promoCode = document.getElementById('promo_code_input').value.trim();
+    
     alert("Taking you to Paystack secure checkout...");
 
-    // Send the chosen plan to our backend 'initialize' route
     fetch('{{ url_for("billing.initialize_checkout") }}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
         },
         body: JSON.stringify({
             plan_id: planId,
-            billing_cycle: billingCycle
+            billing_cycle: billingCycle,
+            promo_code: promoCode 
         })
     })
     .then(response => response.json())
     .then(data => {
         if(data.success && data.checkout_url) {
-            // Paystack generated the link securely, redirect the user!
             window.location.href = data.checkout_url;
         } else {
-            alert("Error connecting to payment gateway: " + data.message);
+            alert("Error: " + data.message);
         }
     })
     .catch(error => {

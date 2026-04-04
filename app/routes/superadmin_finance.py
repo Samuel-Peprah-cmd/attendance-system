@@ -72,16 +72,26 @@ def finance_dashboard():
 @superadmin_finance_bp.route('/admin/finance/plan/update/<int:plan_id>', methods=['POST'])
 @login_required
 def update_plan_pricing(plan_id):
-    """Allows Super Admin to instantly change the price of a plan"""
+    """Allows Super Admin to instantly change prices AND features of a plan"""
     if current_user.role != 'super_admin':
         return "Unauthorized", 403
         
     plan = Plan.query.get_or_404(plan_id)
+    
+    # Update Prices
     plan.price_monthly = float(request.form.get('price_monthly'))
     plan.price_annual = float(request.form.get('price_annual'))
     
+    # Update Features (Checkboxes only send data if they are checked)
+    plan.whatsapp_enabled = 'whatsapp_enabled' in request.form
+    plan.sms_enabled = 'sms_enabled' in request.form
+    plan.gps_enabled = 'gps_enabled' in request.form
+    
+    # You can also add limits here if you want!
+    # plan.student_limit = int(request.form.get('student_limit', -1))
+    
     db.session.commit()
-    flash(f"Prices for {plan.name} updated globally.", "success")
+    flash(f"{plan.name} Package updated successfully globally.", "success")
     return redirect(url_for('superadmin_finance.finance_dashboard'))
 
 @superadmin_finance_bp.route('/admin/finance/coupon/create', methods=['POST'])

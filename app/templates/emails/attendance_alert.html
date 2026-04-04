@@ -27,11 +27,11 @@
                 <p style="margin: 5px 0;"><strong>📍 Location:</strong> {{ location.place_name or 'Main Gate' }}</p>
                 <p style="margin: 5px 0;"><strong>🏙️ Area:</strong> {{ location.town or location.city or 'School Zone' }}</p>
                 
-                {% if location.lat %}
+                {% if location and location.lat %}
                 <div style="margin-top: 15px;">
                     <a href="https://www.google.com/maps?q={{ location.lat }},{{ location.lng }}" 
                        style="background-color: #4285F4; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 13px; display: inline-block;">
-                       📍 View Live Location
+                        📍 View Live Location
                     </a>
                 </div>
                 <p style="margin-top: 10px; font-size: 10px; color: #aaa;">Coordinates: {{ location.lat }}, {{ location.lng }}</p>

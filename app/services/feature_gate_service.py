@@ -6,6 +6,7 @@ class FeatureGateService:
     
     @staticmethod
     def get_school_plan(school_id):
+        # Only returns the plan if the subscription is 'active'
         sub = SchoolSubscription.query.filter_by(school_id=school_id, status='active').first()
         if not sub:
             return None
@@ -13,22 +14,23 @@ class FeatureGateService:
 
     @classmethod
     def can_use_feature(cls, school_id, feature_name):
-        """Checks boolean features (e.g., whatsapp_enabled, gps_enabled)"""
         plan = cls.get_school_plan(school_id)
         if not plan:
-            return False
+            return False # Locked if no plan or expired
             
-        # Check base plan features
-        has_base_access = getattr(plan, f"{feature_name}_enabled", False)
+        # 🚨 THE MAPPING
+        # This maps the name in your HTML to the column in your Database
+        feature_map = {
+            'broadcasts': 'whatsapp_enabled',
+            'live_scanner': 'gps_enabled',
+            'gps': 'gps_enabled',
+            'staff_attendance': 'whatsapp_enabled' # Or whatever column you prefer
+        }
         
-        # Check for custom entitlements/add-ons purchased
-        addon = FeatureEntitlement.query.filter_by(
-            school_id=school_id, 
-            feature_key=feature_name, 
-            is_enabled=True
-        ).first()
+        column_name = feature_map.get(feature_name, f"{feature_name}_enabled")
         
-        return has_base_access or (addon is not None)
+        # Check if the plan has this boolean set to True
+        return getattr(plan, column_name, False)
 
     @classmethod
     def within_limit(cls, school_id, limit_name, current_count):

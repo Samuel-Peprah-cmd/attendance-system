@@ -93,33 +93,6 @@ def process_scan():
     else:
         display_info = participant.designation or "Staff Member"
     
-    # 3. GPS Intelligence (Google Maps Resolution)
-    # location_info = reverse_geocode_google(lat, lng) if (lat and lng) else {}
-    
-    # # 4. Geofencing Logic (STRICT FLOATING POINT VERSION)
-    # is_on_campus = False
-    # distance_from_school = 999999
-    
-    # if lat is not None and lng is not None and device.school.latitude is not None:
-    #     try:
-    #         user_lat = float(lat)
-    #         user_lng = float(lng)
-    #         school_lat = float(device.school.latitude)
-    #         school_lng = float(device.school.longitude)
-    #         allowed_radius = float(device.school.radius_meters or 200)
-
-    #         # Calculate Distance
-    #         distance_from_school = haversine_distance(user_lat, user_lng, school_lat, school_lng)
-            
-    #         # The Final Verdict
-    #         is_on_campus = distance_from_school <= allowed_radius
-            
-    #         # Debugger
-    #         print(f"📍 GEO-DEBUG | Dist: {distance_from_school:.2f}m | Allowed: {allowed_radius}m | Safe: {is_on_campus}")
-
-    #     except ValueError as e:
-    #         print(f"❌ GEO MATH ERROR: {e}")
-    #         is_on_campus = False
     
     location_info = {}
     is_on_campus = True # Default to True for basic plans without geofencing
@@ -216,14 +189,21 @@ def process_scan():
     # 8. Notification Dispatch
     flask_app = current_app._get_current_object()
     
+    if lat and lng:
+        location_info['lat'] = lat
+        location_info['lng'] = lng
+        location_info['maps_link'] = f"https://www.google.com/maps?q={lat},{lng}"
+    else:
+        location_info['maps_link'] = None
+    
     threading.Thread(target=run_async_alert, args=(
-        flask_app,           
-        participant.id,      
-        p_type,              
-        direction,           
-        is_on_campus,        
-        None,                
-        location_info        
+        flask_app,
+        participant.id,
+        p_type,
+        direction,
+        is_on_campus,
+        None,
+        location_info
     )).start()
 
     return jsonify({

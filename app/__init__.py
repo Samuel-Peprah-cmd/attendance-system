@@ -46,6 +46,7 @@ def create_app():
     from app.routes.billing import billing_bp
     from app.routes.superadmin_finance import superadmin_finance_bp
     from app.routes.school_finance import finance_bp
+    from app.routes.payment_webhooks import webhook_bp
     
     if not app.debug:
         from flask_talisman import Talisman
@@ -63,6 +64,7 @@ def create_app():
     app.register_blueprint(billing_bp)
     app.register_blueprint(superadmin_finance_bp)
     app.register_blueprint(finance_bp)
+    app.register_blueprint(webhook_bp)
     
     
 

@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import os
 import secrets
 import uuid
@@ -189,16 +190,43 @@ def reset_api_key(school_id):
     flash(f"API Key for {school.name} has been rotated.", "success")
     return redirect(url_for("schools.manage_schools"))
 
-@schools_bp.route("/toggle-status/<int:school_id>")
+# @schools_bp.route("/toggle-status/<int:school_id>")
+# @login_required
+# @super_admin_required
+# def toggle_school_status(school_id):
+#     school = School.query.get_or_404(school_id)
+#     school.is_active = not school.is_active
+#     db.session.commit()
+#     status = "Activated" if school.is_active else "Deactivated"
+#     flash(f"{school.name} has been {status}.", "info")
+#     return redirect(url_for("schools.manage_schools"))
+
+@schools_bp.route('/schools/toggle/<int:school_id>', methods=['POST'])
 @login_required
-@super_admin_required
 def toggle_school_status(school_id):
+    from app.models.billing import SchoolSubscription
+    from datetime import datetime, timedelta # 🚨 Added these here
+    
     school = School.query.get_or_404(school_id)
-    school.is_active = not school.is_active
+    sub = SchoolSubscription.query.filter_by(school_id=school.id).first()
+    
+    if not sub:
+        flash(f"Error: No subscription record found for {school.name}.", "danger")
+        return redirect(url_for('schools.manage_schools'))
+
+    if sub.status == 'active':
+        sub.status = 'inactive'
+        flash(f"SYSTEM LOCK: {school.name} has been suspended.", "warning")
+    else:
+        sub.status = 'active'
+        # Check if the subscription is expired; if so, give them 30 days
+        if sub.end_date < datetime.utcnow():
+            sub.end_date = datetime.utcnow() + timedelta(days=30)
+            
+        flash(f"SYSTEM UNLOCK: {school.name} is now active.", "success")
+    
     db.session.commit()
-    status = "Activated" if school.is_active else "Deactivated"
-    flash(f"{school.name} has been {status}.", "info")
-    return redirect(url_for("schools.manage_schools"))
+    return redirect(url_for('schools.manage_schools'))
 
 @schools_bp.route('/master/manage-devices')
 @login_required

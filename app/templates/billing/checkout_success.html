@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto p-6 text-center mt-12">
+    <div class="bg-white border border-gray-200 rounded-2xl p-10 shadow-sm">
+        
+        <div class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <span class="text-4xl">✅</span>
+        </div>
+        
+        <h1 class="text-3xl font-black text-gray-800 mb-2">Payment Successful!</h1>
+        <p class="text-gray-500 mb-8">Your transaction has been processed securely. Your premium features are now unlocked.</p>
+        
+        <div class="bg-gray-50 rounded-xl p-4 mb-8 text-sm text-gray-500 border border-gray-100">
+            <p><strong>Transaction Reference:</strong> <br> {{ reference }}</p>
+        </div>
+
+        <a href="{{ url_for('finance.school_finance_page') }}" class="px-8 py-3 bg-brand text-white font-bold rounded-xl shadow-md hover:bg-blue-700 transition-colors inline-block">
+            Return to Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}

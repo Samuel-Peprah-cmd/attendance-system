@@ -26,27 +26,63 @@
     <hr style="margin: 40px 0; border: 0; border-top: 1px solid #ddd;">
 
     <div style="margin-bottom: 40px;">
-        <h3>Live Pricing Controls</h3>
-        <p style="color: #666; margin-bottom: 20px;">Changes here instantly update the checkout page for all new schools.</p>
+        <h3>Live Pricing & Feature Controls</h3>
+        <p style="color: #666; margin-bottom: 20px;">Changes here instantly update permissions for all schools on these plans.</p>
         
         <div style="display: flex; gap: 20px; flex-wrap: wrap;">
             {% for plan in plans %}
-            <div style="flex: 1; min-width: 250px; background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 5px;">
-                <h4 style="margin-top: 0; color: #333;">{{ plan.name }} Package</h4>
+            <div style="flex: 1; min-width: 300px; background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 8px; shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <h4 style="margin-top: 0; color: #333; border-bottom: 2px solid #f4f4f4; padding-bottom: 10px;">{{ plan.name }} Package</h4>
                 
                 <form action="{{ url_for('superadmin_finance.update_plan_pricing', plan_id=plan.id) }}" method="POST">
-                    <div style="margin-bottom: 10px;">
-                        <label style="font-size: 12px; color: #666;">Monthly Price (GHS)</label>
-                        <input type="number" step="0.01" name="price_monthly" value="{{ plan.price_monthly }}" 
-                               style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <div style="flex: 1;">
+                            <label style="font-size: 11px; font-weight: bold; color: #888; text-transform: uppercase;">Monthly (GHS)</label>
+                            <input type="number" step="0.01" name="price_monthly" value="{{ plan.price_monthly }}" 
+                                   style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-top: 5px;">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="font-size: 11px; font-weight: bold; color: #888; text-transform: uppercase;">Annual (GHS)</label>
+                            <input type="number" step="0.01" name="price_annual" value="{{ plan.price_annual }}" 
+                                   style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-top: 5px;">
+                        </div>
                     </div>
-                    <div style="margin-bottom: 15px;">
-                        <label style="font-size: 12px; color: #666;">Annual Price (GHS)</label>
-                        <input type="number" step="0.01" name="price_annual" value="{{ plan.price_annual }}" 
-                               style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <div style="flex: 1;">
+                            <label style="font-size: 11px; font-weight: bold; color: #888; text-transform: uppercase;">Student Limit</label>
+                            <input type="number" name="student_limit" value="{{ plan.student_limit }}" 
+                                   style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-top: 5px;">
+                        </div>
+                        <div style="flex: 1;">
+                            <label style="font-size: 11px; font-weight: bold; color: #888; text-transform: uppercase;">Scanner Limit</label>
+                            <input type="number" name="scanner_limit" value="{{ plan.scanner_limit }}" 
+                                   style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; margin-top: 5px;">
+                        </div>
                     </div>
-                    <button type="submit" style="width: 100%; padding: 8px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                        Update {{ plan.name }}
+
+                    <div style="background: #fcfcfc; border: 1px solid #eee; padding: 12px; border-radius: 6px; margin-bottom: 20px;">
+                        <p style="font-size: 11px; font-weight: bold; color: #555; margin-top: 0; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px;">Entitlements</p>
+                        
+                        <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #444; margin-bottom: 8px; cursor: pointer;">
+                            <input type="checkbox" name="whatsapp_enabled" {% if plan.whatsapp_enabled %}checked{% endif %}> 
+                            WhatsApp Broadcasts
+                        </label>
+                        
+                        <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #444; margin-bottom: 8px; cursor: pointer;">
+                            <input type="checkbox" name="sms_enabled" {% if plan.sms_enabled %}checked{% endif %}> 
+                            SMS Alerts
+                        </label>
+                        
+                        <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #444; margin-bottom: 0; cursor: pointer;">
+                            <input type="checkbox" name="gps_enabled" {% if plan.gps_enabled %}checked{% endif %}> 
+                            Live GPS Tracking
+                        </label>
+                    </div>
+
+                    <button type="submit" style="width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; transition: background 0.2s;">
+                        Save {{ plan.name }} Changes
                     </button>
                 </form>
             </div>
@@ -54,24 +90,25 @@
         </div>
     </div>
 
-    <div style="display: flex; gap: 30px;">
+    <div style="display: flex; gap: 30px; align-items: flex-start;">
         
-        <div style="flex: 1; background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 5px;">
+        <div style="flex: 1; background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 8px;">
             <h3>Generate Promo Code</h3>
             <form action="{{ url_for('superadmin_finance.create_coupon') }}" method="POST">
-                <div style="margin-bottom: 10px;">
-                    <label style="font-size: 12px; color: #666;">Coupon Code (e.g., LAUNCH50)</label>
-                    <input type="text" name="code" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; text-transform: uppercase;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div style="margin-bottom: 12px;">
+                    <label style="font-size: 12px; color: #666;">Coupon Code</label>
+                    <input type="text" name="code" required placeholder="e.g. SAVE50" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; text-transform: uppercase;">
                 </div>
-                <div style="margin-bottom: 10px;">
+                <div style="margin-bottom: 12px;">
                     <label style="font-size: 12px; color: #666;">Discount Percentage (%)</label>
-                    <input type="number" step="1" max="100" name="discount_percentage" required placeholder="e.g. 50" style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    <input type="number" step="1" max="100" name="discount_percentage" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                 </div>
-                <div style="margin-bottom: 15px;">
+                <div style="margin-bottom: 20px;">
                     <label style="font-size: 12px; color: #666;">Usage Limit (-1 for unlimited)</label>
                     <input type="number" name="usage_limit" value="-1" required style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
                 </div>
-                <button type="submit" style="width: 100%; padding: 10px; background: #6f42c1; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                <button type="submit" style="width: 100%; padding: 10px; background: #6f42c1; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer;">
                     Create Promo Code
                 </button>
             </form>
@@ -79,45 +116,45 @@
             <h4 style="margin-top: 30px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Active Promos</h4>
             <ul style="list-style: none; padding: 0; font-size: 14px;">
                 {% for coupon in coupons %}
-                <li style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f4f4f4;">
+                <li style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f4f4f4;">
                     <strong>{{ coupon.code }}</strong> 
-                    <span style="color: #28a745;">{{ coupon.discount_percentage }}% OFF</span>
-                    <span style="color: #666;">Used: {{ coupon.times_used }}/{{ coupon.usage_limit if coupon.usage_limit != -1 else '∞' }}</span>
+                    <span style="color: #28a745; font-weight: bold;">{{ coupon.discount_percentage }}% OFF</span>
+                    <span style="color: #888;">{{ coupon.times_used }}/{{ coupon.usage_limit if coupon.usage_limit != -1 else '∞' }}</span>
                 </li>
                 {% else %}
-                <li style="color: #888;">No active promo codes.</li>
+                <li style="color: #888; padding: 10px 0;">No active promo codes.</li>
                 {% endfor %}
             </ul>
         </div>
 
-        <div style="flex: 2; background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 5px;">
+        <div style="flex: 2; background: #fff; border: 1px solid #ddd; padding: 20px; border-radius: 8px;">
             <h3>Recent Transactions</h3>
             <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
                 <thead>
                     <tr style="border-bottom: 2px solid #ddd; background: #f4f4f4;">
-                        <th style="padding: 10px;">Date</th>
-                        <th style="padding: 10px;">School ID</th>
-                        <th style="padding: 10px;">Amount</th>
-                        <th style="padding: 10px;">Status</th>
+                        <th style="padding: 12px;">Date</th>
+                        <th style="padding: 12px;">School</th>
+                        <th style="padding: 12px;">Amount</th>
+                        <th style="padding: 12px;">Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for txn in recent_transactions %}
                     <tr style="border-bottom: 1px solid #eee;">
-                        <td style="padding: 10px;">{{ txn.paid_at.strftime('%Y-%m-%d %H:%M') if txn.paid_at else 'N/A' }}</td>
-                        <td style="padding: 10px;">School #{{ txn.school_id }}</td>
-                        <td style="padding: 10px;">GHS {{ "%.2f"|format(txn.amount) }}</td>
-                        <td style="padding: 10px;">
+                        <td style="padding: 12px;">{{ txn.paid_at.strftime('%Y-%m-%d %H:%M') if txn.paid_at else 'N/A' }}</td>
+                        <td style="padding: 12px; font-weight: 500;">School #{{ txn.school_id }}</td>
+                        <td style="padding: 12px; font-weight: bold;">GHS {{ "%.2f"|format(txn.amount) }}</td>
+                        <td style="padding: 12px;">
                             {% if txn.status == 'success' %}
-                                <span style="color: green;">✔ Success</span>
+                                <span style="background: #e6fffa; color: #234e52; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">✔ PAID</span>
                             {% else %}
-                                <span style="color: red;">✘ {{ txn.status }}</span>
+                                <span style="background: #fff5f5; color: #822727; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">✘ {{ txn.status.upper() }}</span>
                             {% endif %}
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="4" style="padding: 20px; text-align: center; color: #888;">No recent transactions found.</td>
+                        <td colspan="4" style="padding: 30px; text-align: center; color: #999;">No revenue recorded yet.</td>
                     </tr>
                     {% endfor %}
                 </tbody>

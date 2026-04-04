@@ -11,6 +11,9 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/static/icon/apple-touch-icon.png?v=v.1.1.1" />
     <meta name="apple-mobile-web-app-title" content="ATOM Gate" />
     <link rel="manifest" href="/static/icon/site.webmanifest?v=v.1.1.1" />
+    <script type="text/javascript">
+        var csrf_token = "{{ csrf_token() }}";
+    </script>
     <style>
         :root {
             --brand-primary: {{ current_user.school.primary_color if (current_user.is_authenticated and current_user.school) else '#2563eb' }};

@@ -7,23 +7,6 @@ from app.extensions import db
 auth_bp = Blueprint("auth", __name__)
 
 
-# @auth_bp.route("/login", methods=["GET", "POST"])
-# def login():
-#     if request.method == "POST":
-#         email = request.form.get("email")
-#         password = request.form.get("password")
-#         user = User.query.filter_by(email=email).first()
-        
-#         if user and user.check_password(password):
-#             login_user(user)
-#             # LOGIC: If Super Admin, go to School Management. If School Admin, go to Dashboard.
-#             if user.role == 'super_admin':
-#                 return redirect(url_for("schools.manage_schools"))
-#             return redirect(url_for("dashboard.index"))
-        
-#         flash("Invalid credentials", "danger")
-#     return render_template("auth/login.html")
-
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -32,24 +15,22 @@ def login():
         user = User.query.filter_by(email=email).first()
         
         if user and user.check_password(password):
-            # 1. SECURITY CHECK: If School Admin or Parent, check School Status
+            # 🚨 REFRESH: Pull latest data from DB (Plan ID, etc)
+            db.session.refresh(user)
+
+            # Check if school is active using our new hybrid property
             if user.role != 'super_admin' and user.school:
                 if not user.school.is_active:
-                    flash("Access Denied: Your school's subscription is inactive. Contact AtomDev.", "danger")
+                    flash("Access Denied: Subscription Expired. Please renew to continue.", "danger")
                     return redirect(url_for('auth.login'))
             
-            # 2. LOG THEM IN
             login_user(user)
             
-            # 3. STRATEGIC REDIRECTION
             if user.role == 'super_admin':
                 return redirect(url_for("schools.manage_schools"))
-            elif user.role == 'parent':
-                return redirect(url_for("parents.dashboard")) # The Family Portal
-            else:
-                return redirect(url_for("dashboard.index")) # School Admin Dashboard
+            return redirect(url_for("dashboard.index"))
         
-        flash("Invalid email or security password.", "danger")
+        flash("Invalid credentials.", "danger")
     return render_template("auth/login.html")
 
 @auth_bp.route("/logout")

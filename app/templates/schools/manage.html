@@ -58,10 +58,13 @@
                         <a href="{{ url_for('schools.edit_school', school_id=school.id) }}" class="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition" title="Edit School Details">
                             <span class="text-sm">✏️</span>
                         </a>
-                        <a href="{{ url_for('schools.toggle_school_status', school_id=school.id) }}" 
-                           class="text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-lg transition shadow-sm {{ 'bg-red-600 text-white hover:bg-red-700' if school.is_active else 'bg-green-600 text-white hover:bg-green-700' }}">
-                            {{ 'Suspend' if school.is_active else 'Activate' }}
-                        </a>
+                        <form action="{{ url_for('schools.toggle_school_status', school_id=school.id) }}" method="POST" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" 
+                                    class="text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-lg transition shadow-sm {{ 'bg-red-600 text-white hover:bg-red-700' if school.is_active else 'bg-green-600 text-white hover:bg-green-700' }}">
+                                {{ 'Suspend' if school.is_active else 'Activate' }}
+                            </button>
+                        </form>
                         <form action="{{ url_for('schools.delete_school', school_id=school.id) }}" method="POST" class="m-0 p-0" onsubmit="return confirm('CRITICAL WARNING: Are you sure you want to delete the school {{ school.name }}?');">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                             <button type="submit" title="Delete School" class="p-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition">

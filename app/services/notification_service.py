@@ -101,14 +101,16 @@ def send_attendance_alert(participant, status, is_delayed=False, notice=None, lo
         notice=notice,
         logo_url=logo_url
     )
-
+    
     # try:
     #     mail.send(msg)
 
     #     if recipient_phone:
-    #         # Short SMS for speed
-    #         msg_text = f"Security: {participant.full_name} {status} at {school.name} ({time_label}). Loc: {location.get('place_name', 'Campus') if location else 'Campus'}"
-    #         _send_twilio_messages(recipient_phone, msg_text, school.name)
+    #         # 🚨 PRODUCTION LOCK: Check if SMS is enabled for this school before sending
+    #         if FeatureGateService.can_use_feature(school.id, 'sms'):
+    #             msg_text = f"Security: {participant.full_name} {status} at {school.name} ({time_label}). Loc: {location.get('place_name', 'Campus') if location else 'Campus'}"
+    #             _send_twilio_messages(recipient_phone, msg_text, school.name)
+                
     # except Exception as e:
     #     print(f"🚨 Notification Dispatch Failure: {e}")
     
@@ -118,7 +120,17 @@ def send_attendance_alert(participant, status, is_delayed=False, notice=None, lo
         if recipient_phone:
             # 🚨 PRODUCTION LOCK: Check if SMS is enabled for this school before sending
             if FeatureGateService.can_use_feature(school.id, 'sms'):
-                msg_text = f"Security: {participant.full_name} {status} at {school.name} ({time_label}). Loc: {location.get('place_name', 'Campus') if location else 'Campus'}"
+                
+                # Grab the place name and the new Maps link
+                loc_name = location.get('place_name', 'Campus') if location else 'Campus'
+                maps_url = location.get('maps_link') if location else None
+                
+                # Build the message with the clickable link if GPS exists
+                if maps_url:
+                    msg_text = f"Security: {participant.full_name} {status} at {school.name} ({time_label}). Loc: {loc_name}. Live Map: {maps_url}"
+                else:
+                    msg_text = f"Security: {participant.full_name} {status} at {school.name} ({time_label}). Loc: {loc_name}"
+                
                 _send_twilio_messages(recipient_phone, msg_text, school.name)
                 
     except Exception as e:
