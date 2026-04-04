@@ -26,7 +26,7 @@ def login():
                 if not user.school.is_active:
                     # 🚨 SOFT REDIRECT: Send them to the payment/billing page
                     flash("Subscription Expired. Please renew to continue using ATOM Gate.", "warning")
-                    return redirect(url_for('billing.pricing')) # Make sure this matches your actual billing route name!
+                    return redirect(url_for('billing.pricing_page')) # Make sure this matches your actual billing route name!
             
             # If they are active (or a super_admin), let them into the dashboard
             if user.role == 'super_admin':

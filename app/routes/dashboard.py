@@ -33,7 +33,7 @@ def index():
     # 🚨 3. BILLING CATCH
     if not school.is_active:
         flash("Subscription Expired. Please renew to access your dashboard.", "warning")
-        return redirect(url_for('billing.pricing')) # Send them to the payment page
+        return redirect(url_for('billing.pricing_page')) # Send them to the payment page
 
     # 4. Setup Exact Timeframes (the rest of your logic stays the same)
     now = datetime.utcnow()
@@ -217,7 +217,7 @@ def overview():
     # 🚨 BILLING CATCH
     if current_user.role != 'super_admin' and current_user.school and not current_user.school.is_active:
         flash("Subscription Expired. Please renew to access your dashboard.", "warning")
-        return redirect(url_for('billing.pricing'))
+        return redirect(url_for('billing.pricing_page'))
 
     school_id = current_user.school_id
     today = date.today()
