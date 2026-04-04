@@ -11,96 +11,31 @@ from app.models.school import School
 from app.models.class_room import ClassRoom
 from datetime import datetime, timedelta, time as dt_time
 from app.services.storage_helper import upload_file_to_r2
+from app.models.staff import Staff
+from datetime import datetime, date
 
 dashboard_bp = Blueprint("dashboard", __name__)
-
-# @dashboard_bp.route("/")
-# @login_required
-# def index():
-#     school_id = current_user.school_id
-#     school = School.query.get(school_id) # Grab the school to get the dynamic time
-    
-#     # 1. Setup Exact Timeframes
-#     now = datetime.utcnow()
-#     today = now.date()
-#     yesterday = today - timedelta(days=1)
-    
-#     # Get Monday of the current week at exactly 00:00:00
-#     start_of_week_date = today - timedelta(days=today.weekday())
-#     start_of_week = datetime.combine(start_of_week_date, dt_time.min) 
-
-#     # 2. Build the 'stats' dictionary
-#     stats = {
-#         "today_count": Attendance.query.filter(
-#             Attendance.school_id == school_id, 
-#             db.func.date(Attendance.timestamp) == today
-#         ).count(),
-        
-#         "yesterday_count": Attendance.query.filter(
-#             Attendance.school_id == school_id, 
-#             db.func.date(Attendance.timestamp) == yesterday
-#         ).count(),
-        
-#         "weekly_count": Attendance.query.filter(
-#             Attendance.school_id == school_id, 
-#             Attendance.timestamp >= start_of_week # Now compares datetime to datetime accurately!
-#         ).count(),
-        
-#         "current_in": Attendance.query.filter(
-#             Attendance.school_id == school_id,
-#             Attendance.status == 'IN',
-#             db.func.date(Attendance.timestamp) == today
-#         ).count()
-#     }
-
-#     # 3. Global Stats
-#     total_students = Student.query.filter_by(school_id=school_id).count()
-    
-#     # 4. Geofence Violations
-#     violations = Attendance.query.filter(
-#         Attendance.school_id == school_id,
-#         Attendance.is_within_boundary == False,
-#         db.func.date(Attendance.timestamp) == today
-#     ).order_by(Attendance.timestamp.desc()).limit(5).all()
-
-#     # 5. Top Late Arrivals (Dynamic calculation based on school settings)
-#     opening = school.opening_time if school.opening_time else dt_time(7, 30)
-#     late_threshold = datetime.combine(today, opening)
-#     late_arrivals = Attendance.query.filter(
-#         Attendance.school_id == school_id,
-#         Attendance.status == 'IN',
-#         Attendance.timestamp > late_threshold,
-#         db.func.date(Attendance.timestamp) == today
-#     ).order_by(Attendance.timestamp.desc()).limit(5).all()
-
-#     # 6. Final Data Hand-off
-#     return render_template("dashboard/index.html", 
-#                            total_students=total_students, 
-#                            stats=stats,  
-#                            violations=violations,
-#                            late_arrivals=late_arrivals)
-
-
-from flask import redirect, url_for
 
 @dashboard_bp.route("/")
 @login_required
 def index():
     # 🚨 1. SUPER ADMIN REDIRECT 
-    # If the master account logs in, send them straight to the global management page
     if current_user.role == 'super_admin':
-        # Note: If your route is just 'schools.manage', change the line below to match it!
         return redirect(url_for('schools.manage_schools')) 
         
     school_id = current_user.school_id
     school = School.query.get(school_id)
     
     # 🚨 2. SAFETY CATCH
-    # Prevents the 'NoneType' error if a user somehow isn't linked to a school
     if not school:
         return "Error: Your account is not linked to a school. Please contact support.", 403
 
-    # 3. Setup Exact Timeframes
+    # 🚨 3. BILLING CATCH
+    if not school.is_active:
+        flash("Subscription Expired. Please renew to access your dashboard.", "warning")
+        return redirect(url_for('billing.pricing')) # Send them to the payment page
+
+    # 4. Setup Exact Timeframes (the rest of your logic stays the same)
     now = datetime.utcnow()
     today = now.date()
     yesterday = today - timedelta(days=1)
@@ -274,22 +209,20 @@ def parent_dashboard():
     children = current_user.students 
     return render_template("dashboard/parent_view.html", children=children)
 
-from flask import Blueprint, render_template
-from flask_login import login_required, current_user
-from app.models.student import Student
-from app.models.staff import Staff
-from app.models.attendance import Attendance
-from datetime import datetime, date
-
 admin_bp = Blueprint('admin', __name__)
 
 @dashboard_bp.route('/dashboard')
 @login_required
 def overview():
+    # 🚨 BILLING CATCH
+    if current_user.role != 'super_admin' and current_user.school and not current_user.school.is_active:
+        flash("Subscription Expired. Please renew to access your dashboard.", "warning")
+        return redirect(url_for('billing.pricing'))
+
     school_id = current_user.school_id
     today = date.today()
 
-    # 1. High-Level Stats
+    # 1. High-Level Stats (the rest of your logic stays the same)
     total_students = Student.query.filter_by(school_id=school_id, is_active=True).count()
     total_staff = Staff.query.filter_by(school_id=school_id, is_active=True).count()
     

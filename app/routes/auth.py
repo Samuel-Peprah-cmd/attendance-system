@@ -18,14 +18,17 @@ def login():
             # 🚨 REFRESH: Pull latest data from DB (Plan ID, etc)
             db.session.refresh(user)
 
-            # Check if school is active using our new hybrid property
+            # ✅ LOG THEM IN FIRST! Give them a valid session token.
+            login_user(user)
+
+            # Now that they are logged in, check where to send them
             if user.role != 'super_admin' and user.school:
                 if not user.school.is_active:
-                    flash("Access Denied: Subscription Expired. Please renew to continue.", "danger")
-                    return redirect(url_for('auth.login'))
+                    # 🚨 SOFT REDIRECT: Send them to the payment/billing page
+                    flash("Subscription Expired. Please renew to continue using ATOM Gate.", "warning")
+                    return redirect(url_for('billing.pricing')) # Make sure this matches your actual billing route name!
             
-            login_user(user)
-            
+            # If they are active (or a super_admin), let them into the dashboard
             if user.role == 'super_admin':
                 return redirect(url_for("schools.manage_schools"))
             return redirect(url_for("dashboard.index"))
