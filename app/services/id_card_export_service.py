@@ -156,11 +156,11 @@ def generate_student_id_png(student, issued_date: str, session_text: str, public
         card.paste(logo_bg, (logo_x, 18))
         card.paste(logo, (logo_x + 3, 21), logo)
 
-    draw.text((text_x, 20), (student.school.name or "").upper(), font=font_school, fill=(255, 255, 255))
+    draw.text((text_x, 18), (student.school.name or "").upper(), font=font_school, fill=(255, 255, 255))
     draw.text((text_x, 62), "STUDENT ATTENDANCE CARD", font=font_sub, fill=(255, 255, 255, 225))
 
     # Header right
-    right_label = "ACADEMIC YEAR"
+    right_label = "YEAR"
     right_value = session_text
     rl_w = draw.textbbox((0, 0), right_label, font=font_small)[2]
     rv_w = draw.textbbox((0, 0), right_value, font=font_small)[2]
@@ -399,7 +399,7 @@ def generate_student_id_back_png(student, public_r2_base_url: str):
         card.paste(logo_bg, (logo_x, 18))
         card.paste(logo, (logo_x + 3, 21), logo)
 
-    draw.text((text_x, 20), (student.school.name or "").upper(), font=font_school, fill=(255, 255, 255))
+    draw.text((text_x, 18), (student.school.name or "").upper(), font=font_school, fill=(255, 255, 255))
     draw.text((text_x, 62), "STUDENT ATTENDANCE CARD", font=font_sub, fill=(255, 255, 255, 225))
 
     if school_logo is not None:
