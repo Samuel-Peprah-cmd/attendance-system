@@ -42,7 +42,7 @@ def login():
 def logout():
     logout_user()
     # This calls the "login" function inside the "auth" blueprint
-    return redirect(url_for("auth.login"))
+    return redirect(url_for("dashboard.landing_page"))
 
 @auth_bp.route("/profile", methods=["GET", "POST"])
 @login_required
