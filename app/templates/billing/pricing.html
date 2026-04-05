@@ -1,68 +1,485 @@
-{% extends "base.html" %} {% block content %}
-<div class="container" style="max-width: 1200px; margin: 0 auto; padding: 20px;">
-    <div style="text-align: center; margin-bottom: 40px;">
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .pricing-shell {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px 16px 40px;
+    }
+
+    .pricing-hero {
+        text-align: center;
+        margin-bottom: 36px;
+    }
+
+    .pricing-hero h1 {
+        font-size: 2rem;
+        font-weight: 900;
+        color: #1f2937;
+        line-height: 1.15;
+        margin-bottom: 10px;
+    }
+
+    .pricing-hero p {
+        font-size: 0.98rem;
+        color: #6b7280;
+        margin: 0;
+    }
+
+    .promo-box {
+        margin-top: 22px;
+        max-width: 460px;
+        margin-left: auto;
+        margin-right: auto;
+        background: #ffffff;
+        padding: 20px;
+        border: 1px solid #e5e7eb;
+        border-radius: 18px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+        text-align: left;
+    }
+
+    .promo-label {
+        display: block;
+        font-size: 11px;
+        font-weight: 800;
+        color: #9ca3af;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .promo-row {
+        display: flex;
+        gap: 10px;
+        align-items: stretch;
+    }
+
+    .promo-input {
+        flex: 1;
+        padding: 13px 14px;
+        border: 1px solid #d1d5db;
+        border-radius: 12px;
+        text-transform: uppercase;
+        font-weight: 700;
+        font-size: 0.95rem;
+        outline: none;
+        min-width: 0;
+    }
+
+    .promo-input:focus {
+        border-color: #0f766e;
+        box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+    }
+
+    .promo-btn {
+        padding: 13px 18px;
+        background: #111827;
+        color: #ffffff;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 800;
+        white-space: nowrap;
+        transition: 0.2s ease;
+    }
+
+    .promo-btn:hover {
+        opacity: 0.92;
+    }
+
+    .price-breakdown {
+        display: none;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .breakdown-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        font-size: 14px;
+        margin-bottom: 7px;
+        color: #374151;
+    }
+
+    .breakdown-row strong {
+        color: #111827;
+    }
+
+    .discount-tag {
+        color: #16a34a;
+        font-weight: 800;
+    }
+
+    .total-preview {
+        font-size: 16px;
+        font-weight: 900;
+        color: #111827;
+    }
+
+    .price-note {
+        font-size: 11px;
+        color: #9ca3af;
+        margin-top: 6px;
+        line-height: 1.45;
+    }
+
+    .promo-status {
+        font-size: 12px;
+        margin-top: 10px;
+        color: #dc2626;
+        font-weight: 600;
+        min-height: 18px;
+    }
+
+    .plans-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 20px;
+        align-items: stretch;
+    }
+
+    .plan-card {
+        position: relative;
+        border: 1px solid #e5e7eb;
+        border-radius: 20px;
+        padding: 22px 20px;
+        background: #ffffff;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        transition: 0.25s ease;
+    }
+
+    .plan-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 16px 35px rgba(15, 23, 42, 0.08);
+    }
+
+    .plan-card.popular {
+        border: 2px solid #0f766e;
+        box-shadow: 0 18px 40px rgba(15, 118, 110, 0.14);
+        transform: translateY(-6px);
+    }
+
+    .badge-row {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+        min-height: 28px;
+    }
+
+    .plan-badge {
+        display: inline-block;
+        background: #16a34a;
+        color: white;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .popular-badge {
+        display: inline-block;
+        background: linear-gradient(135deg, #0f766e, #14b8a6);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 900;
+        line-height: 1;
+        box-shadow: 0 8px 18px rgba(20, 184, 166, 0.25);
+    }
+
+    .plan-title {
+        margin-top: 4px;
+        margin-bottom: 8px;
+        font-size: 1.5rem;
+        font-weight: 900;
+        color: #111827;
+        text-align: center;
+        line-height: 1.2;
+    }
+
+    .plan-price {
+        color: #0f766e;
+        font-size: 1.9rem;
+        font-weight: 900;
+        text-align: center;
+        margin: 0;
+        line-height: 1.1;
+    }
+
+    .plan-price small {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #6b7280;
+    }
+
+    .plan-subprice {
+        color: #6b7280;
+        font-size: 14px;
+        text-align: center;
+        margin-top: 8px;
+        margin-bottom: 0;
+    }
+
+    .plan-divider {
+        margin: 20px 0;
+        border: none;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        text-align: left;
+        font-size: 14px;
+        line-height: 1.9;
+        color: #374151;
+        flex: 1;
+    }
+
+    .feature-list li {
+        margin-bottom: 4px;
+        word-break: break-word;
+    }
+
+    .feature-disabled {
+        color: #9ca3af;
+    }
+
+    .plan-actions {
+        margin-top: 26px;
+    }
+
+    .plan-btn {
+        width: 100%;
+        padding: 13px 14px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 800;
+        border: none;
+        transition: 0.2s ease;
+        font-size: 0.95rem;
+    }
+
+    .plan-btn + .plan-btn {
+        margin-top: 10px;
+    }
+
+    .plan-btn-primary {
+        background: #0f766e;
+        color: #ffffff;
+    }
+
+    .plan-btn-primary:hover {
+        opacity: 0.94;
+    }
+
+    .plan-btn-secondary {
+        background: #f8fafc;
+        color: #1f2937;
+        border: 1px solid #d1d5db;
+    }
+
+    .plan-btn-secondary:hover {
+        background: #f1f5f9;
+    }
+
+    .plan-btn-disabled {
+        background: #d1d5db;
+        color: #6b7280;
+        cursor: not-allowed;
+    }
+
+    @media (max-width: 1024px) {
+        .plans-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 640px) {
+        .pricing-shell {
+            padding: 16px 12px 32px;
+        }
+
+        .pricing-hero {
+            margin-bottom: 28px;
+        }
+
+        .pricing-hero h1 {
+            font-size: 1.65rem;
+        }
+
+        .pricing-hero p {
+            font-size: 0.92rem;
+        }
+
+        .promo-box {
+            padding: 16px;
+            border-radius: 16px;
+        }
+
+        .promo-row {
+            flex-direction: column;
+        }
+
+        .promo-btn {
+            width: 100%;
+        }
+
+        .breakdown-row {
+            font-size: 13px;
+            gap: 10px;
+        }
+
+        .total-preview {
+            font-size: 15px;
+        }
+
+        .plans-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        .plan-card {
+            padding: 18px 16px;
+            border-radius: 18px;
+        }
+
+        .plan-card:hover,
+        .plan-card.popular {
+            transform: none;
+        }
+
+        .plan-title {
+            font-size: 1.35rem;
+        }
+
+        .plan-price {
+            font-size: 1.7rem;
+        }
+
+        .feature-list {
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .plan-btn {
+            padding: 14px;
+        }
+    }
+</style>
+
+<div class="pricing-shell">
+    <div class="pricing-hero">
         <h1>Choose Your ATOM Gate Package</h1>
         <p>Unlock premium features and scale your school's security.</p>
-        
-        <div style="margin-top: 20px; max-width: 450px; margin-left: auto; margin-right: auto; background: #fff; padding: 20px; border: 2px solid #eef0f2; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
-            <label style="display: block; font-size: 11px; font-weight: bold; color: #888; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Promotional Discount</label>
-            
-            <div style="display: flex; gap: 8px;">
-                <input type="text" id="promo_code_input" placeholder="Enter Code (e.g. ATOM50)" 
-                       style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px; text-transform: uppercase; font-weight: bold;">
-                <button onclick="applyPromo()" style="padding: 10px 20px; background: #1a1a1a; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+
+        <div class="promo-box">
+            <label class="promo-label">Promotional Discount</label>
+
+            <div class="promo-row">
+                <input
+                    type="text"
+                    id="promo_code_input"
+                    class="promo-input"
+                    placeholder="Enter Code (e.g. ATOM50)"
+                >
+                <button onclick="applyPromo()" class="promo-btn">
                     Validate
                 </button>
             </div>
 
-            <div id="price_breakdown" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; text-align: left;">
-                <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 5px;">
+            <div id="price_breakdown" class="price-breakdown">
+                <div class="breakdown-row">
                     <span>Discount Applied:</span>
-                    <span id="discount_tag" style="color: #28a745; font-weight: bold;"></span>
+                    <span id="discount_tag" class="discount-tag"></span>
                 </div>
-                <div style="display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; color: #1a1a1a;">
+                <div class="breakdown-row total-preview">
                     <span>New Total Preview:</span>
                     <span id="new_total_display"></span>
                 </div>
-                <p style="font-size: 10px; color: #999; margin-top: 5px;">*Preview based on Monthly selection. Discount applies to all cycles.</p>
+                <p class="price-note">
+                    *Preview based on Monthly selection. Discount applies to all cycles.
+                </p>
             </div>
-            
-            <p id="promo_status" style="font-size: 12px; margin-top: 10px; color: #dc3545; font-weight: 500;"></p>
+
+            <p id="promo_status" class="promo-status"></p>
         </div>
     </div>
 
-    <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+    <div class="plans-grid">
         {% for plan in plans %}
-        <div style="border: 1px solid #ddd; border-radius: 8px; padding: 20px; width: 300px; text-align: center; background: white;">
-            
-            {% if current_sub and current_sub.plan_id == plan.id %}
-                <span style="background: #28a745; color: white; padding: 5px 10px; border-radius: 20px; font-size: 12px;">Active Plan</span>
-            {% endif %}
+        {% set is_popular = loop.index == 2 %}
+        <div class="plan-card {% if is_popular %}popular{% endif %}">
 
-            <h2 style="margin-top: 15px;">{{ plan.name }}</h2>
-            <h3 style="color: #007bff;">GHS {{ plan.price_monthly }}<small>/mo</small></h3>
-            <p style="color: #666; font-size: 14px;">or GHS {{ plan.price_annual }}/year</p>
-            
-            <hr style="margin: 20px 0;">
-            
-            <ul style="list-style: none; padding: 0; text-align: left; font-size: 14px; line-height: 2;">
+            <div class="badge-row">
+                {% if is_popular %}
+                    <span class="popular-badge">Most Popular</span>
+                {% endif %}
+
+                {% if current_sub and current_sub.plan_id == plan.id %}
+                    <span class="plan-badge">Active Plan</span>
+                {% endif %}
+            </div>
+
+            <h2 class="plan-title">{{ plan.name }}</h2>
+            <h3 class="plan-price">
+                GHS {{ plan.price_monthly }}<small>/mo</small>
+            </h3>
+            <p class="plan-subprice">or GHS {{ plan.price_annual }}/year</p>
+
+            <hr class="plan-divider">
+
+            <ul class="feature-list">
                 <li>✅ <strong>{{ plan.student_limit if plan.student_limit != -1 else 'Unlimited' }}</strong> Students</li>
                 <li>✅ <strong>{{ plan.scanner_limit if plan.scanner_limit != -1 else 'Unlimited' }}</strong> Devices</li>
-                {% if plan.sms_enabled %}<li>✅ SMS Notifications</li>{% else %}<li style="color:#aaa;">❌ SMS Notifications</li>{% endif %}
-                {% if plan.whatsapp_enabled %}<li>✅ WhatsApp Alerts</li>{% else %}<li style="color:#aaa;">❌ WhatsApp Alerts</li>{% endif %}
-                {% if plan.gps_enabled %}<li>✅ GPS Intelligence</li>{% else %}<li style="color:#aaa;">❌ GPS Intelligence</li>{% endif %}
+
+                {% if plan.sms_enabled %}
+                    <li>✅ SMS Notifications</li>
+                {% else %}
+                    <li class="feature-disabled">❌ SMS Notifications</li>
+                {% endif %}
+
+                {% if plan.whatsapp_enabled %}
+                    <li>✅ WhatsApp Alerts</li>
+                {% else %}
+                    <li class="feature-disabled">❌ WhatsApp Alerts</li>
+                {% endif %}
+
+                {% if plan.gps_enabled %}
+                    <li>✅ GPS Intelligence</li>
+                {% else %}
+                    <li class="feature-disabled">❌ GPS Intelligence</li>
+                {% endif %}
             </ul>
 
-            <div style="margin-top: 30px;">
+            <div class="plan-actions">
                 {% if current_sub and current_sub.plan_id == plan.id %}
-                    <button disabled style="width: 100%; padding: 10px; background: #ccc; border: none; border-radius: 5px;">Current Plan</button>
+                    <button disabled class="plan-btn plan-btn-disabled">Current Plan</button>
                 {% else %}
-                    <button onclick="startCheckout({{ plan.id }}, 'monthly')" 
-                            style="width: 100%; padding: 10px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 10px; font-weight: bold;">
+                    <button
+                        onclick="startCheckout({{ plan.id }}, 'monthly')"
+                        class="plan-btn plan-btn-primary"
+                    >
                         Upgrade Monthly
                     </button>
-                    <button onclick="startCheckout({{ plan.id }}, 'annual')" 
-                            style="width: 100%; padding: 10px; background: #f8f9fa; color: #333; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; font-weight: bold;">
+
+                    <button
+                        onclick="startCheckout({{ plan.id }}, 'annual')"
+                        class="plan-btn plan-btn-secondary"
+                    >
                         Upgrade Annually
                     </button>
                 {% endif %}
@@ -73,13 +490,13 @@
 </div>
 
 <script>
-// 1. Function to simply VALIDATE and show the price drop
 function applyPromo() {
     const code = document.getElementById('promo_code_input').value.trim();
     const status = document.getElementById('promo_status');
     const breakdown = document.getElementById('price_breakdown');
-    
+
     if (!code) {
+        status.style.color = "#dc2626";
         status.innerText = "Please enter a code first.";
         return;
     }
@@ -92,33 +509,33 @@ function applyPromo() {
         },
         body: JSON.stringify({
             code: code,
-            plan_id: {{ plans[0].id if plans else 'null' }}, // Test against the first plan for preview
+            plan_id: {{ plans[0].id if plans else 'null' }},
             cycle: 'monthly'
         })
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            status.style.color = "#28a745";
+            status.style.color = "#16a34a";
             status.innerText = "Promo code verified!";
             breakdown.style.display = "block";
             document.getElementById('discount_tag').innerText = `-${data.discount_percent}% (Save GHS ${data.savings})`;
             document.getElementById('new_total_display').innerText = `GHS ${data.new_total}`;
         } else {
-            status.style.color = "#dc3545";
+            status.style.color = "#dc2626";
             status.innerText = data.message;
             breakdown.style.display = "none";
         }
     })
-    .catch(err => {
+    .catch(() => {
+        status.style.color = "#dc2626";
         status.innerText = "Error connecting to server.";
     });
 }
 
-// 2. Function to actually start the PAYSTACK flow
 function startCheckout(planId, billingCycle) {
     const promoCode = document.getElementById('promo_code_input').value.trim();
-    
+
     alert("Taking you to Paystack secure checkout...");
 
     fetch('{{ url_for("billing.initialize_checkout") }}', {
@@ -130,12 +547,12 @@ function startCheckout(planId, billingCycle) {
         body: JSON.stringify({
             plan_id: planId,
             billing_cycle: billingCycle,
-            promo_code: promoCode 
+            promo_code: promoCode
         })
     })
     .then(response => response.json())
     .then(data => {
-        if(data.success && data.checkout_url) {
+        if (data.success && data.checkout_url) {
             window.location.href = data.checkout_url;
         } else {
             alert("Error: " + data.message);
