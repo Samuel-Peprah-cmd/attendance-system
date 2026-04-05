@@ -81,53 +81,53 @@
             </div>
 
             <!-- Details -->
-            <div class="flex flex-col justify-between">
-                <div>
-                    <p class="text-[9px] text-gray-400 font-black uppercase tracking-wide mb-1">Full Name</p>
-                    <h3 class="text-[24px] font-black text-gray-900 uppercase leading-tight">
+            <div class="flex flex-col justify-between min-w-0">
+                <div class="min-w-0">
+                    <p class="text-[9px] text-gray-400 font-black uppercase tracking-widest mb-1">Full Name</p>
+                    <h3 class="text-[22px] font-black text-gray-900 uppercase leading-tight break-words">
                         {{ staff.full_name }}
                     </h3>
                 </div>
 
-                <div class="grid grid-cols-2 gap-x-4 gap-y-3 mt-4 pt-3 border-t border-gray-200">
-                    <div>
-                        <p class="text-[9px] font-black text-brand uppercase">Designation</p>
-                        <p class="text-[12px] font-bold text-gray-800">
+                <div class="grid grid-cols-2 gap-x-5 gap-y-2.5 mt-3 pt-3 border-t border-gray-100 min-w-0">
+                    <div class="min-w-0">
+                        <p class="text-[7.5px] font-black text-brand uppercase tracking-widest mb-0.5">Designation</p>
+                        <p class="text-[11px] font-bold text-gray-800 leading-tight truncate">
                             {{ staff.designation or 'N/A' }}
                         </p>
                     </div>
 
-                    <div>
-                        <p class="text-[9px] font-black text-brand uppercase">Status</p>
-                        <p class="text-[12px] font-bold text-green-600">
+                    <div class="min-w-0">
+                        <p class="text-[7.5px] font-black text-brand uppercase tracking-widest mb-0.5">Status</p>
+                        <p class="text-[11px] font-black text-gray-800 uppercase leading-tight">
                             Active
                         </p>
                     </div>
 
-                    <div>
-                        <p class="text-[9px] font-black text-brand uppercase">Phone</p>
-                        <p class="text-[12px] font-bold text-gray-800 break-words">
+                    <div class="min-w-0">
+                        <p class="text-[7.5px] font-black text-brand uppercase tracking-widest mb-0.5">Phone</p>
+                        <p class="text-[11px] font-bold text-gray-800 leading-tight truncate">
                             {{ staff.phone or 'N/A' }}
                         </p>
                     </div>
 
-                    <div>
-                        <p class="text-[9px] font-black text-brand uppercase">Email</p>
-                        <p class="text-[12px] font-bold text-gray-800 break-words">
+                    <div class="min-w-0">
+                        <p class="text-[7.5px] font-black text-brand uppercase tracking-widest mb-0.5">Email</p>
+                        <p class="text-[11px] font-bold text-gray-800 leading-tight truncate">
                             {{ staff.email or 'N/A' }}
                         </p>
                     </div>
 
-                    <div>
-                        <p class="text-[9px] font-black text-brand uppercase">Date Issued</p>
-                        <p class="text-[12px] font-bold text-gray-800">
+                    <div class="min-w-0">
+                        <p class="text-[7.5px] font-black text-brand uppercase tracking-widest mb-0.5">Date Issued</p>
+                        <p class="text-[11px] font-bold text-gray-800 leading-tight truncate">
                             {{ issued_date }}
                         </p>
                     </div>
 
-                    <div>
-                        <p class="text-[9px] font-black text-brand uppercase">Expiry</p>
-                        <p class="text-[12px] font-bold text-gray-800">
+                    <div class="min-w-0">
+                        <p class="text-[7.5px] font-black text-brand uppercase tracking-widest mb-0.5">Expiry</p>
+                        <p class="text-[11px] font-bold text-gray-800 leading-tight truncate">
                             {{ expiry_date }}
                         </p>
                     </div>

@@ -17,6 +17,99 @@ from datetime import datetime, date
 dashboard_bp = Blueprint("dashboard", __name__)
 
 @dashboard_bp.route("/")
+def landing_page():
+    """Public facing landing page explaining ATOM Gate."""
+    # If they are already logged in, skip the landing page and go straight to the portal!
+    if current_user.is_authenticated:
+        if current_user.role == 'super_admin':
+            return redirect(url_for('schools.manage_schools'))
+        elif current_user.role == 'parent':
+            return redirect(url_for('dashboard.parent_dashboard'))
+        else:
+            return redirect(url_for('dashboard.index'))
+            
+    return render_template("landing.html")
+
+# @dashboard_bp.route("/")
+# @login_required
+# def index():
+#     # 🚨 1. SUPER ADMIN REDIRECT 
+#     if current_user.role == 'super_admin':
+#         return redirect(url_for('schools.manage_schools')) 
+        
+#     school_id = current_user.school_id
+#     school = School.query.get(school_id)
+    
+#     # 🚨 2. SAFETY CATCH
+#     if not school:
+#         return "Error: Your account is not linked to a school. Please contact support.", 403
+
+#     # 🚨 3. BILLING CATCH
+#     if not school.is_active:
+#         flash("Subscription Expired. Please renew to access your dashboard.", "warning")
+#         return redirect(url_for('billing.pricing_page')) # Send them to the payment page
+
+#     # 4. Setup Exact Timeframes (the rest of your logic stays the same)
+#     now = datetime.utcnow()
+#     today = now.date()
+#     yesterday = today - timedelta(days=1)
+    
+#     # Get Monday of the current week at exactly 00:00:00
+#     start_of_week_date = today - timedelta(days=today.weekday())
+#     start_of_week = datetime.combine(start_of_week_date, dt_time.min) 
+
+#     # 4. Build the 'stats' dictionary
+#     stats = {
+#         "today_count": Attendance.query.filter(
+#             Attendance.school_id == school_id, 
+#             db.func.date(Attendance.timestamp) == today
+#         ).count(),
+        
+#         "yesterday_count": Attendance.query.filter(
+#             Attendance.school_id == school_id, 
+#             db.func.date(Attendance.timestamp) == yesterday
+#         ).count(),
+        
+#         "weekly_count": Attendance.query.filter(
+#             Attendance.school_id == school_id, 
+#             Attendance.timestamp >= start_of_week # Now compares datetime to datetime accurately!
+#         ).count(),
+        
+#         "current_in": Attendance.query.filter(
+#             Attendance.school_id == school_id,
+#             Attendance.status == 'IN',
+#             db.func.date(Attendance.timestamp) == today
+#         ).count()
+#     }
+
+#     # 5. Global Stats
+#     total_students = Student.query.filter_by(school_id=school_id).count()
+    
+#     # 6. Geofence Violations
+#     violations = Attendance.query.filter(
+#         Attendance.school_id == school_id,
+#         Attendance.is_within_boundary == False,
+#         db.func.date(Attendance.timestamp) == today
+#     ).order_by(Attendance.timestamp.desc()).limit(5).all()
+
+#     # 7. Top Late Arrivals (Dynamic calculation based on school settings)
+#     opening = school.opening_time if school.opening_time else dt_time(7, 30)
+#     late_threshold = datetime.combine(today, opening)
+#     late_arrivals = Attendance.query.filter(
+#         Attendance.school_id == school_id,
+#         Attendance.status == 'IN',
+#         Attendance.timestamp > late_threshold,
+#         db.func.date(Attendance.timestamp) == today
+#     ).order_by(Attendance.timestamp.desc()).limit(5).all()
+
+#     # 8. Final Data Hand-off
+#     return render_template("dashboard/index.html", 
+#                            total_students=total_students, 
+#                            stats=stats,  
+#                            violations=violations,
+#                            late_arrivals=late_arrivals)
+
+@dashboard_bp.route("/dashboard")
 @login_required
 def index():
     # 🚨 1. SUPER ADMIN REDIRECT 
@@ -35,7 +128,7 @@ def index():
         flash("Subscription Expired. Please renew to access your dashboard.", "warning")
         return redirect(url_for('billing.pricing_page')) # Send them to the payment page
 
-    # 4. Setup Exact Timeframes (the rest of your logic stays the same)
+    # 4. Setup Exact Timeframes
     now = datetime.utcnow()
     today = now.date()
     yesterday = today - timedelta(days=1)
@@ -58,7 +151,7 @@ def index():
         
         "weekly_count": Attendance.query.filter(
             Attendance.school_id == school_id, 
-            Attendance.timestamp >= start_of_week # Now compares datetime to datetime accurately!
+            Attendance.timestamp >= start_of_week 
         ).count(),
         
         "current_in": Attendance.query.filter(
@@ -78,7 +171,7 @@ def index():
         db.func.date(Attendance.timestamp) == today
     ).order_by(Attendance.timestamp.desc()).limit(5).all()
 
-    # 7. Top Late Arrivals (Dynamic calculation based on school settings)
+    # 7. Top Late Arrivals
     opening = school.opening_time if school.opening_time else dt_time(7, 30)
     late_threshold = datetime.combine(today, opening)
     late_arrivals = Attendance.query.filter(
@@ -94,7 +187,6 @@ def index():
                            stats=stats,  
                            violations=violations,
                            late_arrivals=late_arrivals)
-
 
 # @dashboard_bp.route("/settings", methods=["GET", "POST"])
 # @login_required

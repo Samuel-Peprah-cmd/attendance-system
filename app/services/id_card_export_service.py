@@ -219,15 +219,15 @@ def generate_student_id_png(student, issued_date: str, session_text: str, public
     contact = student.guardian_one_phone or "N/A"
     dob = student.date_of_birth.strftime("%d %b %Y") if getattr(student, "date_of_birth", None) else "N/A"
     status_text = "ACTIVE" if getattr(student, "is_active", True) else "INACTIVE"
-    status_color = (22, 163, 74) if getattr(student, "is_active", True) else (220, 38, 38)
+    status_color = primary if getattr(student, "is_active", True) else secondary
 
     detail_items = [
-        (col1_x, row1_y, "CLASS", student_class, secondary, 220),
-        (col2_x, row1_y, "BLOOD G.", blood_group, (220, 38, 38) if blood_group != "N/A" else secondary, 170),
-        (col1_x, row2_y, "CONTACT", contact, secondary, 220),
-        (col2_x, row2_y, "DATE OF BIRTH", dob, secondary, 190),
-        (col1_x, row3_y, "STATUS", status_text, status_color, 170),
-        (col2_x, row3_y, "DATE ISSUED", issued_date, secondary, 220),
+        (col1_x, row1_y, "CLASS", student_class, primary, 220),
+        (col2_x, row1_y, "BLOOD G.", blood_group, primary if blood_group != "N/A" else secondary, 220),
+        (col1_x, row2_y, "CONTACT", contact, primary, 220),
+        (col2_x, row2_y, "DATE OF BIRTH", dob, primary, 190),
+        (col1_x, row3_y, "STATUS", status_text, status_color, 220),
+        (col2_x, row3_y, "DATE ISSUED", issued_date, primary, 220),
     ]
 
     for x, y, label, value, color, width in detail_items:

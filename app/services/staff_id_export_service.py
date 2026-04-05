@@ -214,15 +214,15 @@ def generate_staff_id_png(staff, issued_date: str, expiry_date: str, session_tex
     phone = staff.phone or "N/A"
     email = staff.email or "N/A"
     status_text = "ACTIVE" if getattr(staff, "is_active", True) else "INACTIVE"
-    status_color = (22, 163, 74) if getattr(staff, "is_active", True) else (220, 38, 38)
+    status_color = primary if getattr(staff, "is_active", True) else secondary
 
     detail_items = [
-        (col1_x, row1_y, "DESIGNATION", designation, secondary, 220),
-        (col2_x, row1_y, "STATUS", status_text, status_color, 170),
-        (col1_x, row2_y, "PHONE", phone, secondary, 220),
-        (col2_x, row2_y, "EMAIL", email, secondary, 220),
-        (col1_x, row3_y, "DATE ISSUED", issued_date, secondary, 170),
-        (col2_x, row3_y, "EXPIRY", expiry_date, secondary, 220),
+        (col1_x, row1_y, "DESIGNATION", designation, primary, 220),
+        (col1_x, row1_y, "STATUS", status_text, status_color, 170),
+        (col1_x, row2_y, "PHONE", phone, primary, 220),
+        (col2_x, row2_y, "EMAIL", email, primary, 220),
+        (col1_x, row3_y, "DATE ISSUED", issued_date, primary, 170),
+        (col2_x, row3_y, "EXPIRY", expiry_date, primary, 220),
     ]
 
     for x, y, label, value, color, width in detail_items:
