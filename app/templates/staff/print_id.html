@@ -3,7 +3,7 @@
 {% block content %}
 <div class="flex flex-col items-center no-print mb-6">
     <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-center max-w-sm">
-        <h2 class="text-md font-bold text-gray-800 mb-1">Staff ID Preview</h2>
+        <h2 class="text-md font-bold text-gray-800 mb-1">Staff Card Preview</h2>
         <p class="text-[11px] text-gray-500 mb-4">Landscape card • Clean layout • Large QR for scanning</p>
 
         <div class="flex gap-2 justify-center">
@@ -47,7 +47,7 @@
                         {{ staff.school.name }}
                     </h2>
                     <p class="text-[10px] font-semibold text-white/80 uppercase tracking-wide mt-1">
-                        Staff Identification Card
+                        STAFF ATTENDANCE CARD
                     </p>
                 </div>
             </div>
@@ -154,14 +154,141 @@
         <!-- Footer -->
         <div class="relative z-10 bg-gray-50 border-t border-gray-200 px-5 flex items-center justify-between">
             <p class="text-[8px] font-black uppercase tracking-widest text-gray-500">
-                OFFICIAL {{ staff.school.name }} STAFF ID
+                OFFICIAL {{ staff.school.name }} STAFF ATTENDANCE CARD
             </p>
             <p class="text-[6px] font-bold text-brand">
-                AtomDev Studios Smart School Attendance System
+                ATOM Gate
             </p>
         </div>
     </div>
 </div>
+
+<div class="flex flex-col items-center no-print mt-10 mb-6">
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 text-center max-w-sm">
+        <h2 class="text-md font-bold text-gray-800 mb-1">Staff ID Back Preview</h2>
+        <p class="text-[11px] text-gray-500 mb-4">Ownership notice • Return instructions • School contact</p>
+
+        <div class="flex gap-2 justify-center">
+            <a href="{{ url_for('staff.download_staff_id_card_back', staff_id=staff.id) }}"
+               class="bg-brand text-white px-5 py-2 rounded-lg font-bold shadow-md text-xs hover:brightness-95">
+                Download Back PVC Card
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="print-container">
+    <div class="preview-shell">
+        <div id="staff-id-card-back" class="bg-white border border-gray-300 rounded-xl shadow-2xl overflow-hidden font-sans relative flex flex-col">
+
+            {% if staff.school.logo_path %}
+            <div class="absolute inset-0 pointer-events-none flex items-center justify-center z-0">
+                <img src="{{ staff.school.logo_path }}"
+                     class="w-[180px] h-[180px] object-contain opacity-[0.03]">
+            </div>
+            {% endif %}
+
+            <div class="relative z-10 bg-brand text-white px-5 py-3 flex items-center gap-3">
+                {% if staff.school.logo_path %}
+                    <img src="{{ staff.school.logo_path }}"
+                         class="w-10 h-10 rounded-full bg-white p-1 object-contain shadow-sm flex-shrink-0">
+                {% endif %}
+                <div>
+                    <h2 class="text-[15px] font-black uppercase leading-none">
+                        {{ staff.school.name }}
+                    </h2>
+                    <p class="text-[10px] font-semibold text-white/80 uppercase tracking-wide mt-1">
+                        STAFF ATTENDANCE CARD
+                    </p>
+                </div>
+            </div>
+
+            <div class="relative z-10 flex-1 px-6 py-2.5 flex flex-col justify-between bg-white/95">
+                
+                <div class="text-center space-y-1">
+                    <p class="text-[12px] font-black uppercase tracking-[0.16em] text-gray-900">
+                        Strictly Non-Transferable
+                    </p>
+                    <p class="text-[9px] leading-snug text-gray-600 font-medium max-w-2xl mx-auto">
+                        This identification card is the official property of <span class="font-black text-brand">{{ staff.school.name }}</span>. 
+                        If found, please return it to the school or contact administration immediately.
+                    </p>
+                </div>
+
+                {# 🚨 SAFE DATA EXTRACTION 🚨 #}
+                {% set profile = staff.school.profile %}
+                {% set school_email = staff.school.contact_email or "contact@" ~ staff.school.name|lower|replace(' ', '') ~ ".edu" %}
+                {% set school_phone = staff.school.contact_phone or "Contact Administration" %}
+                    
+                {% set school_address = staff.school.contact_address %}
+                {% if not school_address or school_address == 'Ghana' %}
+                    {% set school_address = "Address pending configuration" %}
+                {% endif %}
+                    
+                {% set school_website = profile.website if profile and profile.website else "www." ~ staff.school.name|lower|replace(' ', '') ~ ".edu" %}
+
+                <div class="grid grid-cols-2 gap-2 mt-2">
+                    <div class="rounded-xl border border-gray-100 bg-gray-50 px-3 py-1.5 flex flex-col justify-center items-center text-center min-w-0">
+                        <p class="text-[7px] font-black uppercase tracking-[0.18em] text-brand mb-0.5">Email</p>
+                        <p class="text-[9px] font-bold text-gray-800 break-all leading-tight">{{ school_email }}</p>
+                    </div>
+
+                    <div class="rounded-xl border border-gray-100 bg-gray-50 px-3 py-1.5 flex flex-col justify-center items-center text-center min-w-0">
+                        <p class="text-[7px] font-black uppercase tracking-[0.18em] text-brand mb-0.5">Phone</p>
+                        <p class="text-[9px] font-bold text-gray-800 break-words leading-tight">{{ school_phone }}</p>
+                    </div>
+
+                    <div class="col-span-2 rounded-xl border border-gray-100 bg-gray-50 px-3 py-1.5 flex flex-col justify-center items-center text-center min-w-0">
+                        <p class="text-[7px] font-black uppercase tracking-[0.18em] text-brand mb-0.5">Location</p>
+                        <p class="text-[9px] font-bold text-gray-800 break-words leading-tight line-clamp-1">{{ school_address }}</p>
+                    </div>
+                </div>
+
+                <div class="text-center mt-1">
+                    <p class="text-[10px] font-black text-brand tracking-widest uppercase">{{ school_website }}</p>
+                </div>
+
+                <div class="rounded-lg border border-red-500/20 bg-red-50 px-3 py-1.5 text-center mt-1.5">
+                    <p class="text-[8px] font-black uppercase tracking-widest text-blue-600">
+                        Unauthorized use, duplication, or tampering is strictly prohibited.
+                    </p>
+                </div>
+            </div>
+
+            <div class="relative z-10 bg-gray-50 border-t border-gray-200 px-6 py-2.5 flex items-end justify-between gap-3">
+                <div class="pb-0.5">
+                    <div class="w-32 border-b-2 border-gray-400 mb-1"></div>
+                    <p class="text-[7px] font-black uppercase tracking-widest text-gray-500">Authorized Signature</p>
+                </div>
+                <p class="text-[6px] font-bold text-brand text-right leading-tight max-w-[230px]">
+                    ATOM Gate
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    #staff-id-card-back {
+        width: 760px;
+        height: 320px;
+        flex-shrink: 0;
+    }
+
+    @media print {
+        #staff-id-card-back {
+            width: 760px !important;
+            height: 320px !important;
+            max-width: 760px !important;
+            box-shadow: none !important;
+            border: 1px solid #ccc !important;
+            border-radius: 10px !important;
+            margin: 10mm auto !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+    }
+</style>
 
 <style>
     .print-container {

@@ -10,3 +10,4 @@ from app.models.broadcast import Broadcast
 from app.models.broadcast import BroadcastAttachment
 from app.models.broadcast import BroadcastRecipient
 from app.models.coupon import Coupon
+from app.models.school_profile import SchoolProfile

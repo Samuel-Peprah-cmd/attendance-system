@@ -157,7 +157,7 @@ def generate_staff_id_png(staff, issued_date: str, expiry_date: str, session_tex
         card.paste(logo, (logo_x + 3, 21), logo)
 
     draw.text((text_x, 20), (staff.school.name or "").upper(), font=font_school, fill=(255, 255, 255))
-    draw.text((text_x, 62), "STAFF IDENTIFICATION CARD", font=font_sub, fill=(255, 255, 255, 225))
+    draw.text((text_x, 62), "STAFF ATTENDANCE CARD", font=font_sub, fill=(255, 255, 255, 225))
 
     # Header right
     right_label = "ACADEMIC YEAR"
@@ -253,7 +253,205 @@ def generate_staff_id_png(staff, issued_date: str, expiry_date: str, session_tex
     draw.rectangle((0, footer_y, CARD_WIDTH, CARD_HEIGHT), fill=(249, 250, 251))
     draw.line((0, footer_y, CARD_WIDTH, footer_y), fill=(229, 231, 235), width=2)
 
-    footer_left = f"OFFICIAL {(staff.school.name or '').upper()} STAFF ID"
+    footer_left = f"OFFICIAL {(staff.school.name or '').upper()} STAFF ATTENDANCE CARD"
+    footer_right = "ATOM Gate"
+
+    draw.text((35, footer_y + 8), footer_left, font=font_footer_left, fill=(107, 114, 128))
+    fr_w = draw.textbbox((0, 0), footer_right, font=font_footer_right)[2]
+    draw.text((CARD_WIDTH - fr_w - 35, footer_y + 11), footer_right, font=font_footer_right, fill=primary)
+
+    output = BytesIO()
+    card = card.convert("RGB")
+    card.save(output, format="PNG", dpi=(300, 300))
+    output.seek(0)
+    return output
+
+
+# def generate_staff_id_back_png(staff, public_r2_base_url: str):
+#     primary = _hex_to_rgb(getattr(staff.school, "primary_color", None), (22, 128, 144))
+#     secondary = _hex_to_rgb(getattr(staff.school, "secondary_color", None), (31, 41, 55))
+
+#     card = Image.new("RGBA", (CARD_WIDTH, CARD_HEIGHT), (247, 248, 250, 255))
+#     draw = ImageDraw.Draw(card)
+
+#     header_h = 110
+#     draw.rectangle((0, 0, CARD_WIDTH, header_h), fill=primary)
+
+#     font_school = _safe_font(34, bold=True)
+#     font_sub = _safe_font(20, bold=False)
+#     font_title = _safe_font(24, bold=True)
+#     font_body = _safe_font(22, bold=False)
+#     font_label = _safe_font(16, bold=True)
+#     font_value = _safe_font(20, bold=True)
+#     font_footer_left = _safe_font(14, bold=True)
+#     font_footer_right = _safe_font(11, bold=True)
+
+#     logo_x = 28
+#     text_x = 125
+#     school_logo = None
+
+#     if getattr(staff.school, "logo_path", None):
+#         school_logo = _download_image(staff.school.logo_path, fallback_size=(70, 70))
+#         logo = _fit_contain(school_logo, (70, 70))
+#         logo_bg = Image.new("RGBA", (76, 76), (255, 255, 255, 255))
+#         card.paste(logo_bg, (logo_x, 18))
+#         card.paste(logo, (logo_x + 3, 21), logo)
+
+#     draw.text((text_x, 20), (staff.school.name or "").upper(), font=font_school, fill=(255, 255, 255))
+#     draw.text((text_x, 62), "STAFF IDENTIFICATION CARD — REVERSE SIDE", font=font_sub, fill=(255, 255, 255, 225))
+
+#     if school_logo is not None:
+#         wm = _fit_contain(school_logo, (250, 250)).copy()
+#         alpha = wm.getchannel("A").point(lambda p: int(p * 0.04))
+#         wm.putalpha(alpha)
+#         card.paste(wm, ((CARD_WIDTH - 250) // 2, (CARD_HEIGHT - 250) // 2 + 10), wm)
+
+#     title_text = "SCHOOL PROPERTY NOTICE"
+#     title_w = draw.textbbox((0, 0), title_text, font=font_title)[2]
+#     draw.text(((CARD_WIDTH - title_w) // 2, 145), title_text, font=font_title, fill=primary)
+
+#     notice_text = (
+#         f"This identification card is the property of {staff.school.name}. "
+#         f"If found, please return it to the school or contact the school using the information below."
+#     )
+#     _draw_text(draw, (120, 195), notice_text, font=font_body, fill=secondary, max_width=770, line_spacing=8)
+
+#     box1 = (90, 315, 455, 410)
+#     box2 = (560, 315, 925, 410)
+#     box3 = (90, 440, 925, 530)
+
+#     for box in [box1, box2, box3]:
+#         draw.rounded_rectangle(box, radius=18, outline=(220, 225, 230), width=2, fill=(250, 251, 252))
+
+#     school_email = staff.school.profile.email_primary if staff.school.profile and staff.school.profile.email_primary else "school@email.com"
+#     school_phone = staff.school.profile.phone_primary if staff.school.profile and staff.school.profile.phone_primary else "No phone available"
+#     school_address = staff.school.profile.full_address if staff.school.profile and staff.school.profile.full_address else "Address not provided"
+
+#     draw.text((115, 335), "SCHOOL EMAIL", font=font_label, fill=primary)
+#     _draw_text(draw, (115, 360), school_email, font=font_value, fill=secondary, max_width=300, line_spacing=2)
+
+#     draw.text((585, 335), "SCHOOL PHONE", font=font_label, fill=primary)
+#     _draw_text(draw, (585, 360), school_phone, font=font_value, fill=secondary, max_width=300, line_spacing=2)
+
+#     draw.text((115, 460), "SCHOOL ADDRESS", font=font_label, fill=primary)
+#     _draw_text(draw, (115, 485), school_address, font=font_value, fill=secondary, max_width=760, line_spacing=2)
+
+#     draw.rounded_rectangle((120, 548, 893, 585), radius=16, fill=(237, 247, 247))
+#     warning = "Unauthorized use, duplication, transfer, or tampering of this card is prohibited."
+#     ww = draw.textbbox((0, 0), warning, font=_safe_font(16, bold=True))[2]
+#     draw.text(((CARD_WIDTH - ww) // 2, 558), warning, font=_safe_font(16, bold=True), fill=secondary)
+
+#     footer_height = 36
+#     footer_y = CARD_HEIGHT - footer_height
+
+#     draw.rectangle((0, footer_y, CARD_WIDTH, CARD_HEIGHT), fill=(249, 250, 251))
+#     draw.line((0, footer_y, CARD_WIDTH, footer_y), fill=(229, 231, 235), width=2)
+
+#     footer_left = f"RETURN TO {(staff.school.name or '').upper()}"
+#     footer_right = "ATOM Gate"
+
+#     draw.text((35, footer_y + 8), footer_left, font=font_footer_left, fill=(107, 114, 128))
+#     fr_w = draw.textbbox((0, 0), footer_right, font=font_footer_right)[2]
+#     draw.text((CARD_WIDTH - fr_w - 35, footer_y + 11), footer_right, font=font_footer_right, fill=primary)
+
+#     output = BytesIO()
+#     card = card.convert("RGB")
+#     card.save(output, format="PNG", dpi=(300, 300))
+#     output.seek(0)
+#     return output
+
+def generate_staff_id_back_png(staff, public_r2_base_url: str):
+    primary = _hex_to_rgb(getattr(staff.school, "primary_color", None), (22, 128, 144))
+    secondary = _hex_to_rgb(getattr(staff.school, "secondary_color", None), (31, 41, 55))
+
+    card = Image.new("RGBA", (CARD_WIDTH, CARD_HEIGHT), (247, 248, 250, 255))
+    draw = ImageDraw.Draw(card)
+
+    header_h = 110
+    draw.rectangle((0, 0, CARD_WIDTH, header_h), fill=primary)
+
+    font_school = _safe_font(34, bold=True)
+    font_sub = _safe_font(20, bold=False)
+    font_title = _safe_font(24, bold=True)
+    font_body = _safe_font(22, bold=False)
+    font_label = _safe_font(16, bold=True)
+    font_value = _safe_font(20, bold=True)
+    font_footer_left = _safe_font(14, bold=True)
+    font_footer_right = _safe_font(11, bold=True)
+
+    logo_x = 28
+    text_x = 125
+    school_logo = None
+
+    if getattr(staff.school, "logo_path", None):
+        school_logo = _download_image(staff.school.logo_path, fallback_size=(70, 70))
+        logo = _fit_contain(school_logo, (70, 70))
+        logo_bg = Image.new("RGBA", (76, 76), (255, 255, 255, 255))
+        card.paste(logo_bg, (logo_x, 18))
+        card.paste(logo, (logo_x + 3, 21), logo)
+
+    draw.text((text_x, 20), (staff.school.name or "").upper(), font=font_school, fill=(255, 255, 255))
+    draw.text((text_x, 62), "STAFF ATTENDANCE CARD", font=font_sub, fill=(255, 255, 255, 225))
+
+    if school_logo is not None:
+        wm = _fit_contain(school_logo, (250, 250)).copy()
+        alpha = wm.getchannel("A").point(lambda p: int(p * 0.04))
+        wm.putalpha(alpha)
+        card.paste(wm, ((CARD_WIDTH - 250) // 2, (CARD_HEIGHT - 250) // 2 + 10), wm)
+
+    title_text = "SCHOOL PROPERTY NOTICE"
+    title_w = draw.textbbox((0, 0), title_text, font=font_title)[2]
+    draw.text(((CARD_WIDTH - title_w) // 2, 145), title_text, font=font_title, fill=primary)
+
+    notice_text = (
+        f"This attendance card is the property of {staff.school.name}. "
+        f"If found, please return it to the school or contact the school using the information below."
+    )
+    _draw_text(draw, (120, 195), notice_text, font=font_body, fill=secondary, max_width=770, line_spacing=8)
+
+    box1 = (90, 305, 455, 395)
+    box2 = (560, 305, 925, 395)
+    box3 = (90, 410, 925, 485)
+
+    for box in [box1, box2, box3]:
+        draw.rounded_rectangle(box, radius=18, outline=(220, 225, 230), width=2, fill=(250, 251, 252))
+
+    school_email = staff.school.contact_email or "contact@school.edu"
+    school_phone = staff.school.contact_phone or "Contact Administration"
+    
+    school_address = staff.school.contact_address
+    if not school_address or school_address.strip() == "Ghana":
+        school_address = "Address pending configuration"
+
+    school_website = getattr(staff.school.profile, 'website', None) if staff.school.profile else None
+    if not school_website:
+        clean_name = "".join(e for e in (staff.school.name or "school") if e.isalnum()).lower()
+        school_website = f"www.{clean_name}.edu"
+
+    draw.text((115, 325), "SCHOOL EMAIL", font=font_label, fill=primary)
+    _draw_text(draw, (115, 350), school_email, font=font_value, fill=secondary, max_width=300, line_spacing=2)
+
+    draw.text((585, 325), "SCHOOL PHONE", font=font_label, fill=primary)
+    _draw_text(draw, (585, 350), school_phone, font=font_value, fill=secondary, max_width=300, line_spacing=2)
+
+    draw.text((115, 425), "SCHOOL ADDRESS", font=font_label, fill=primary)
+    _draw_text(draw, (115, 450), school_address, font=font_value, fill=secondary, max_width=760, line_spacing=2)
+
+    web_w = draw.textbbox((0, 0), school_website, font=font_value)[2]
+    draw.text(((CARD_WIDTH - web_w) // 2, 510), school_website, font=font_value, fill=primary)
+
+    draw.rounded_rectangle((120, 545, 893, 582), radius=16, fill=(237, 247, 247))
+    warning = "Unauthorized use, duplication, transfer, or tampering of this card is prohibited."
+    ww = draw.textbbox((0, 0), warning, font=_safe_font(16, bold=True))[2]
+    draw.text(((CARD_WIDTH - ww) // 2, 555), warning, font=_safe_font(16, bold=True), fill=secondary)
+
+    footer_height = 36
+    footer_y = CARD_HEIGHT - footer_height
+
+    draw.rectangle((0, footer_y, CARD_WIDTH, CARD_HEIGHT), fill=(249, 250, 251))
+    draw.line((0, footer_y, CARD_WIDTH, footer_y), fill=(229, 231, 235), width=2)
+
+    footer_left = f"Authorized Signature"
     footer_right = "ATOM Gate"
 
     draw.text((35, footer_y + 8), footer_left, font=font_footer_left, fill=(107, 114, 128))

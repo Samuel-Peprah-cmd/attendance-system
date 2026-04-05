@@ -14,6 +14,8 @@ from app.services.notification_service import  send_parent_welcome
 from collections import defaultdict
 from app.services.storage_helper import upload_file_to_r2
 from app.utils.decorators import requires_limit
+from app.services.id_card_export_service import generate_student_id_png, generate_student_id_back_png
+from flask import send_file
 
 students_bp = Blueprint("students", __name__)
 
@@ -157,6 +159,31 @@ def download_id_card(student_id):
 
     safe_name = (student.full_name or "student").replace(" ", "_")
     filename = f"{safe_name}_ID_Card.png"
+
+    return send_file(
+        card_file,
+        mimetype="image/png",
+        as_attachment=True,
+        download_name=filename,
+        max_age=0
+    )
+
+@students_bp.route("/id-card/<int:student_id>/download-back")
+@login_required
+def download_id_card_back(student_id):
+    student = Student.query.filter_by(id=student_id, school_id=current_user.school_id).first()
+
+    if not student:
+        flash("Unauthorized Access Attempt Detected.", "danger")
+        return redirect(url_for("students.list_students"))
+
+    card_file = generate_student_id_back_png(
+        student=student,
+        public_r2_base_url=current_app.config["CF_PUBLIC_URL_PREFIX"],
+    )
+
+    safe_name = (student.full_name or "student").replace(" ", "_")
+    filename = f"{safe_name}_ID_Card_Back.png"
 
     return send_file(
         card_file,

@@ -40,6 +40,18 @@ class School(db.Model):
     users = db.relationship('User', backref='school', lazy=True)
     students = db.relationship('Student', backref='school', lazy=True)
     class_rooms = db.relationship('ClassRoom', backref='school', lazy=True)
+    
+    @property
+    def contact_email(self):
+        return self.profile.email_primary if self.profile and self.profile.email_primary else None
+
+    @property
+    def contact_phone(self):
+        return self.profile.phone_primary if self.profile and self.profile.phone_primary else None
+
+    @property
+    def contact_address(self):
+        return self.profile.full_address if self.profile else None
 
 
 

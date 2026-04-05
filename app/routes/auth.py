@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import current_user, login_user, logout_user, login_required
+from app.models.school_profile import SchoolProfile
 from app.models.user import User
 import secrets
 from app.extensions import db
@@ -46,19 +47,50 @@ def logout():
 @auth_bp.route("/profile", methods=["GET", "POST"])
 @login_required
 def profile():
-    if request.method == "POST":
-        new_password = request.form.get("new_password")
-        confirm_password = request.form.get("confirm_password")
-        
-        if new_password and new_password == confirm_password:
-            current_user.set_password(new_password)
+    school_profile = None
+
+    # 🚨 FIX 1: Safely check if the user is an admin or school_admin
+    if current_user.role in ["admin", "school_admin"] and current_user.school_id:
+        school_profile = SchoolProfile.query.filter_by(school_id=current_user.school_id).first()
+        if not school_profile:
+            school_profile = SchoolProfile(school_id=current_user.school_id)
+            db.session.add(school_profile)
             db.session.commit()
-            flash("Security credentials updated successfully!", "success")
-            return redirect(url_for('dashboard.index'))
-        else:
-            flash("Passwords do not match.", "danger")
-            
-    return render_template("auth/profile.html")
+
+    if request.method == "POST":
+        form_type = request.form.get("form_type")
+
+        if form_type == "password":
+            new_password = request.form.get("new_password")
+            confirm_password = request.form.get("confirm_password")
+
+            if new_password and new_password == confirm_password:
+                current_user.set_password(new_password)
+                db.session.commit()
+                flash("Security credentials updated successfully!", "success")
+                return redirect(url_for("auth.profile"))
+            else:
+                flash("Passwords do not match.", "danger")
+
+        # 🚨 FIX 2: Allow BOTH 'admin' and 'school_admin' to save the profile!
+        elif form_type == "school_profile" and current_user.role in ["admin", "school_admin"] and school_profile:
+            school_profile.email_primary = request.form.get("email_primary")
+            school_profile.email_secondary = request.form.get("email_secondary")
+            school_profile.phone_primary = request.form.get("phone_primary")
+            school_profile.phone_secondary = request.form.get("phone_secondary")
+            school_profile.website = request.form.get("website")
+            school_profile.address_line_1 = request.form.get("address_line_1")
+            school_profile.address_line_2 = request.form.get("address_line_2")
+            school_profile.city = request.form.get("city")
+            school_profile.region_state = request.form.get("region_state")
+            school_profile.postal_code = request.form.get("postal_code")
+            school_profile.country = request.form.get("country") or "Ghana"
+
+            db.session.commit()
+            flash("School contact profile updated successfully!", "success")
+            return redirect(url_for("auth.profile"))
+
+    return render_template("auth/profile.html", school_profile=school_profile)
 
 @auth_bp.route("/forgot-password", methods=["GET", "POST"])
 def forgot_password():

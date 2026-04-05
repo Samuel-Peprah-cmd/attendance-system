@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <section class="relative overflow-hidden bg-white border-b border-gray-100">
+        <div class="absolute inset-0 opacity-[0.04]"
+             style="background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,0.15) 1px, transparent 0); background-size: 24px 24px;">
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 relative">
+            <div class="max-w-4xl">
+                <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand/10 border border-brand/10 mb-6">
+                    <span class="h-2.5 w-2.5 rounded-full bg-brand animate-pulse"></span>
+                    <span class="text-[11px] font-black uppercase tracking-[0.2em] text-brand">About ATOM Gate</span>
+                </div>
+
+                <h1 class="text-4xl md:text-6xl font-black tracking-tight text-gray-900 leading-tight uppercase">
+                    Smarter School Security, Identity, and Communication
+                </h1>
+
+                <p class="mt-6 text-base md:text-lg text-gray-600 leading-8 max-w-3xl">
+                    ATOM Gate is a modern school operations and security platform designed to help educational institutions
+                    manage attendance, identity verification, guardian communication, staff tracking, and access intelligence
+                    through one unified system.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-14 md:py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-3 gap-8">
+
+            <div class="lg:col-span-2 space-y-8">
+                <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 md:p-10">
+                    <h2 class="text-2xl md:text-3xl font-black text-gray-900 uppercase tracking-tight mb-5">
+                        What ATOM Gate Is
+                    </h2>
+                    <div class="space-y-5 text-gray-600 leading-8 text-[15px]">
+                        <p>
+                            ATOM Gate is built to solve a critical problem for schools: the need for a secure, intelligent,
+                            and professional system for managing student and staff check-in/check-out, school identity,
+                            guardian alerts, and administrative oversight.
+                        </p>
+                        <p>
+                            Instead of schools depending on manual registers, fragmented communication tools, or isolated systems,
+                            ATOM Gate brings attendance, access control, ID generation, scanning, and communication into one platform.
+                        </p>
+                        <p>
+                            The platform supports school-branded ID cards, QR-based scanning, guardian notifications,
+                            reporting, analytics, and scalable access control. It is built with both operational use and
+                            long-term institutional growth in mind.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8">
+                        <h3 class="text-xl font-black text-gray-900 uppercase mb-4">Mission</h3>
+                        <p class="text-gray-600 leading-7">
+                            To help schools and organizations operate with more security, visibility, accountability,
+                            and trust through intelligent digital systems.
+                        </p>
+                    </div>
+
+                    <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8">
+                        <h3 class="text-xl font-black text-gray-900 uppercase mb-4">Vision</h3>
+                        <p class="text-gray-600 leading-7">
+                            To become a trusted digital infrastructure provider for schools and institutions seeking
+                            smarter identity, communication, and operational systems.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 md:p-10">
+                    <h2 class="text-2xl font-black text-gray-900 uppercase mb-6">Core Capabilities</h2>
+
+                    <div class="grid sm:grid-cols-2 gap-4">
+                        <div class="rounded-2xl bg-gray-50 border border-gray-100 p-5">
+                            <h4 class="font-black text-gray-900 uppercase text-sm mb-2">Attendance Intelligence</h4>
+                            <p class="text-sm text-gray-600 leading-7">
+                                Student and staff check-in/check-out tracking with logs, timestamps, and reporting.
+                            </p>
+                        </div>
+
+                        <div class="rounded-2xl bg-gray-50 border border-gray-100 p-5">
+                            <h4 class="font-black text-gray-900 uppercase text-sm mb-2">Identity Cards</h4>
+                            <p class="text-sm text-gray-600 leading-7">
+                                Professionally generated school-branded PVC-ready ID cards with QR verification.
+                            </p>
+                        </div>
+
+                        <div class="rounded-2xl bg-gray-50 border border-gray-100 p-5">
+                            <h4 class="font-black text-gray-900 uppercase text-sm mb-2">Scanner Ecosystem</h4>
+                            <p class="text-sm text-gray-600 leading-7">
+                                Browser-based web scanner and dedicated Kivy scanner app for controlled access points.
+                            </p>
+                        </div>
+
+                        <div class="rounded-2xl bg-gray-50 border border-gray-100 p-5">
+                            <h4 class="font-black text-gray-900 uppercase text-sm mb-2">Guardian Communication</h4>
+                            <p class="text-sm text-gray-600 leading-7">
+                                Email, SMS, and WhatsApp alerts for attendance, notices, and school broadcasts.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 sticky top-24">
+                    <h2 class="text-xl font-black text-gray-900 uppercase mb-6">Founder</h2>
+
+                    <div class="flex flex-col items-center text-center">
+                        <div class="w-40 h-40 rounded-[2rem] overflow-hidden border-4 border-brand/10 shadow-md bg-gray-100">
+                            <img src="{{ url_for('static', filename='images/founder.jpg') }}"
+                                 alt="Atom De Legend"
+                                 class="w-full h-full object-cover">
+                        </div>
+
+                        <h3 class="mt-5 text-2xl font-black text-gray-900 uppercase">SAMUEL PEPRAH</h3>
+                        <p class="text-brand font-bold uppercase tracking-[0.18em] text-[11px] mt-2">
+                            Founder & Lead Engineer, AtomDev Studios
+                        </p>
+
+                        <p class="mt-5 text-sm text-gray-600 leading-7">
+                            "I built ATOM Gate because safety and communication in education should not be left to chance. Schools deserve enterprise-grade tools, and parents deserve absolute peace of mind."
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8">
+                    <h3 class="text-lg font-black text-gray-900 uppercase mb-4">Public Trust Principles</h3>
+                    <ul class="space-y-3 text-sm text-gray-600 leading-7">
+                        <li>• Responsible handling of personal data</li>
+                        <li>• Secure and auditable attendance records</li>
+                        <li>• School-specific data separation</li>
+                        <li>• Transparent communication and system controls</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

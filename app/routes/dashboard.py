@@ -261,3 +261,15 @@ def web_scanner():
     device_key = current_app.config.get('SCANNER_DEVICE_KEY', '')
     
     return render_template('scanner.html', device_key=device_key)
+
+@dashboard_bp.route('/privacy')
+def privacy():
+    return render_template('privacy.html', title="Privacy Policy - ATOM Gate")
+
+@dashboard_bp.route('/terms')
+def terms():
+    return render_template('terms.html', title="Terms of Service - ATOM Gate")
+
+@dashboard_bp.route('/about')
+def about():
+    return render_template('about.html', title="About Us - ATOM Gate")

@@ -12,6 +12,8 @@ from app.models.attendance import Attendance
 from math import radians, cos, sin, asin, sqrt
 from app.services.storage_helper import upload_file_to_r2
 from app.utils.decorators import requires_feature
+from flask import send_file
+from app.services.staff_id_export_service import generate_staff_id_png, generate_staff_id_back_png
 
 staff_bp = Blueprint("staff", __name__, url_prefix="/staff")
 
@@ -81,24 +83,6 @@ def register_staff():
             flash(f"System Error: {str(e)}", "danger")
 
     return render_template('staff/staff_register.html')
-
-@staff_bp.route('/print/<int:staff_id>')
-@login_required
-def print_card(staff_id):
-    staff = Staff.query.filter_by(id=staff_id, school_id=current_user.school_id).first_or_404()
-
-    today = datetime.utcnow()
-    issued_date = today.strftime("%d %b %Y")
-    expiry_date = (today + timedelta(days=365)).strftime("%d %b %Y")
-    session_text = f"{today.year}/{today.year + 1}"
-
-    return render_template(
-        'staff/print_id.html',
-        staff=staff,
-        issued_date=issued_date,
-        expiry_date=expiry_date,
-        session_text=session_text
-    )
 
 @staff_bp.route('/list')
 @login_required
@@ -318,6 +302,48 @@ def download_staff_id_card(staff_id):
 
     safe_name = (staff.full_name or "staff").replace(" ", "_")
     filename = f"{safe_name}_Staff_ID_Card.png"
+
+    return send_file(
+        card_file,
+        mimetype="image/png",
+        as_attachment=True,
+        download_name=filename,
+        max_age=0
+    )
+
+@staff_bp.route('/print/<int:staff_id>')
+@login_required
+def print_card(staff_id):
+    staff = Staff.query.filter_by(id=staff_id, school_id=current_user.school_id).first_or_404()
+
+    today = datetime.utcnow()
+    issued_date = today.strftime("%d %b %Y")
+    expiry_date = (today + timedelta(days=365)).strftime("%d %b %Y")
+    session_text = f"{today.year}/{today.year + 1}"
+
+    return render_template(
+        'staff/print_id.html',
+        staff=staff,
+        issued_date=issued_date,
+        expiry_date=expiry_date,
+        session_text=session_text
+    )
+
+@staff_bp.route('/id-card/<int:staff_id>/download-back')
+@login_required
+def download_staff_id_card_back(staff_id):
+    staff = Staff.query.filter_by(
+        id=staff_id,
+        school_id=current_user.school_id
+    ).first_or_404()
+
+    card_file = generate_staff_id_back_png(
+        staff=staff,
+        public_r2_base_url=current_app.config["CF_PUBLIC_URL_PREFIX"],
+    )
+
+    safe_name = (staff.full_name or "staff").replace(" ", "_")
+    filename = f"{safe_name}_Staff_ID_Card_Back.png"
 
     return send_file(
         card_file,
