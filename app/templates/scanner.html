@@ -28,26 +28,15 @@
         #reader video { object-fit: cover !important; border-radius: 2.5rem; }
     </style>
 </head>
-<div id="biometric-lock-screen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #0f172a; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white;">
-    <h1 style="font-size: 2.5rem; margin-bottom: 10px;">🔒 Terminal Locked</h1>
-    <p style="color: #94a3b8; margin-bottom: 30px;">Authorized Guards Only</p>
-    
-    <input type="hidden" id="csrf_token_auth" value="{{ csrf_token() }}">
-    
-    <button id="btn-unlock-terminal" style="background-color: #3b82f6; color: white; border: none; padding: 15px 30px; font-size: 1.2rem; border-radius: 8px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.3);">
-        👆 Tap to Unlock
-    </button>
-    <p id="unlock-status" style="margin-top: 15px; color: #ef4444; font-weight: bold;"></p>
-</div>
-<div id="secure-scanner-content" style="display: none;">
-    </div>
+<!-- <div id="secure-scanner-content" style="display: none;">
+    </div> -->
 
 <body class="bg-[#0a0a0c] text-white antialiased min-h-screen flex flex-col">
 
     <!-- <div id="api-config" data-url="http://127.0.0.1:5000"></div> -->
     <div id="api-config" data-url="https://attendance-system-7zf4.onrender.com"></div>
 
-    <div id="setup-overlay" class="fixed inset-0 bg-[#0a0a0c] z-[100] flex items-center justify-center p-6 hidden">
+    <div id="setup-overlay" class="fixed inset-0 bg-[#0a0a0c] z-[10000] flex items-center justify-center p-6 hidden">
         <div class="bg-white p-10 rounded-[3rem] w-full max-w-md shadow-2xl text-center text-gray-900">
             <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">🔐</div>
             <h2 class="text-3xl font-black tracking-tighter mb-2">Activate Node</h2>
@@ -60,11 +49,41 @@
         </div>
     </div>
 
+    <div id="biometric-lock-screen"
+         class="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#0f172a] text-white px-6 text-center">
+        <div class="w-24 h-24 rounded-[2rem] bg-white/5 border border-white/10 flex items-center justify-center mb-6 text-4xl">
+            🔒
+        </div>
+
+        <h1 class="text-3xl md:text-5xl font-black tracking-tight mb-3">Terminal Locked</h1>
+        <p class="text-slate-400 font-bold uppercase tracking-[0.25em] text-[11px] mb-8">
+            Authorized Guards Only
+        </p>
+
+        <input type="hidden" id="csrf_token_auth" value="{{ csrf_token() }}">
+
+        <button id="btn-unlock-terminal"
+                class="bg-blue-600 hover:bg-blue-500 text-white border-0 px-8 py-4 text-base md:text-lg rounded-2xl cursor-pointer font-black shadow-xl transition-all active:scale-95">
+            👆 Use Saved Passkey
+        </button>
+
+        <button id="btn-lock-help"
+                type="button"
+                class="mt-3 text-xs font-black uppercase tracking-[0.18em] text-slate-400 hover:text-white transition">
+            Trouble unlocking?
+        </button>
+
+        <p id="unlock-status" class="mt-5 text-sm font-bold text-red-400 min-h-[24px]"></p>
+    </div>
+    
+
+    <div id="scanner-shell" class="min-h-screen flex flex-col opacity-0 pointer-events-none transition-opacity duration-300">
+
     <header class="h-20 px-6 border-b border-white/5 flex justify-between items-center bg-[#0a0a0c] shrink-0">
         <div class="flex items-center gap-3">
-            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-black italic">ADS</div>
+            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-black italic">AGT</div>
             <div>
-                <h1 class="text-lg font-black tracking-tighter uppercase leading-none">Atom Dev Terminal</h1>
+                <h1 class="text-lg font-black tracking-tighter uppercase leading-none">Atom Gate Terminal</h1>
                 <p id="node-display" class="text-[9px] font-bold text-gray-500 tracking-[0.2em] uppercase mt-1">Initializing...</p>
             </div>
         </div>
@@ -163,6 +182,9 @@
                 // 1. Wipe the saved device keys from browser memory
                 localStorage.removeItem('device_key');
                 localStorage.removeItem('deviceKey');
+                localStorage.removeItem('device_school_id');
+                localStorage.removeItem('school_id');
+                localStorage.removeItem('terminal_school_id');
                 
                 // 2. Instantly bring the security wall back up
                 document.getElementById('setup-overlay').classList.remove('hidden');
@@ -173,10 +195,9 @@
                 // 4. Update the visual indicators in the header
                 document.getElementById('node-display').innerText = "NODE DISCONNECTED";
                 document.getElementById('node-display').classList.replace('text-gray-500', 'text-red-500');
-                
-                // (Optional) If you want to completely kill the camera stream as well, 
-                // you can uncomment the line below to force a hard refresh after showing the wall.
-                // window.location.reload();
+
+                lockTerminalUI('🔒 Terminal disconnected.');
+
             }
         }
     </script>
@@ -185,234 +206,154 @@
     <script>
         const { startAuthentication } = SimpleWebAuthnBrowser;
 
-        document.getElementById('btn-unlock-terminal').addEventListener('click', async () => {
-            const statusText = document.getElementById('unlock-status');
-            const csrfToken = document.getElementById('csrf_token_auth').value;
-        
-            statusText.innerText = "Requesting secure challenge...";
-        
+        const lockScreen = document.getElementById('biometric-lock-screen');
+        const scannerShell = document.getElementById('scanner-shell');
+        const unlockBtn = document.getElementById('btn-unlock-terminal');
+        const unlockStatus = document.getElementById('unlock-status');
+        const csrfToken = document.getElementById('csrf_token_auth').value;
+
+        function unlockTerminalUI() {
+            lockScreen.classList.add('hidden');
+            scannerShell.classList.remove('opacity-0', 'pointer-events-none');
+            scannerShell.classList.add('opacity-100');
+            sessionStorage.setItem('terminal_unlocked', '1');
+        }
+
+        function showSetupRequiredState(message = '') {
+            document.getElementById('setup-overlay')?.classList.remove('hidden');
+            lockScreen.classList.add('hidden');
+            scannerShell.classList.add('opacity-0', 'pointer-events-none');
+            scannerShell.classList.remove('opacity-100');
+
+            if (message) {
+                unlockStatus.style.color = '#fbbf24';
+                unlockStatus.innerText = message;
+            }
+        }
+
+        function lockTerminalUI(message = '') {
+            lockScreen.classList.remove('hidden');
+            scannerShell.classList.add('opacity-0', 'pointer-events-none');
+            scannerShell.classList.remove('opacity-100');
+            sessionStorage.removeItem('terminal_unlocked');
+            if (message) unlockStatus.innerText = message;
+        }
+
+        function getTerminalSchoolId() {
+            // Use the key your terminal activation flow already stores.
+            // Adjust these key names if your scanner activation script uses a different one.
+            return (
+                localStorage.getItem('device_school_id') ||
+                localStorage.getItem('school_id') ||
+                localStorage.getItem('terminal_school_id') ||
+                ''
+            );
+        }
+
+        async function beginPasskeyUnlock() {
+            const schoolId = getTerminalSchoolId();
+
+            if (!schoolId) {
+                lockTerminalUI('❌ Terminal is not linked to a school yet. Activate the node first.');
+                return;
+            }
+
+            unlockBtn.disabled = true;
+            unlockStatus.style.color = '#60a5fa';
+            unlockStatus.innerText = 'Requesting secure challenge...';
+
             try {
-                // 1. Get the challenge
-                const resp = await fetch('/api/biometric/authenticate-options', {
+                const optionsResp = await fetch('/api/biometric/terminal/authenticate-options', {
                     method: 'POST',
-                    headers: { 
-                        'X-CSRFToken': csrfToken,
-                        'ngrok-skip-browser-warning': 'true'
-                    }
-                });
-            
-                // 🚨 BULLETPROOF FIX: Read the raw text first!
-                const rawText = await resp.text();
-            
-                // If the server sent back an HTML Webpage (starts with '<'), we are logged out!
-                if (rawText.trim().startsWith('<')) {
-                    throw new Error("You are logged out! Please refresh the page and log in.");
-                }
-            
-                // Now it is safe to convert to JSON
-                const options = JSON.parse(rawText);
-            
-                if (!resp.ok) {
-                    throw new Error(options.message || "Server rejected request.");
-                }
-
-                // 2. TRIGGER THE FINGERPRINT SCANNER!
-                statusText.innerText = "Please scan your fingerprint or face...";
-                const authResp = await startAuthentication(options);
-
-                // 3. Verify the signature
-                statusText.innerText = "Verifying signature...";
-                const verifyResp = await fetch('/api/biometric/authenticate-verify', {
-                    method: 'POST',
-                    headers: { 
+                    headers: {
                         'Content-Type': 'application/json',
                         'X-CSRFToken': csrfToken,
                         'ngrok-skip-browser-warning': 'true'
                     },
-                    body: JSON.stringify(authResp),
+                    body: JSON.stringify({ school_id: schoolId })
+                });
+
+                const optionsText = await optionsResp.text();
+                let optionsJson = {};
+                try {
+                    optionsJson = JSON.parse(optionsText);
+                } catch (_) {
+                    throw new Error('Invalid server response while requesting passkey challenge.');
+                }
+
+                if (!optionsResp.ok || optionsJson.success === false) {
+                    throw new Error(optionsJson.message || 'Could not start passkey authentication.');
+                }
+
+                unlockStatus.innerText = 'Use your fingerprint, Face ID, or Windows Hello...';
+
+                const authResp = await startAuthentication(optionsJson);
+
+                unlockStatus.innerText = 'Verifying passkey...';
+
+                const verifyResp = await fetch('/api/biometric/terminal/authenticate-verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                        'ngrok-skip-browser-warning': 'true'
+                    },
+                    body: JSON.stringify(authResp)
                 });
 
                 const verifyText = await verifyResp.text();
-                if (verifyText.trim().startsWith('<')) {
-                    throw new Error("Session expired during verification. Please log in.");
+                let verifyJson = {};
+                try {
+                    verifyJson = JSON.parse(verifyText);
+                } catch (_) {
+                    throw new Error('Invalid verification response from server.');
                 }
-            
-                const verifyJSON = JSON.parse(verifyText);
 
-                if (verifyJSON.success) {
-                    // 🟢 UNLOCK THE VAULT!
-                    document.getElementById('biometric-lock-screen').style.display = 'none';
-                    document.getElementById('secure-scanner-content').style.display = 'block';
-                } else {
-                    statusText.innerText = "❌ Fingerprint did not match.";
+                if (!verifyResp.ok || !verifyJson.success) {
+                    throw new Error(verifyJson.message || 'Passkey verification failed.');
                 }
-            
+
+                unlockStatus.style.color = '#22c55e';
+                unlockStatus.innerText = '✅ Terminal unlocked.';
+                unlockTerminalUI();
+
             } catch (error) {
                 console.error(error);
-                statusText.innerText = "❌ " + error.message;
+                unlockStatus.style.color = '#f87171';
+                unlockStatus.innerText = `❌ ${error.message}`;
+                lockTerminalUI(unlockStatus.innerText);
+            } finally {
+                unlockBtn.disabled = false;
             }
+        }
+
+        unlockBtn.addEventListener('click', beginPasskeyUnlock);
+
+        document.getElementById('btn-lock-help').addEventListener('click', () => {
+            alert(
+                'If unlock fails:\\n\\n' +
+                '1. Make sure this scanner was already activated for the school.\\n' +
+                '2. Make sure a passkey was registered from Settings.\\n' +
+                '3. If needed, use the reset/change button in Settings and register again.'
+            );
+        });
+
+        window.addEventListener('load', () => {
+            const hasDeviceKey =
+                localStorage.getItem('atom_device_key') ||
+                localStorage.getItem('device_key') ||
+                localStorage.getItem('deviceKey');
+
+            const schoolId = getTerminalSchoolId();
+
+            if (!hasDeviceKey || !schoolId) {
+                showSetupRequiredState('⚠️ Activate this node first before passkey unlock can work.');
+                return;
+            }
+
+            lockTerminalUI();
         });
     </script>
+    </div>
 </body>
 </html>
-
-
-
-
-
-
-
-
-<!-- <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ATOMDEV | Security Terminal</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; overflow-x: hidden; }
-
-        .scan-line {
-            height: 2px;
-            background: linear-gradient(to right, transparent, #3b82f6, transparent);
-            width: 100%;
-            position: absolute;
-            top: 0;
-            animation: scan 2s linear infinite;
-            z-index: 10;
-        }
-
-        @keyframes scan {
-            0% { top: 0%; opacity: 0; }
-            50% { opacity: 1; }
-            100% { top: 100%; opacity: 0; }
-        }
-
-        #reader video { object-fit: cover !important; border-radius: 2.5rem; }
-        #active-view.hidden { display: none; }
-        
-        /* Glassmorphism for Setup */
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-    </style>
-</head>
-<body class="bg-[#0a0a0c] text-white antialiased min-h-screen flex flex-col">
-
-    <div id="api-config" data-url="{{ api_url }}" class="hidden"></div>
-
-    <div id="setup-overlay" class="fixed inset-0 bg-[#0a0a0c] z-[100] flex items-center justify-center p-6 hidden">
-        <div class="bg-white p-10 rounded-[3rem] w-full max-w-md shadow-2xl text-center text-gray-900">
-            <div class="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">🔐</div>
-            <h2 class="text-3xl font-black tracking-tighter mb-2">Activate Node</h2>
-            <p class="text-gray-400 text-[10px] font-black uppercase tracking-[0.2em] mb-8">Enter your Master Device Key</p>
-            
-            <input type="text" id="setup-key-input" placeholder="XXXX-XXXX-XXXX-XXXX" 
-                   class="w-full p-5 bg-gray-50 border-2 border-transparent focus:border-blue-600 rounded-2xl outline-none font-mono text-center mb-4 text-xl font-bold uppercase">
-            
-            <button onclick="activateDevice()" 
-                    class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-blue-500/30 hover:brightness-110 active:scale-95 transition-all">
-                Verify & Register
-            </button>
-            <p class="text-[9px] text-gray-400 mt-6 font-bold uppercase">Authorized Access Only • AtomDev Studios</p>
-        </div>
-    </div>
-
-    <header class="h-20 px-6 border-b border-white/5 flex justify-between items-center bg-[#0a0a0c] shrink-0">
-        <div class="flex items-center gap-3">
-            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-black text-white italic">ADS</div>
-            <div>
-                <h1 class="text-lg font-black tracking-tighter uppercase leading-none">Atom Dev Terminal</h1>
-                <p id="node-display" class="text-[9px] font-bold text-gray-500 tracking-[0.2em] uppercase mt-1">Status: Initializing...</p>
-            </div>
-        </div>
-        <div class="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-2xl border border-white/5">
-            <span class="h-2 w-2 rounded-full bg-green-500 animate-pulse"></span>
-            <span class="text-[10px] font-black uppercase text-green-500">ADS System Live</span>
-        </div>
-    </header>
-
-    <main class="flex-1 flex flex-col md:flex-row overflow-y-auto md:overflow-hidden">
-        
-        <div class="w-full md:flex-1 p-4 md:p-8 flex items-center justify-center bg-black/40 relative min-h-[450px]">
-            <div class="relative w-full max-w-lg aspect-square">
-                
-                <div class="absolute top-6 right-6 z-30 flex flex-col gap-3">
-                    <button onclick="switchCamera()" class="bg-black/40 hover:bg-blue-600 backdrop-blur-xl p-4 rounded-2xl border border-white/10 transition-all active:scale-90 group">
-                        <span class="text-xl block group-hover:rotate-180 transition-transform duration-500">🔄</span>
-                        <span class="text-[8px] font-black uppercase tracking-widest block mt-1">Flip</span>
-                    </button>
-                    <button id="torch-btn" onclick="toggleTorch()" class="bg-black/40 hover:bg-yellow-500 backdrop-blur-xl p-4 rounded-2xl border border-white/10 transition-all active:scale-90 group">
-                        <span id="torch-icon" class="text-xl block">🔦</span>
-                        <span class="text-[8px] font-black uppercase tracking-widest block mt-1">Light</span>
-                    </button>
-                </div>
-
-                <div id="reader" class="w-full h-full rounded-[2.5rem] overflow-hidden border-2 border-white/10 shadow-2xl bg-gray-900">
-                    <div id="scan-status" class="hidden absolute inset-0 z-50 bg-black/60 flex flex-col items-center justify-center backdrop-blur-sm transition-all">
-                        <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <p class="text-white font-black uppercase text-[10px] tracking-[0.3em] animate-pulse">Establishing GPS Lock...</p>
-                    </div>
-                </div>
-                
-                <div class="absolute inset-0 pointer-events-none z-20 flex items-center justify-center p-8">
-                    <div class="w-full h-full border border-blue-500/30 rounded-[2rem] relative overflow-hidden">
-                        <div class="scan-line"></div>
-                        <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-500 rounded-tl-xl"></div>
-                        <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-500 rounded-tr-xl"></div>
-                        <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-500 rounded-bl-xl"></div>
-                        <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-500 rounded-br-xl"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="result-panel" class="w-full md:w-[450px] bg-[#0f0f12] border-t md:border-t-0 md:border-l border-white/5 p-8 md:p-12 flex flex-col items-center justify-center shrink-0">
-            <div id="idle-view" class="text-center group">
-                <div class="w-24 h-24 bg-white/5 rounded-[2rem] flex items-center justify-center mx-auto mb-6 border border-white/5">
-                    <span class="text-4xl">📇</span>
-                </div>
-                <h3 class="text-white font-black uppercase text-sm tracking-[0.3em] mb-2">Awaiting ID</h3>
-                <p class="text-gray-500 text-[10px] font-bold uppercase tracking-widest">Present Student QR Code</p>
-                <button onclick="resetActivation()" class="mt-8 text-[8px] font-black uppercase tracking-widest text-gray-700 hover:text-red-500 transition-colors">Reset Terminal</button>
-            </div>
-            
-            <div id="active-view" class="hidden text-center w-full animate-in fade-in zoom-in duration-500">
-                <div class="relative inline-block mb-10">
-                    <div class="w-56 h-56 md:w-64 md:h-64 rounded-[3rem] overflow-hidden border-[12px] border-[#1a1a1e] shadow-2xl relative">
-                        <img id="student-img" src="" class="w-full h-full object-cover">
-                    </div>
-                    <div id="status-badge" class="absolute -bottom-5 left-1/2 -translate-x-1/2 px-10 py-4 rounded-2xl text-[11px] font-black text-white shadow-2xl uppercase tracking-[0.3em] whitespace-nowrap"></div>
-                </div>
-                <h2 id="student-name" class="text-3xl md:text-4xl font-black text-white tracking-tighter leading-tight"></h2>
-                <p id="student-class" class="text-blue-500 font-black uppercase tracking-[0.2em] text-xs"></p>
-                <div class="mt-10 pt-10 border-t border-white/5 w-full flex justify-between items-center opacity-40">
-                    <span class="text-[9px] font-black uppercase tracking-widest">Logged: <span id="scan-time" class="font-mono ml-1"></span></span>
-                    <span class="text-[9px] font-black uppercase tracking-widest font-bold">Verified ✓</span>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/sounds.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/scanner.js') }}"></script>
-
-    <script>
-        let isTorchOn = false;
-        async function toggleTorch() {
-            try {
-                isTorchOn = !isTorchOn;
-                await html5QrcodeScanner.applyVideoConstraints({ advanced: [{ torch: isTorchOn }] });
-                document.getElementById('torch-btn').classList.toggle('bg-yellow-500', isTorchOn);
-                document.getElementById('torch-icon').innerText = isTorchOn ? '🌟' : '🔦';
-            } catch (err) { console.warn("Torch not supported."); }
-        }
-    </script>
-</body>
-</html> -->

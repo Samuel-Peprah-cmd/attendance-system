@@ -5,10 +5,22 @@
 
 let html5QrcodeScanner;
 let currentFacingMode = "environment"; // Default to back camera for better focus
-let DEVICE_KEY = localStorage.getItem('atom_device_key');
+let DEVICE_KEY =
+    localStorage.getItem('atom_device_key') ||
+    localStorage.getItem('device_key') ||
+    localStorage.getItem('deviceKey');
 
 // 🚩 GLOBAL GPS CACHE (Keeps the satellite link "warm")
 let activeCoords = { lat: null, lng: null, timestamp: 0 };
+
+function getStoredSchoolId() {
+    return (
+        localStorage.getItem('device_school_id') ||
+        localStorage.getItem('school_id') ||
+        localStorage.getItem('terminal_school_id') ||
+        ''
+    );
+}
 
 if (navigator.geolocation) {
     navigator.geolocation.watchPosition(
@@ -28,15 +40,28 @@ if (navigator.geolocation) {
  * 1. INITIALIZATION
  * Checks if the device is already "Married" to a school.
  */
+// function checkActivation() {
+//     const setupOverlay = document.getElementById('setup-overlay');
+    
+//     if (!DEVICE_KEY) {
+//         // Show the Activation Screen if no key is stored
+//         setupOverlay.classList.remove('hidden');
+//         console.log("📟 Terminal Status: Awaiting Activation...");
+//     } else {
+//         // Start the scanner immediately if we have a key
+//         setupOverlay.classList.add('hidden');
+//         startScanner();
+//     }
+// }
+
 function checkActivation() {
     const setupOverlay = document.getElementById('setup-overlay');
-    
-    if (!DEVICE_KEY) {
-        // Show the Activation Screen if no key is stored
+    const schoolId = getStoredSchoolId();
+
+    if (!DEVICE_KEY || !schoolId) {
         setupOverlay.classList.remove('hidden');
         console.log("📟 Terminal Status: Awaiting Activation...");
     } else {
-        // Start the scanner immediately if we have a key
         setupOverlay.classList.add('hidden');
         startScanner();
     }
@@ -46,9 +71,47 @@ function checkActivation() {
  * 2. ACTIVATION LOGIC
  * Verifies the key with the Master Server and saves it locally.
  */
+// async function activateDevice() {
+//     const inputKey = document.getElementById('setup-key-input').value.trim();
+//     // const apiUrl = document.getElementById('api-config').dataset.url;
+//     const apiUrl = window.location.origin;
+
+//     if (!inputKey) {
+//         alert("Please enter a valid API Key.");
+//         return;
+//     }
+
+//     try {
+//         // Ping the backend to verify this key exists and is active
+//         const response = await fetch(`${apiUrl}/api/scanner/ping`, {
+//             method: 'GET',
+//             headers: { 
+//                 'X-Device-Key': inputKey,
+//                 'ngrok-skip-browser-warning': 'true', // 🚩 NGROK BYPASS
+//                 'Content-Type': 'application/json'
+//              }
+//         });
+        
+//         if (response.ok) {
+//             const data = await response.json();
+//             // SAVE TO BROWSER MEMORY
+//             localStorage.setItem('atom_device_key', inputKey);
+//             DEVICE_KEY = inputKey;
+            
+//             console.log(`✅ Activation Success: Connected to ${data.school}`);
+//             location.reload(); // Refresh to initialize the camera with the new key
+//         } else {
+//             const errorData = await response.json();
+//             alert(`❌ Activation Failed: ${errorData.message || "Invalid Key"}`);
+//         }
+//     } catch (e) {
+//         console.error("Connection Error:", e);
+//         alert("🔌 Server Unreachable: Ensure the backend is running and CORS is enabled.");
+//     }
+// }
+
 async function activateDevice() {
     const inputKey = document.getElementById('setup-key-input').value.trim();
-    // const apiUrl = document.getElementById('api-config').dataset.url;
     const apiUrl = window.location.origin;
 
     if (!inputKey) {
@@ -57,31 +120,56 @@ async function activateDevice() {
     }
 
     try {
-        // Ping the backend to verify this key exists and is active
         const response = await fetch(`${apiUrl}/api/scanner/ping`, {
             method: 'GET',
-            headers: { 
+            headers: {
                 'X-Device-Key': inputKey,
-                'ngrok-skip-browser-warning': 'true', // 🚩 NGROK BYPASS
+                'ngrok-skip-browser-warning': 'true',
                 'Content-Type': 'application/json'
-             }
+            }
         });
-        
-        if (response.ok) {
-            const data = await response.json();
-            // SAVE TO BROWSER MEMORY
-            localStorage.setItem('atom_device_key', inputKey);
-            DEVICE_KEY = inputKey;
-            
-            console.log(`✅ Activation Success: Connected to ${data.school}`);
-            location.reload(); // Refresh to initialize the camera with the new key
-        } else {
-            const errorData = await response.json();
-            alert(`❌ Activation Failed: ${errorData.message || "Invalid Key"}`);
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "Invalid Key");
         }
+
+        const schoolId =
+            data.school_id ||
+            data.schoolId ||
+            (data.school && data.school.id) ||
+            null;
+
+        if (!schoolId) {
+            throw new Error("Activation succeeded, but school ID was not returned by the server.");
+        }
+
+        // Save device key in all expected formats
+        localStorage.setItem('atom_device_key', inputKey);
+        localStorage.setItem('device_key', inputKey);
+        localStorage.setItem('deviceKey', inputKey);
+
+        // Save school identity for scanner unlock
+        localStorage.setItem('device_school_id', String(schoolId));
+        localStorage.setItem('school_id', String(schoolId));
+        localStorage.setItem('terminal_school_id', String(schoolId));
+
+        // Optional school display name
+        if (data.school_name) {
+            localStorage.setItem('school_name', data.school_name);
+        } else if (typeof data.school === 'string') {
+            localStorage.setItem('school_name', data.school);
+        }
+
+        DEVICE_KEY = inputKey;
+
+        console.log(`✅ Activation Success: Connected to ${data.school_name || data.school || schoolId}`);
+        location.reload();
+
     } catch (e) {
         console.error("Connection Error:", e);
-        alert("🔌 Server Unreachable: Ensure the backend is running and CORS is enabled.");
+        alert(`❌ Activation Failed: ${e.message || "Server Unreachable"}`);
     }
 }
 
@@ -114,70 +202,6 @@ function startScanner() {
     document.getElementById('node-display').innerText = `Node: ${DEVICE_KEY.substring(0, 8)}...`;
 }
 
-// async function onScanSuccess(decodedText) {
-//     console.log("🎯 QR Detected:", decodedText); 
-    
-//     const statusOverlay = document.getElementById('scan-status');
-//     if (statusOverlay) statusOverlay.classList.remove('hidden');
-
-//     if (html5QrcodeScanner) html5QrcodeScanner.pause();
-    
-//     // const apiUrl = document.getElementById('api-config').dataset.url;
-//     const apiUrl = window.location.origin;
-
-//     // Await GPS Hardware Lock
-//     let coords = await getGPS();
-
-//     // Prepare Payload
-//     const payload = {
-//         qr_token: decodedText,
-//         lat: coords.lat,
-//         lng: coords.lng
-//     };
-
-//     try {
-//         // Send to Backend
-//         const data = await ScannerAPI.sendScan(payload, apiUrl, DEVICE_KEY);
-//         console.log("📦 Data Received from Server:", data); // Check your console to see what the server sent!
-
-//         if (statusOverlay) statusOverlay.classList.add('hidden');
-        
-//         showResult(data);
-//         SoundService.playSuccess();
-
-//     } catch (error) {
-//         if (statusOverlay) statusOverlay.classList.add('hidden');
-        
-//         console.error("❌ Scan Error:", error.message);
-//         if (error.message.includes("401")) {
-//             handleDeauthorization();
-//         } else {
-//             showError(error.message);
-//             SoundService.playError();
-//         }
-//     }
-
-//     // Auto-Reset UI after 4 seconds
-//     setTimeout(() => {
-//         resetUI();
-//         if (html5QrcodeScanner) html5QrcodeScanner.resume();
-//     }, 4000);
-// }
-
-// async function getGPS() {
-//     return new Promise((resolve) => {
-//         if (!navigator.geolocation) {
-//             resolve({ lat: null, lng: null });
-//             return;
-//         }
-
-//         navigator.geolocation.getCurrentPosition(
-//             (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-//             () => resolve({ lat: null, lng: null }),
-//             { enableHighAccuracy: true, timeout: 5000 }
-//         );
-//     });
-// }
 
 async function onScanSuccess(decodedText) {
     console.log("🎯 QR Detected:", decodedText); 
@@ -229,38 +253,51 @@ async function onScanSuccess(decodedText) {
 /**
  * 5. SECURITY UTILITIES
  */
+// function handleDeauthorization() {
+//     console.warn("⚠️ Device De-authorized. Wiping local memory...");
+//     localStorage.removeItem('atom_device_key');
+//     alert("This terminal has been de-authorized or reassigned by the Master Admin.");
+//     location.reload(); // This will trigger the Setup Overlay
+// }
+
 function handleDeauthorization() {
     console.warn("⚠️ Device De-authorized. Wiping local memory...");
+
     localStorage.removeItem('atom_device_key');
+    localStorage.removeItem('device_key');
+    localStorage.removeItem('deviceKey');
+
+    localStorage.removeItem('device_school_id');
+    localStorage.removeItem('school_id');
+    localStorage.removeItem('terminal_school_id');
+    localStorage.removeItem('school_name');
+
     alert("This terminal has been de-authorized or reassigned by the Master Admin.");
-    location.reload(); // This will trigger the Setup Overlay
+    location.reload();
 }
 
+// function resetActivation() {
+//     if(confirm("Deregister this device? You will need the API key to reconnect.")) {
+//         localStorage.removeItem('atom_device_key');
+//         location.reload();
+//     }
+// }
+
 function resetActivation() {
-    if(confirm("Deregister this device? You will need the API key to reconnect.")) {
+    if (confirm("Deregister this device? You will need the API key to reconnect.")) {
         localStorage.removeItem('atom_device_key');
+        localStorage.removeItem('device_key');
+        localStorage.removeItem('deviceKey');
+
+        localStorage.removeItem('device_school_id');
+        localStorage.removeItem('school_id');
+        localStorage.removeItem('terminal_school_id');
+        localStorage.removeItem('school_name');
+
         location.reload();
     }
 }
 
-/**
- * 6. UI & HARDWARE CONTROLS
- */
-// function showResult(data) {
-//     document.getElementById('idle-view').classList.add('hidden');
-//     document.getElementById('active-view').classList.remove('hidden');
-    
-//     document.getElementById('student-name').innerText = data.name;
-//     document.getElementById('student-class').innerText = data.class;
-//     document.getElementById('scan-time').innerText = data.timestamp;
-    
-//     const imgPath = data.photo_url || 'default_student.png';
-//     document.getElementById('student-img').src = `${document.getElementById('api-config').dataset.url}/static/uploads/students/${imgPath}`;
-    
-//     const badge = document.getElementById('status-badge');
-//     badge.innerText = `CHECKED ${data.direction}`;
-//     badge.className = `absolute -bottom-5 left-1/2 -translate-x-1/2 px-10 py-4 rounded-2xl text-[11px] font-black text-white shadow-2xl uppercase tracking-[0.3em] whitespace-nowrap ${data.direction === 'IN' ? 'bg-green-500' : 'bg-orange-500'}`;
-// }
 
 function showResult(data) {
     document.getElementById('idle-view').classList.add('hidden');

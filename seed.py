@@ -90,6 +90,7 @@ def seed_database():
                 "sms_enabled": True,
                 "whatsapp_enabled": False,
                 "gps_enabled": False,
+                "complaints_enabled": False,
                 "advanced_analytics_enabled": False,
                 "is_active": True # Ensuring it is active for the UI
             },
@@ -105,6 +106,7 @@ def seed_database():
                 "sms_enabled": True,
                 "whatsapp_enabled": False,
                 "gps_enabled": False,
+                "complaints_enabled": False,
                 "advanced_analytics_enabled": True,
                 "is_active": True
             },
@@ -120,6 +122,7 @@ def seed_database():
                 "sms_enabled": True,
                 "whatsapp_enabled": True,
                 "gps_enabled": True,
+                "complaints_enabled": False,
                 "advanced_analytics_enabled": True,
                 "is_active": True
             },
@@ -135,6 +138,7 @@ def seed_database():
                 "sms_enabled": True,
                 "whatsapp_enabled": True,
                 "gps_enabled": True,
+                "complaints_enabled": True,
                 "advanced_analytics_enabled": True,
                 "custom_branding_enabled": True,
                 "is_active": True

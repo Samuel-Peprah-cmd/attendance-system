@@ -24,7 +24,9 @@ class FeatureGateService:
             'broadcasts': 'whatsapp_enabled',
             'live_scanner': 'gps_enabled',
             'gps': 'gps_enabled',
-            'staff_attendance': 'whatsapp_enabled' # Or whatever column you prefer
+            'staff_attendance': 'whatsapp_enabled',
+            'complaints': 'complaints_enabled'
+            
         }
         
         column_name = feature_map.get(feature_name, f"{feature_name}_enabled")

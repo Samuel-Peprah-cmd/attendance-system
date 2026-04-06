@@ -1,0 +1,495 @@
+{% extends "base.html" %}
+
+{% block content %}
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
+<style>
+    .chat-shell {
+        height: calc(100vh - 160px);
+    }
+    .messages-scroll {
+        height: calc(100vh - 360px);
+    }
+    .threads-scroll {
+        height: calc(100vh - 260px);
+    }
+    .bubble-me {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: white;
+        border-radius: 1.25rem 1.25rem 0.35rem 1.25rem;
+    }
+    .bubble-other {
+        background: #f3f4f6;
+        color: #111827;
+        border-radius: 1.25rem 1.25rem 1.25rem 0.35rem;
+    }
+    .thread-active {
+        background: rgba(37, 99, 235, 0.08);
+        border-color: rgba(37, 99, 235, 0.2);
+    }
+</style>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-5 sm:py-6">
+    <div class="flex items-center justify-between gap-4 mb-6">
+        <div>
+            <p class="text-xs font-black uppercase tracking-[0.2em] text-brand mb-2">Support Center</p>
+            <h1 class="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">Complaints & Messaging</h1>
+            <p class="text-sm text-gray-500 mt-2">
+                Real-time support messaging with document, image, and video sharing.
+            </p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 chat-shell">
+        <!-- LEFT -->
+        <aside class="xl:col-span-4 bg-white border border-gray-200 rounded-3xl shadow-sm p-4 sm:p-5 flex flex-col">
+            <div class="flex items-center justify-between gap-3 mb-4">
+                <h2 class="text-lg font-black text-gray-900">Conversations</h2>
+            </div>
+
+            {% if current_user.role == 'parent' %}
+            <form id="parent-create-form" class="mb-4 p-4 rounded-2xl border border-gray-200 bg-gray-50 space-y-3">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <h3 class="text-sm font-black text-gray-900">New Complaint</h3>
+                <select name="student_id" class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white">
+                    <option value="">Select Child</option>
+                    {% for child in children %}
+                    <option value="{{ child.id }}">{{ child.full_name }}</option>
+                    {% endfor %}
+                </select>
+                <input type="text" name="subject" placeholder="Complaint subject"
+                       class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white">
+                <select name="priority" class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white">
+                    <option value="normal">Normal</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="low">Low</option>
+                </select>
+                <textarea name="message" placeholder="Describe the issue..." rows="3"
+                          class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white"></textarea>
+                <button type="submit"
+                        class="w-full px-4 py-3 rounded-xl bg-brand text-white font-black hover:opacity-90 transition">
+                    Open Complaint
+                </button>
+            </form>
+            {% elif current_user.role == 'school_admin' %}
+            <form id="support-create-form" class="mb-4 p-4 rounded-2xl border border-gray-200 bg-gray-50 space-y-3">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <h3 class="text-sm font-black text-gray-900">New Support Ticket to ATOM Gate</h3>
+                <input type="text" name="subject" placeholder="Support subject"
+                       class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white">
+                <select name="priority" class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white">
+                    <option value="normal">Normal</option>
+                    <option value="high">High</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="low">Low</option>
+                </select>
+                <textarea name="message" placeholder="What do you need help with?" rows="3"
+                          class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white"></textarea>
+                <button type="submit"
+                        class="w-full px-4 py-3 rounded-xl bg-gray-900 text-white font-black hover:opacity-90 transition">
+                    Open Support Thread
+                </button>
+            </form>
+            {% endif %}
+
+            <input id="threadSearch"
+                   type="text"
+                   placeholder="Search conversations..."
+                   class="w-full px-4 py-3 rounded-xl border border-gray-300 mb-4">
+
+            <div id="threadList" class="threads-scroll overflow-y-auto space-y-3 pr-1">
+                {% for thread in threads %}
+                <a href="{{ url_for('complaints.complaints_home', thread_id=thread.id) }}"
+                   class="thread-card block border rounded-2xl p-4 hover:bg-gray-50 transition {{ 'thread-active' if selected_thread and selected_thread.id == thread.id else 'border-gray-200' }}"
+                   data-search="{{ (thread.subject ~ ' ' ~ thread.subtitle ~ ' ' ~ thread.last_message_preview)|lower }}">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0">
+                            <h3 class="font-black text-gray-900 truncate">{{ thread.subject }}</h3>
+                            <p class="text-xs text-gray-500 mt-1 truncate">{{ thread.subtitle }}</p>
+                        </div>
+                        {% if thread.unread_count > 0 %}
+                        <span class="inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full bg-red-500 text-white text-xs font-black">
+                            {{ thread.unread_count }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center gap-2 mt-3 flex-wrap">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase
+                            {% if thread.priority == 'urgent' %}bg-red-100 text-red-700
+                            {% elif thread.priority == 'high' %}bg-orange-100 text-orange-700
+                            {% elif thread.priority == 'low' %}bg-slate-100 text-slate-700
+                            {% else %}bg-blue-100 text-blue-700{% endif %}">
+                            {{ thread.priority }}
+                        </span>
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-gray-100 text-gray-700">
+                            {{ thread.status }}
+                        </span>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-3 truncate">{{ thread.last_message_preview }}</p>
+                </a>
+                {% else %}
+                <div class="py-12 text-center text-gray-400 font-semibold">
+                    No complaint threads yet.
+                </div>
+                {% endfor %}
+            </div>
+        </aside>
+
+        <!-- CENTER -->
+        <section class="xl:col-span-8 bg-white border border-gray-200 rounded-3xl shadow-sm flex flex-col overflow-hidden">
+            {% if selected_thread %}
+            <div class="px-5 sm:px-6 py-4 border-b border-gray-200 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-black text-gray-900">{{ selected_thread.subject }}</h2>
+                    <p class="text-sm text-gray-500 mt-1">
+                        {% if selected_thread.thread_type == 'parent_school' %}
+                            {{ selected_thread.student.full_name if selected_thread.student else 'Student' }} • {{ selected_thread.school.name if selected_thread.school else 'School' }}
+                        {% else %}
+                            {{ selected_thread.school.name if selected_thread.school else 'School' }} • ATOM Gate Support
+                        {% endif %}
+                    </p>
+                </div>
+
+                <div class="flex items-center gap-3 flex-wrap">
+                    <span class="px-3 py-1.5 rounded-full text-xs font-black uppercase bg-gray-100 text-gray-700">
+                        {{ selected_thread.status }}
+                    </span>
+
+                    {% if current_user.role in ['school_admin', 'super_admin'] %}
+                    <form id="statusForm" class="flex items-center gap-2">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <select name="status" class="px-3 py-2 rounded-xl border border-gray-300 bg-white text-sm">
+                            <option value="open" {% if selected_thread.status == 'open' %}selected{% endif %}>Open</option>
+                            <option value="pending" {% if selected_thread.status == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="resolved" {% if selected_thread.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                            <option value="closed" {% if selected_thread.status == 'closed' %}selected{% endif %}>Closed</option>
+                        </select>
+                        <button type="submit" class="px-4 py-2 rounded-xl bg-gray-900 text-white text-sm font-black">
+                            Update
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div id="messagesArea" class="messages-scroll overflow-y-auto px-4 sm:px-6 py-5 bg-slate-50">
+                <div id="typingIndicator" class="hidden text-xs text-gray-500 font-bold mb-3">Someone is typing...</div>
+
+                <div id="messagesList" class="space-y-4">
+                    {% for msg in selected_messages %}
+                    <div class="flex {% if msg.sender_id == current_user.id %}justify-end{% else %}justify-start{% endif %}">
+                        <div class="max-w-[85%] sm:max-w-[70%] px-4 py-3 shadow-sm {% if msg.sender_id == current_user.id %}bubble-me{% else %}bubble-other{% endif %}">
+                            <div class="flex items-center justify-between gap-3 mb-1">
+                                <span class="text-[11px] font-black uppercase tracking-[0.14em] {% if msg.sender_id == current_user.id %}text-blue-100{% else %}text-gray-500{% endif %}">
+                                    {{ 'You' if msg.sender_id == current_user.id else (msg.sender.email if msg.sender else 'User') }}
+                                </span>
+                                <span class="text-[10px] {% if msg.sender_id == current_user.id %}text-blue-100{% else %}text-gray-400{% endif %}">
+                                    {{ msg.created_at.strftime('%d %b %Y, %I:%M %p') }}
+                                </span>
+                            </div>
+
+                            {% if msg.body %}
+                            <div class="text-sm leading-6 whitespace-pre-wrap">{{ msg.body }}</div>
+                            {% endif %}
+
+                            {% for att in msg.attachments.all() %}
+                                {% if att.media_kind == 'image' %}
+                                    <a href="{{ att.file_url }}" target="_blank">
+                                        <img src="{{ att.file_url }}" alt="{{ att.file_name }}" class="rounded-2xl border border-white/20 max-h-72 object-cover">
+                                    </a>
+                                {% elif att.media_kind == 'video' %}
+                                    <video controls class="w-full rounded-2xl border border-white/20 max-h-72">
+                                        <source src="{{ att.file_url }}" type="{{ att.mime_type or 'video/mp4' }}">
+                                    </video>
+                                {% else %}
+                                    <a href="{{ att.file_url }}" target="_blank"
+                                        class="block rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-bold underline">
+                                        📎 {{ att.file_name }}
+                                    </a>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="p-4 sm:p-5 border-t border-gray-200 bg-white">
+                <form id="messageForm" class="space-y-3">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <textarea id="messageInput" name="body" rows="3"
+                              placeholder="Write a message..."
+                              class="w-full px-4 py-3 rounded-2xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <input type="file" id="fileInput" class="hidden">
+                            <button type="button" id="attachBtn"
+                                    class="px-4 py-2.5 rounded-xl border border-gray-300 bg-white text-sm font-black text-gray-700">
+                                Attach File
+                            </button>
+                            <span id="fileNamePreview" class="text-xs text-gray-500 font-semibold"></span>
+                        </div>
+
+                        <button type="submit"
+                                class="px-5 py-3 rounded-xl bg-brand text-white text-sm font-black hover:opacity-90 transition">
+                            Send Message
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {% else %}
+            <div class="flex-1 flex items-center justify-center px-8 text-center">
+                <div>
+                    <div class="w-24 h-24 rounded-[2rem] bg-gray-100 flex items-center justify-center text-4xl mx-auto mb-5">💬</div>
+                    <h2 class="text-2xl font-black text-gray-900">Select a Conversation</h2>
+                    <p class="text-gray-500 mt-2">Open a thread from the left to start messaging in real time.</p>
+                </div>
+            </div>
+            {% endif %}
+        </section>
+    </div>
+</div>
+
+<script>
+    async function parseJsonResponse(res) {
+        const text = await res.text();
+        let data;
+
+        try {
+            data = JSON.parse(text);
+        } catch (err) {
+            throw new Error(`Server returned non-JSON response (${res.status}). Check CSRF or server error.`);
+        }
+
+        if (!res.ok || data.success === false) {
+            throw new Error(data.message || `Request failed with status ${res.status}`);
+        }
+
+        return data;
+    }
+
+    const threadSearch = document.getElementById('threadSearch');
+    if (threadSearch) {
+        threadSearch.addEventListener('input', function () {
+            const q = this.value.toLowerCase().trim();
+            document.querySelectorAll('.thread-card').forEach(card => {
+                card.style.display = (!q || card.dataset.search.includes(q)) ? '' : 'none';
+            });
+        });
+    }
+
+    const parentCreateForm = document.getElementById('parent-create-form');
+    if (parentCreateForm) {
+        parentCreateForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const fd = new FormData(parentCreateForm);
+
+                const res = await fetch('{{ url_for("complaints.create_parent_complaint") }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrf_token,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: fd
+                });
+
+                const data = await parseJsonResponse(res);
+                window.location.href = data.redirect_url;
+            } catch (err) {
+                alert(err.message);
+                console.error(err);
+            }
+        });
+    }
+
+    const supportCreateForm = document.getElementById('support-create-form');
+    if (supportCreateForm) {
+        supportCreateForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const fd = new FormData(supportCreateForm);
+
+                const res = await fetch('{{ url_for("complaints.create_school_support_thread") }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrf_token,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: fd
+                });
+
+                const data = await parseJsonResponse(res);
+                window.location.href = data.redirect_url;
+            } catch (err) {
+                alert(err.message);
+                console.error(err);
+            }
+        });
+    }
+
+    {% if selected_thread %}
+    const socket = io();
+    const currentThreadId = {{ selected_thread.id }};
+    const currentUserId = {{ current_user.id }};
+
+    const messagesArea = document.getElementById('messagesArea');
+    const messagesList = document.getElementById('messagesList');
+    const messageForm = document.getElementById('messageForm');
+    const messageInput = document.getElementById('messageInput');
+    const attachBtn = document.getElementById('attachBtn');
+    const fileInput = document.getElementById('fileInput');
+    const fileNamePreview = document.getElementById('fileNamePreview');
+    const typingIndicator = document.getElementById('typingIndicator');
+
+    function scrollMessagesToBottom() {
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+    }
+
+    function renderAttachment(att) {
+        if (att.media_kind === 'image') {
+            return `<div class="mt-3"><a href="${att.file_url}" target="_blank"><img src="${att.file_url}" class="rounded-2xl border border-white/20 max-h-72 object-cover"></a></div>`;
+        }
+        if (att.media_kind === 'video') {
+            return `<div class="mt-3"><video controls class="w-full rounded-2xl border border-white/20 max-h-72"><source src="${att.file_url}" type="${att.mime_type || 'video/mp4'}"></video></div>`;
+        }
+        return `<div class="mt-3"><a href="${att.file_url}" target="_blank" class="block rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-bold underline">📎 ${att.file_name}</a></div>`;
+    }
+
+    function appendMessage(msg) {
+        const mine = msg.sender_id === currentUserId;
+        const wrapper = document.createElement('div');
+        wrapper.className = `flex ${mine ? 'justify-end' : 'justify-start'}`;
+
+        const attachmentsHtml = (msg.attachments || []).map(renderAttachment).join('');
+
+        wrapper.innerHTML = `
+            <div class="max-w-[85%] sm:max-w-[70%] px-4 py-3 shadow-sm ${mine ? 'bubble-me' : 'bubble-other'}">
+                <div class="flex items-center justify-between gap-3 mb-1">
+                    <span class="text-[11px] font-black uppercase tracking-[0.14em] ${mine ? 'text-blue-100' : 'text-gray-500'}">
+                        ${mine ? 'You' : (msg.sender_email || 'User')}
+                    </span>
+                    <span class="text-[10px] ${mine ? 'text-blue-100' : 'text-gray-400'}">
+                        ${msg.created_at}
+                    </span>
+                </div>
+                ${msg.body ? `<div class="text-sm leading-6 whitespace-pre-wrap">${msg.body}</div>` : ''}
+                ${attachmentsHtml}
+            </div>
+        `;
+        messagesList.appendChild(wrapper);
+        scrollMessagesToBottom();
+    }
+
+    socket.emit('join_complaint_thread', { thread_id: currentThreadId });
+    socket.emit('mark_complaint_read', { thread_id: currentThreadId });
+
+    socket.on('new_complaint_message', (msg) => {
+        if (msg.thread_id === currentThreadId) {
+            appendMessage(msg);
+            socket.emit('mark_complaint_read', { thread_id: currentThreadId });
+        }
+    });
+
+    let typingTimeout;
+    messageInput.addEventListener('input', () => {
+        socket.emit('complaint_typing', { thread_id: currentThreadId });
+    });
+
+    socket.on('complaint_typing_indicator', (data) => {
+        if (data.thread_id !== currentThreadId) return;
+        typingIndicator.classList.remove('hidden');
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => typingIndicator.classList.add('hidden'), 1200);
+    });
+
+    messageForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+            const body = messageInput.value.trim();
+            if (!body) return;
+
+            const formData = new FormData(messageForm);
+            formData.set('body', body);
+
+            const res = await fetch(`/complaints/${currentThreadId}/send`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrf_token,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            });
+
+            await parseJsonResponse(res);
+            messageInput.value = '';
+        } catch (err) {
+            alert(err.message);
+            console.error(err);
+        }
+    });
+
+    attachBtn.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', async () => {
+        try {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            fileNamePreview.textContent = file.name;
+
+            const fd = new FormData();
+            fd.append('file', file);
+            fd.append('csrf_token', csrf_token);
+
+            const res = await fetch(`/complaints/${currentThreadId}/upload`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrf_token,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: fd
+            });
+
+            await parseJsonResponse(res);
+            fileInput.value = '';
+            fileNamePreview.textContent = '';
+        } catch (err) {
+            alert(err.message);
+            console.error(err);
+        }
+    });
+
+    scrollMessagesToBottom();
+
+    {% if current_user.role in ['school_admin', 'super_admin'] %}
+    const statusForm = document.getElementById('statusForm');
+    if (statusForm) {
+        statusForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const fd = new FormData(statusForm);
+
+                const res = await fetch(`/complaints/${currentThreadId}/status`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrf_token,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: fd
+                });
+
+                await parseJsonResponse(res);
+                window.location.reload();
+            } catch (err) {
+                alert(err.message);
+                console.error(err);
+            }
+        });
+    }
+    {% endif %}
+    {% endif %}
+</script>
+{% endblock %}

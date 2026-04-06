@@ -463,6 +463,12 @@
                 {% else %}
                     <li class="feature-disabled">❌ GPS Intelligence</li>
                 {% endif %}
+
+                {% if plan.complaints_enabled %}
+                    <li>✅ CHAT</li>
+                {% else %}
+                    <li class="feature-disabled">❌ CHAT</li>
+                {% endif %}
             </ul>
 
             <div class="plan-actions">

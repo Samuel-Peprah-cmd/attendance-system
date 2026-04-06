@@ -1,6 +1,6 @@
 from flask import Flask, flash, redirect, url_for
 from config import Config
-from app.extensions import db, migrate, mail, login_manager
+from app.extensions import db, migrate, mail, login_manager, socketio
 from app.extensions import csrf, limiter, cors
 
 def create_app():
@@ -11,7 +11,8 @@ def create_app():
     login_manager.init_app(app)
     mail.init_app(app)
     migrate.init_app(app, db)
-    csrf.init_app(app) # Enable CSRF protection globally
+    socketio.init_app(app, cors_allowed_origins="*")
+    csrf.init_app(app)
     cors.init_app(app, resources={
         r"/api/*": {
             "origins": "*",
@@ -48,6 +49,9 @@ def create_app():
     from app.routes.school_finance import finance_bp
     from app.routes.payment_webhooks import webhook_bp
     from app.routes.biometric import biometric_bp
+    from app.routes.complaints import complaints_bp
+
+
 
     if not app.debug:
         from flask_talisman import Talisman
@@ -67,6 +71,7 @@ def create_app():
     app.register_blueprint(superadmin_finance_bp)
     app.register_blueprint(finance_bp)
     app.register_blueprint(webhook_bp)
+    app.register_blueprint(complaints_bp)
     
     
 
@@ -82,6 +87,7 @@ def create_app():
     
     from app.services.feature_gate_service import FeatureGateService
     from flask_login import current_user
+    from app.routes import complaint_socket
 
     # This makes the 'has_feature' function available in EVERY HTML file automatically
     @app.context_processor

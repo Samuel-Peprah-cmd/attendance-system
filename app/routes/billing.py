@@ -65,110 +65,56 @@ def validate_promo():
         "new_total": round(new_total, 2)
     })
 
+
 @billing_bp.route('/checkout/initialize', methods=['POST'])
 @login_required
 def initialize_checkout():
     data = request.get_json(silent=True) or {}
     plan_id = data.get('plan_id')
-    billing_cycle = data.get('billing_cycle')
-    promo_code_input = data.get('promo_code', '').strip().upper() 
-    
+    billing_cycle = data.get('billing_cycle', 'monthly')
+    promo_code_input = data.get('promo_code', '').strip().upper()
+
     plan = Plan.query.get_or_404(plan_id)
     amount = plan.price_annual if billing_cycle == 'annual' else plan.price_monthly
-    
-    # 🚨 PROMO CODE LOGIC
+
+    coupon = None
     if promo_code_input:
         coupon = Coupon.query.filter_by(code=promo_code_input, is_active=True).first()
-        
-        if coupon:
-            # Check Expiry
-            if coupon.expires_at and coupon.expires_at < datetime.utcnow():
-                return jsonify({"success": False, "message": "This promo code has expired."}), 400
-            
-            # Check Usage Limit
-            if coupon.usage_limit != -1 and coupon.times_used >= coupon.usage_limit:
-                return jsonify({"success": False, "message": "This promo code has reached its usage limit."}), 400
-                
-            # Apply discount
-            discount = amount * (coupon.discount_percentage / 100)
-            amount -= discount
-            
-            # Commit usage
-            coupon.times_used += 1
-            db.session.commit()
-        else:
+
+        if not coupon:
             return jsonify({"success": False, "message": "Invalid promo code."}), 400
 
-    # Paystack Initialization
+        if coupon.expires_at and coupon.expires_at < datetime.utcnow():
+            return jsonify({"success": False, "message": "This promo code has expired."}), 400
+
+        if coupon.usage_limit != -1 and coupon.times_used >= coupon.usage_limit:
+            return jsonify({"success": False, "message": "This promo code has reached its usage limit."}), 400
+
+        discount = amount * (coupon.discount_percentage / 100)
+        amount -= discount
+
     reference = f"SUB_{current_user.school_id}_{uuid.uuid4().hex[:10]}"
+
     metadata = {
         "school_id": current_user.school_id,
         "plan_id": plan.id,
         "billing_cycle": billing_cycle,
-        "promo_used": promo_code_input if promo_code_input else "None"
+        "promo_used": promo_code_input if promo_code_input else None
     }
-    
+
     paystack_data = PaystackService.initialize_transaction(
         email=current_user.email,
-        amount_ghs=amount, 
+        amount_ghs=amount,
         reference=reference,
         metadata=metadata,
         callback_url=url_for('billing.checkout_callback', _external=True)
     )
-    
+
     if paystack_data and 'authorization_url' in paystack_data:
         return jsonify({"success": True, "checkout_url": paystack_data['authorization_url']})
-    
+
     return jsonify({"success": False, "message": "Gateway connection failed."}), 500
 
-# @billing_bp.route('/checkout/callback', methods=['GET'])
-# @login_required
-# def checkout_callback():
-#     reference = request.args.get('reference')
-#     if not reference:
-#         return redirect(url_for('billing.pricing_page'))
-
-#     paystack_data = PaystackService.verify_transaction(reference)
-    
-#     if paystack_data and paystack_data.get('status') == 'success':
-#         # Paystack verification puts the ID inside the 'data' key
-#         actual_txn_info = paystack_data.get('data', paystack_data)
-        
-#         metadata = actual_txn_info.get('metadata', {})
-#         plan_id = metadata.get('plan_id')
-#         billing_cycle = metadata.get('billing_cycle', 'monthly')
-        
-#         # ALWAYS Upgrade Subscription
-#         sub = SchoolSubscription.query.filter_by(school_id=current_user.school_id).first()
-#         if sub and plan_id:
-#             sub.plan_id = plan_id
-#             sub.status = 'active'
-#             sub.billing_cycle = billing_cycle
-#             sub.start_date = datetime.utcnow()
-#             days = 365 if billing_cycle == 'annual' else 30
-#             sub.end_date = sub.start_date + timedelta(days=days)
-
-#         # Handle Transaction Ledger
-#         existing_txn = PaymentTransaction.query.filter_by(provider_reference=reference).first()
-#         if not existing_txn:
-#             new_txn = PaymentTransaction(
-#                 school_id=current_user.school_id,
-#                 subscription_id=sub.id if sub else None,
-#                 amount=actual_txn_info.get('amount') / 100, 
-#                 provider_reference=reference,
-#                 status='success',
-#                 paid_at=datetime.utcnow(),
-#                 metadata_json=actual_txn_info # 🚨 SAVES THE NESTED DATA (Fixes Receipt)
-#             )
-#             db.session.add(new_txn)
-#         else:
-#             # Update existing record with the full data if it was missing
-#             existing_txn.metadata_json = actual_txn_info
-#             existing_txn.status = 'success'
-        
-#         db.session.commit()
-
-#     return render_template('billing/checkout_success.html', reference=reference)
 
 @billing_bp.route('/checkout/callback', methods=['GET'])
 @login_required
@@ -179,62 +125,98 @@ def checkout_callback():
             return redirect(url_for('billing.pricing_page'))
 
         paystack_data = PaystackService.verify_transaction(reference)
-        
-        if paystack_data and paystack_data.get('status') == 'success':
-            # Paystack verification puts the ID inside the 'data' key
-            actual_txn_info = paystack_data.get('data', paystack_data)
-            
-            # 🚨 FIX 1: Safely handle metadata if Paystack returns it as a string!
-            metadata = actual_txn_info.get('metadata', {})
-            if isinstance(metadata, str):
-                try:
-                    metadata = json.loads(metadata)
-                except:
-                    metadata = {}
-                    
-            plan_id = metadata.get('plan_id')
-            billing_cycle = metadata.get('billing_cycle', 'monthly')
-            
-            # 🚨 FIX 2: If the school has NO subscription yet, CREATE ONE!
-            sub = SchoolSubscription.query.filter_by(school_id=current_user.school_id).first()
-            if not sub:
-                sub = SchoolSubscription(school_id=current_user.school_id)
-                db.session.add(sub)
+        if not paystack_data or paystack_data.get('status') != 'success':
+            flash("Payment verification failed.", "error")
+            return redirect(url_for('billing.pricing_page'))
 
-            if plan_id:
-                sub.plan_id = plan_id
-                sub.status = 'active'
-                sub.billing_cycle = billing_cycle
-                sub.start_date = datetime.utcnow()
-                days = 365 if billing_cycle == 'annual' else 30
-                sub.end_date = sub.start_date + timedelta(days=days)
+        actual_txn_info = paystack_data.get('data', paystack_data)
 
-            # 🚨 FIX 3: Safely calculate the amount to avoid Math/Type errors
-            raw_amount = actual_txn_info.get('amount', 0)
-            amount_val = float(raw_amount) / 100 if raw_amount else 0.0
+        metadata = actual_txn_info.get('metadata', {})
+        if isinstance(metadata, str):
+            try:
+                metadata = json.loads(metadata)
+            except Exception:
+                metadata = {}
 
-            # Handle Transaction Ledger
-            existing_txn = PaymentTransaction.query.filter_by(provider_reference=reference).first()
-            if not existing_txn:
-                new_txn = PaymentTransaction(
-                    school_id=current_user.school_id,
-                    subscription_id=sub.id if sub.id else None,
-                    amount=amount_val, 
-                    provider_reference=reference,
-                    status='success',
-                    paid_at=datetime.utcnow(),
-                    metadata_json=actual_txn_info 
-                )
-                db.session.add(new_txn)
+        plan_id = metadata.get('plan_id')
+        billing_cycle = metadata.get('billing_cycle', 'monthly')
+        promo_used = metadata.get('promo_used')
+
+        sub = SchoolSubscription.query.filter_by(school_id=current_user.school_id).first()
+        if not sub:
+            sub = SchoolSubscription(
+                school_id=current_user.school_id,
+                plan_id=plan_id,
+                status='trialing',
+                billing_cycle=billing_cycle,
+                start_date=datetime.utcnow(),
+                end_date=datetime.utcnow() + timedelta(days=30)
+            )
+            db.session.add(sub)
+            db.session.flush()  # ensures sub.id exists
+
+        if plan_id:
+            sub.plan_id = plan_id
+            sub.status = 'active'
+            sub.billing_cycle = billing_cycle
+            sub.start_date = datetime.utcnow()
+
+            if billing_cycle == 'annual':
+                sub.end_date = sub.start_date + timedelta(days=365)
+            elif billing_cycle == 'termly':
+                sub.end_date = sub.start_date + timedelta(days=120)
             else:
-                existing_txn.metadata_json = actual_txn_info
-                existing_txn.status = 'success'
-            
-            db.session.commit()
+                sub.end_date = sub.start_date + timedelta(days=30)
 
+        raw_amount = actual_txn_info.get('amount', 0)
+        amount_val = float(raw_amount) / 100 if raw_amount else 0.0
+
+        channel_val = actual_txn_info.get('channel')
+        if not channel_val:
+            channel_val = (actual_txn_info.get('authorization') or {}).get('channel')
+
+        existing_txn = PaymentTransaction.query.filter_by(provider_reference=reference).first()
+        first_success_processing = False
+
+        if not existing_txn:
+            existing_txn = PaymentTransaction(
+                school_id=current_user.school_id,
+                subscription_id=sub.id,
+                amount=amount_val,
+                currency=actual_txn_info.get('currency') or 'GHS',
+                channel=channel_val,
+                provider='paystack',
+                provider_reference=reference,
+                provider_status=actual_txn_info.get('status'),
+                status='success',
+                paid_at=datetime.utcnow(),
+                metadata_json=actual_txn_info
+            )
+            db.session.add(existing_txn)
+            first_success_processing = True
+        else:
+            if existing_txn.status != 'success':
+                first_success_processing = True
+
+            existing_txn.school_id = current_user.school_id
+            existing_txn.subscription_id = sub.id
+            existing_txn.amount = amount_val
+            existing_txn.currency = actual_txn_info.get('currency') or existing_txn.currency or 'GHS'
+            existing_txn.channel = channel_val
+            existing_txn.provider = 'paystack'
+            existing_txn.provider_status = actual_txn_info.get('status')
+            existing_txn.status = 'success'
+            existing_txn.paid_at = datetime.utcnow()
+            existing_txn.metadata_json = actual_txn_info
+
+        if promo_used and promo_used != "None" and first_success_processing:
+            coupon = Coupon.query.filter_by(code=promo_used, is_active=True).first()
+            if coupon:
+                coupon.times_used += 1
+
+        db.session.commit()
         return render_template('billing/checkout_success.html', reference=reference)
 
-    except Exception as e:
+    except Exception:
         db.session.rollback()
-        # 🚨 THIS WILL PRINT THE EXACT ERROR ON YOUR SCREEN!
         return f"<h1>Callback Crash:</h1><pre>{traceback.format_exc()}</pre>", 500

@@ -1,722 +1,744 @@
 {% extends "base.html" %}
 
 {% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <style>
-    .finance-shell {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 20px 16px 40px;
-    }
-
-    .finance-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        gap: 16px;
-        margin-bottom: 30px;
-    }
-
-    .finance-header h1 {
-        margin: 0;
-        font-size: 2rem;
-        line-height: 1.15;
-        font-weight: 900;
-        color: #111827;
-    }
-
-    .finance-header p {
-        margin: 0;
-        color: #6b7280;
-        font-size: 0.98rem;
-    }
-
-    .kpi-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 20px;
-        margin-bottom: 40px;
-    }
-
-    .kpi-card {
-        background: #f8fafc;
-        padding: 20px;
-        border-radius: 16px;
+    .analytics-card {
+        background: white;
         border: 1px solid #e5e7eb;
-        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+        border-radius: 1.25rem;
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
     }
 
-    .kpi-card h4 {
-        margin: 0;
-        color: #6b7280;
-        font-size: 0.9rem;
-        font-weight: 700;
-    }
-
-    .kpi-card h2 {
-        margin: 10px 0 0 0;
-        font-size: 1.8rem;
-        line-height: 1.15;
-        font-weight: 900;
-        color: #111827;
-        word-break: break-word;
-    }
-
-    .kpi-blue { border-left: 4px solid #2563eb; }
-    .kpi-green { border-left: 4px solid #16a34a; }
-    .kpi-cyan { border-left: 4px solid #06b6d4; }
-
-    .section-divider {
-        margin: 40px 0;
-        border: 0;
-        border-top: 1px solid #e5e7eb;
-    }
-
-    .section-title {
-        margin-bottom: 20px;
-    }
-
-    .section-title h3 {
-        margin: 0 0 6px 0;
-        font-size: 1.35rem;
-        font-weight: 900;
-        color: #111827;
-    }
-
-    .section-title p {
-        margin: 0;
-        color: #6b7280;
-        font-size: 0.95rem;
-    }
-
-    .plans-grid {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 20px;
-        margin-bottom: 40px;
-    }
-
-    .plan-card {
-        background: #ffffff;
-        border: 1px solid #e5e7eb;
-        border-radius: 20px;
-        padding: 20px;
-        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.04);
-    }
-
-    .plan-card h4 {
-        margin-top: 0;
-        margin-bottom: 18px;
-        color: #111827;
-        font-size: 1.1rem;
-        font-weight: 900;
-        border-bottom: 1px solid #edf2f7;
-        padding-bottom: 10px;
-    }
-
-    .input-grid-2 {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
-        margin-bottom: 15px;
-    }
-
-    .form-group label {
-        display: block;
-        font-size: 11px;
-        font-weight: 800;
-        color: #9ca3af;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        margin-bottom: 6px;
-    }
-
-    .form-control {
-        width: 100%;
-        padding: 10px 12px;
-        border: 1px solid #d1d5db;
-        border-radius: 10px;
-        font-size: 0.95rem;
-        color: #111827;
-        background: #fff;
-        outline: none;
-        box-sizing: border-box;
-    }
-
-    .form-control:focus {
-        border-color: #0f766e;
-        box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1);
-    }
-
-    .entitlements-box {
-        background: #fcfcfc;
-        border: 1px solid #eeeeee;
-        padding: 14px;
-        border-radius: 12px;
-        margin-bottom: 20px;
-    }
-
-    .entitlements-title {
-        font-size: 11px;
-        font-weight: 800;
-        color: #6b7280;
-        margin-top: 0;
-        margin-bottom: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-    }
-
-    .check-row {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-size: 14px;
-        color: #374151;
-        margin-bottom: 10px;
-        cursor: pointer;
-    }
-
-    .check-row:last-child {
-        margin-bottom: 0;
-    }
-
-    .submit-btn {
-        width: 100%;
-        padding: 12px 14px;
-        background: #16a34a;
-        color: white;
-        border: none;
-        border-radius: 12px;
-        font-weight: 800;
-        cursor: pointer;
-        transition: 0.2s ease;
-        font-size: 0.95rem;
-    }
-
-    .submit-btn:hover {
-        opacity: 0.94;
-    }
-
-    .bottom-grid {
-        display: grid;
-        grid-template-columns: 1fr 1.6fr;
-        gap: 24px;
-        align-items: start;
-    }
-
-    .panel-card {
-        background: #ffffff;
-        border: 1px solid #e5e7eb;
-        padding: 20px;
-        border-radius: 20px;
-        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.04);
-    }
-
-    .panel-card h3 {
-        margin-top: 0;
-        margin-bottom: 16px;
-        font-size: 1.2rem;
-        font-weight: 900;
-        color: #111827;
-    }
-
-    .promo-btn {
-        width: 100%;
-        padding: 12px 14px;
-        background: #7c3aed;
-        color: white;
-        border: none;
-        border-radius: 12px;
-        font-weight: 800;
-        cursor: pointer;
-        transition: 0.2s ease;
-        font-size: 0.95rem;
-    }
-
-    .promo-btn:hover {
-        opacity: 0.94;
-    }
-
-    .subheading {
-        margin-top: 28px;
-        margin-bottom: 12px;
-        border-bottom: 1px solid #e5e7eb;
-        padding-bottom: 8px;
-        font-size: 1rem;
-        font-weight: 800;
-        color: #111827;
-    }
-
-    .promo-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        font-size: 14px;
-    }
-
-    .promo-list li {
-        display: grid;
-        grid-template-columns: 1fr auto auto;
-        gap: 10px;
-        align-items: center;
-        padding: 12px 0;
-        border-bottom: 1px solid #f3f4f6;
-    }
-
-    .promo-list li:last-child {
-        border-bottom: none;
-    }
-
-    .promo-code {
-        font-weight: 800;
-        color: #111827;
-        word-break: break-word;
-    }
-
-    .promo-discount {
-        color: #16a34a;
-        font-weight: 800;
-        white-space: nowrap;
-    }
-
-    .promo-usage {
-        color: #6b7280;
-        white-space: nowrap;
-    }
-
-    .transactions-table-wrap {
-        overflow-x: auto;
-    }
-
-    .transactions-table {
-        width: 100%;
-        border-collapse: collapse;
-        text-align: left;
-        font-size: 14px;
-    }
-
-    .transactions-table thead tr {
-        border-bottom: 2px solid #e5e7eb;
-        background: #f8fafc;
-    }
-
-    .transactions-table th,
-    .transactions-table td {
-        padding: 12px;
-        vertical-align: top;
-    }
-
-    .transactions-table tbody tr {
-        border-bottom: 1px solid #f3f4f6;
-    }
-
-    .status-paid,
-    .status-failed {
-        display: inline-flex;
-        align-items: center;
-        padding: 5px 10px;
-        border-radius: 999px;
-        font-size: 11px;
-        font-weight: 800;
-        line-height: 1;
-        white-space: nowrap;
-    }
-
-    .status-paid {
-        background: #e6fffa;
-        color: #234e52;
-    }
-
-    .status-failed {
-        background: #fff5f5;
-        color: #822727;
-    }
-
-    .mobile-transactions {
-        display: none;
-    }
-
-    .txn-card {
-        border: 1px solid #eef2f7;
-        border-radius: 14px;
-        padding: 14px;
-        margin-bottom: 12px;
-        background: #fff;
-    }
-
-    .txn-card:last-child {
-        margin-bottom: 0;
-    }
-
-    .txn-top {
-        display: flex;
-        justify-content: space-between;
-        gap: 14px;
-        margin-bottom: 10px;
-    }
-
-    .txn-label {
-        font-size: 11px;
-        font-weight: 800;
-        color: #9ca3af;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        margin-bottom: 4px;
-    }
-
-    .txn-value {
-        font-size: 14px;
-        color: #111827;
-        font-weight: 600;
-        word-break: break-word;
-    }
-
-    .txn-amount {
-        font-weight: 900;
-    }
-
-    .empty-state {
-        padding: 24px 0;
-        text-align: center;
-        color: #9ca3af;
-    }
-
-    @media (max-width: 1024px) {
-        .kpi-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .plans-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .bottom-grid {
-            grid-template-columns: 1fr;
-        }
+    .chart-wrap {
+        position: relative;
+        height: 320px;
     }
 
     @media (max-width: 640px) {
-        .finance-shell {
-            padding: 16px 12px 32px;
+        .chart-wrap {
+            height: 260px;
         }
+    }
 
-        .finance-header {
-            flex-direction: column;
-            align-items: flex-start;
-            margin-bottom: 24px;
-        }
+    .transactions-scrollbox {
+        max-height: 540px;
+        overflow-y: auto;
+        overflow-x: auto;
+        border: 1px solid #e5e7eb;
+        border-radius: 1rem;
+        background: white;
+    }
 
-        .finance-header h1 {
-            font-size: 1.65rem;
-        }
+    .transactions-scrollbox::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
 
-        .finance-header p {
-            font-size: 0.92rem;
-        }
+    .transactions-scrollbox::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 999px;
+    }
 
-        .kpi-card {
-            padding: 16px;
-            border-radius: 14px;
-        }
+    .transactions-scrollbox::-webkit-scrollbar-track {
+        background: transparent;
+    }
 
-        .kpi-card h2 {
-            font-size: 1.45rem;
-        }
+    .transactions-scrollbox thead th {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: #f9fafb;
+    }
 
-        .plans-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .plan-card,
-        .panel-card {
-            padding: 16px;
-            border-radius: 16px;
-        }
-
-        .input-grid-2 {
-            grid-template-columns: 1fr;
-        }
-
-        .promo-list li {
-            grid-template-columns: 1fr;
-            gap: 6px;
-        }
-
-        .transactions-table-wrap {
-            display: none;
-        }
-
-        .mobile-transactions {
-            display: block;
-        }
-
-        .txn-top {
-            flex-direction: column;
-            gap: 10px;
+    @media (max-width: 768px) {
+        .transactions-scrollbox {
+            max-height: 420px;
         }
     }
 </style>
 
-<div class="finance-shell">
-
-    <div class="finance-header">
+<div class="max-w-7xl mx-auto space-y-6">
+    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
         <div>
-            <h1>Master Finance Dashboard</h1>
-        </div>
-        <p>Real-time revenue, pricing, & promo controls</p>
-    </div>
-
-    <div class="kpi-grid">
-        <div class="kpi-card kpi-blue">
-            <h4>Monthly Recurring Revenue (MRR)</h4>
-            <h2>GHS {{ "%.2f"|format(mrr) }}</h2>
+            <p class="text-xs font-black uppercase tracking-[0.2em] text-brand mb-2">Master Finance</p>
+            <h1 class="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">Financial Analytics Dashboard</h1>
+            <p class="text-sm sm:text-base text-gray-500 mt-2">
+                Revenue intelligence, payment operations, growth metrics, and transaction control.
+            </p>
         </div>
 
-        <div class="kpi-card kpi-green">
-            <h4>Total Collected Revenue</h4>
-            <h2>GHS {{ "%.2f"|format(total_revenue) }}</h2>
-        </div>
-
-        <div class="kpi-card kpi-cyan">
-            <h4>Paying Schools</h4>
-            <h2>
-                {{ paying_schools }}
-                <small style="font-size: 14px; color: #9ca3af; font-weight: 700;">
-                    / {{ total_schools }} total
-                </small>
-            </h2>
+        <div class="flex flex-wrap gap-3">
+            <button onclick="printTransactions()"
+                    class="inline-flex items-center justify-center px-4 py-3 rounded-xl bg-gray-900 text-white text-sm font-bold hover:opacity-90 transition">
+                🖨️ Print Transactions
+            </button>
         </div>
     </div>
 
-    <hr class="section-divider">
+    <!-- KPI CARDS -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div class="analytics-card p-5 border-l-4 border-blue-600">
+            <p class="text-xs font-black uppercase tracking-[0.18em] text-gray-400">Monthly Recurring Revenue</p>
+            <h2 class="text-3xl font-black text-gray-900 mt-3">GHS {{ "%.2f"|format(mrr) }}</h2>
+            <p class="text-sm text-gray-500 mt-2">Projected recurring value across active subscriptions.</p>
+        </div>
 
-    <div class="section-title">
-        <h3>Live Pricing & Feature Controls</h3>
-        <p>Changes here instantly update permissions for all schools on these plans.</p>
+        <div class="analytics-card p-5 border-l-4 border-emerald-600">
+            <p class="text-xs font-black uppercase tracking-[0.18em] text-gray-400">Total Collected Revenue</p>
+            <h2 class="text-3xl font-black text-gray-900 mt-3">GHS {{ "%.2f"|format(total_revenue) }}</h2>
+            <p class="text-sm text-gray-500 mt-2">All successful collections recorded in the ledger.</p>
+        </div>
+
+        <div class="analytics-card p-5 border-l-4 border-cyan-600">
+            <p class="text-xs font-black uppercase tracking-[0.18em] text-gray-400">Paying Schools</p>
+            <h2 class="text-3xl font-black text-gray-900 mt-3">{{ paying_schools }}</h2>
+            <p class="text-sm text-gray-500 mt-2">{{ total_schools }} total schools in the system.</p>
+        </div>
+
+        <div class="analytics-card p-5">
+            <p class="text-xs font-black uppercase tracking-[0.18em] text-gray-400">Conversion Rate</p>
+            <h2 class="text-3xl font-black text-gray-900 mt-3">{{ "%.2f"|format(conversion_rate) }}%</h2>
+            <p class="text-sm text-gray-500 mt-2">Paying schools as a share of total onboarded schools.</p>
+        </div>
+
+        <div class="analytics-card p-5">
+            <p class="text-xs font-black uppercase tracking-[0.18em] text-gray-400">Payment Success Rate</p>
+            <h2 class="text-3xl font-black text-gray-900 mt-3">{{ "%.2f"|format(success_rate) }}%</h2>
+            <p class="text-sm text-gray-500 mt-2">{{ successful_transactions }} successful out of {{ total_transactions }} total transactions.</p>
+        </div>
+
+        <div class="analytics-card p-5">
+            <p class="text-xs font-black uppercase tracking-[0.18em] text-gray-400">Average Revenue Per Paying School</p>
+            <h2 class="text-3xl font-black text-gray-900 mt-3">GHS {{ "%.2f"|format(avg_revenue_per_paying_school) }}</h2>
+            <p class="text-sm text-gray-500 mt-2">Average lifetime collected value from each paying school.</p>
+        </div>
     </div>
 
-    <div class="plans-grid">
-        {% for plan in plans %}
-        <div class="plan-card">
-            <h4>{{ plan.name }} Package</h4>
+    <!-- MINI INSIGHTS -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="analytics-card p-5">
+            <p class="text-xs font-black uppercase tracking-[0.18em] text-gray-400">Active Subscriptions</p>
+            <h3 class="text-2xl font-black text-gray-900 mt-2">{{ active_subscriptions }}</h3>
+            <p class="text-sm text-gray-500 mt-2">Schools currently active or in trialing state.</p>
+        </div>
 
-            <form action="{{ url_for('superadmin_finance.update_plan_pricing', plan_id=plan.id) }}" method="POST">
+        <div class="analytics-card p-5">
+            <p class="text-xs font-black uppercase tracking-[0.18em] text-gray-400">Current Month Revenue</p>
+            <h3 class="text-2xl font-black text-gray-900 mt-2">GHS {{ "%.2f"|format(current_month_revenue) }}</h3>
+            <p class="text-sm text-gray-500 mt-2">Compared to GHS {{ "%.2f"|format(previous_month_revenue) }} last month.</p>
+        </div>
+
+        <div class="analytics-card p-5">
+            <p class="text-xs font-black uppercase tracking-[0.18em] text-gray-400">Month-over-Month Growth</p>
+            <h3 class="text-2xl font-black {% if revenue_growth_pct >= 0 %}text-emerald-600{% else %}text-red-600{% endif %} mt-2">
+                {{ "%.2f"|format(revenue_growth_pct) }}%
+            </h3>
+            <p class="text-sm text-gray-500 mt-2">Revenue movement against the previous month.</p>
+        </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div class="analytics-card p-5 xl:col-span-2">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-xl font-black text-gray-900">Revenue Trend</h3>
+                    <p class="text-sm text-gray-500">Successful revenue across the last 6 months.</p>
+                </div>
+            </div>
+            <div class="chart-wrap">
+                <canvas id="monthlyRevenueChart"></canvas>
+            </div>
+        </div>
+
+        <div class="analytics-card p-5">
+            <h3 class="text-xl font-black text-gray-900">Payment Channels</h3>
+            <p class="text-sm text-gray-500 mb-4">How schools are paying across available methods.</p>
+            <div class="chart-wrap">
+                <canvas id="paymentChannelsChart"></canvas>
+            </div>
+        </div>
+
+        <div class="analytics-card p-5">
+            <h3 class="text-xl font-black text-gray-900">Transaction Status</h3>
+            <p class="text-sm text-gray-500 mb-4">Paid, pending, and failed transaction counts.</p>
+            <div class="chart-wrap">
+                <canvas id="transactionStatusChart"></canvas>
+            </div>
+        </div>
+
+        <div class="analytics-card p-5">
+            <h3 class="text-xl font-black text-gray-900">Active Plan Distribution</h3>
+            <p class="text-sm text-gray-500 mb-4">How active schools are spread across packages.</p>
+            <div class="chart-wrap">
+                <canvas id="planDistributionChart"></canvas>
+            </div>
+        </div>
+
+        <div class="analytics-card p-5 xl:col-span-1">
+            <h3 class="text-xl font-black text-gray-900">Top Revenue Schools</h3>
+            <p class="text-sm text-gray-500 mb-4">Highest contributors by collected revenue.</p>
+            <div class="chart-wrap">
+                <canvas id="topSchoolsChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- TRANSACTIONS -->
+    <div class="analytics-card p-5">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-5">
+            <div>
+                <h3 class="text-xl font-black text-gray-900">Transaction Ledger</h3>
+                <p class="text-sm text-gray-500">Search, filter, review, and print the latest 50 transactions.</p>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3">
+                <input
+                    id="txnSearch"
+                    type="text"
+                    placeholder="Search school, reference, channel, amount..."
+                    class="w-full sm:w-80 px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                <select
+                    id="txnStatusFilter"
+                    class="px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                    <option value="all">All Statuses</option>
+                    <option value="success">Paid</option>
+                    <option value="pending">Pending</option>
+                    <option value="failed">Failed</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-between mb-4">
+            <p class="text-sm text-gray-500">
+                Showing <span id="visibleTxnCount" class="font-black text-gray-800">{{ recent_transactions|length }}</span>
+                visible transaction(s)
+            </p>
+            <button onclick="printTransactions()"
+                    class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-brand text-white text-sm font-bold hover:opacity-90 transition">
+                Print Visible Rows
+            </button>
+        </div>
+
+        <!-- Desktop -->
+        <div class="hidden md:block transactions-scrollbox" id="transactions-print-area">
+            <table class="min-w-full text-sm" id="transactions-table">
+                <thead>
+                    <tr class="bg-gray-50 border-y border-gray-200 text-left">
+                        <th class="px-4 py-3 font-black uppercase tracking-wider text-gray-500 text-xs">Date</th>
+                        <th class="px-4 py-3 font-black uppercase tracking-wider text-gray-500 text-xs">Reference</th>
+                        <th class="px-4 py-3 font-black uppercase tracking-wider text-gray-500 text-xs">School</th>
+                        <th class="px-4 py-3 font-black uppercase tracking-wider text-gray-500 text-xs">Channel</th>
+                        <th class="px-4 py-3 font-black uppercase tracking-wider text-gray-500 text-xs">Amount</th>
+                        <th class="px-4 py-3 font-black uppercase tracking-wider text-gray-500 text-xs">Status</th>
+                        <th class="px-4 py-3 font-black uppercase tracking-wider text-gray-500 text-xs">Receipt</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for txn in recent_transactions %}
+                    <tr
+                        class="txn-row border-b border-gray-100 hover:bg-gray-50"
+                        data-status="{{ txn.status|lower }}"
+                        data-search="{{ ((txn.school.name if txn.school else 'Unknown School') ~ ' ' ~ (txn.provider_reference or '') ~ ' ' ~ (txn.channel or '') ~ ' ' ~ ('%.2f'|format(txn.amount)))|lower }}"
+                    >
+                        <td class="px-4 py-4 text-gray-700">
+                            {{ txn.paid_at.strftime('%Y-%m-%d %H:%M') if txn.paid_at else 'N/A' }}
+                        </td>
+                        <td class="px-4 py-4 font-bold text-gray-800 whitespace-nowrap">{{ txn.provider_reference }}</td>
+                        <td class="px-4 py-4 font-semibold text-gray-800">
+                            {{ txn.school.name if txn.school else 'Unknown School' }}
+                        </td>
+                        <td class="px-4 py-4 text-gray-600 whitespace-nowrap">
+                            {% if txn.channel %}
+                                {{ txn.channel.replace('_', ' ')|title }}
+                            {% else %}
+                                <span class="italic text-gray-400">Pending / Unknown</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-4 font-black text-gray-900 whitespace-nowrap">GHS {{ "%.2f"|format(txn.amount) }}</td>
+                        <td class="px-4 py-4 whitespace-nowrap">
+                            {% if txn.status == 'success' %}
+                                <span class="inline-flex px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800">PAID</span>
+                            {% elif txn.status == 'pending' %}
+                                <span class="inline-flex px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-800">PENDING</span>
+                            {% else %}
+                                <span class="inline-flex px-3 py-1 rounded-full text-xs font-black bg-red-100 text-red-800">{{ txn.status.upper() }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-4 whitespace-nowrap">
+                            {% if txn.metadata_json and txn.metadata_json.id %}
+                                <a href="https://paystack.com/receipt/{{ txn.metadata_json.id }}"
+                                    target="_blank"
+                                    class="text-brand font-bold hover:underline">
+                                        View Receipt
+                                </a>
+                            {% else %}
+                                <span class="italic text-gray-400">Not Available</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="px-4 py-10 text-center text-gray-400 font-semibold">
+                            No transactions recorded yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Mobile -->
+        <div class="md:hidden space-y-3">
+            {% for txn in recent_transactions %}
+            <div
+                class="txn-card border border-gray-200 rounded-2xl p-4 bg-white"
+                data-status="{{ txn.status|lower }}"
+                data-search="{{ ((txn.school.name if txn.school else 'Unknown School') ~ ' ' ~ (txn.provider_reference or '') ~ ' ' ~ (txn.channel or '') ~ ' ' ~ ('%.2f'|format(txn.amount)))|lower }}"
+            >
+                <div class="flex justify-between gap-4 mb-3">
+                    <div>
+                        <p class="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400">School</p>
+                        <p class="text-sm font-bold text-gray-900">{{ txn.school.name if txn.school else 'Unknown School' }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400">Amount</p>
+                        <p class="text-sm font-black text-gray-900">GHS {{ "%.2f"|format(txn.amount) }}</p>
+                    </div>
+                </div>
+
+                <div class="space-y-2 text-sm">
+                    <p><span class="font-black text-gray-500">Date:</span> {{ txn.paid_at.strftime('%Y-%m-%d %H:%M') if txn.paid_at else 'N/A' }}</p>
+                    <p><span class="font-black text-gray-500">Reference:</span> {{ txn.provider_reference }}</p>
+                    <p>
+                        <span class="font-black text-gray-500">Channel:</span>
+                        {% if txn.channel %}
+                            {{ txn.channel.replace('_', ' ')|title }}
+                        {% else %}
+                            <span class="italic text-gray-400">Pending / Unknown</span>
+                        {% endif %}
+                    </p>
+                    <div class="pt-2">
+                        {% if txn.status == 'success' %}
+                            <span class="inline-flex px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800">PAID</span>
+                        {% elif txn.status == 'pending' %}
+                            <span class="inline-flex px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-800">PENDING</span>
+                        {% else %}
+                            <span class="inline-flex px-3 py-1 rounded-full text-xs font-black bg-red-100 text-red-800">{{ txn.status.upper() }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="py-10 text-center text-gray-400 font-semibold">
+                No transactions recorded yet.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- PLAN CONTROLS -->
+    <div class="space-y-4 pt-2">
+        <div>
+            <h3 class="text-2xl font-black text-gray-900">Pricing & Feature Controls</h3>
+            <p class="text-sm text-gray-500 mt-1">Update package pricing, limits, and entitlements globally.</p>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+            {% for plan in plans %}
+            <div class="analytics-card p-5">
+                <h4 class="text-lg font-black text-gray-900 border-b border-gray-100 pb-3 mb-4">{{ plan.name }} Package</h4>
+
+                <form action="{{ url_for('superadmin_finance.update_plan_pricing', plan_id=plan.id) }}" method="POST" class="space-y-4">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-black uppercase tracking-[0.18em] text-gray-400 mb-2">Monthly (GHS)</label>
+                            <input type="number" step="0.01" name="price_monthly" value="{{ plan.price_monthly }}"
+                                   class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-black uppercase tracking-[0.18em] text-gray-400 mb-2">Annual (GHS)</label>
+                            <input type="number" step="0.01" name="price_annual" value="{{ plan.price_annual }}"
+                                   class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-black uppercase tracking-[0.18em] text-gray-400 mb-2">Student Limit</label>
+                            <input type="number" name="student_limit" value="{{ plan.student_limit }}"
+                                   class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-black uppercase tracking-[0.18em] text-gray-400 mb-2">Scanner Limit</label>
+                            <input type="number" name="scanner_limit" value="{{ plan.scanner_limit }}"
+                                   class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                        <p class="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400 mb-3">Entitlements</p>
+
+                        <label class="flex items-center gap-3 text-sm font-semibold text-gray-700 mb-3">
+                            <input type="checkbox" name="whatsapp_enabled" {% if plan.whatsapp_enabled %}checked{% endif %}>
+                            WhatsApp Broadcasts
+                        </label>
+
+                        <label class="flex items-center gap-3 text-sm font-semibold text-gray-700 mb-3">
+                            <input type="checkbox" name="sms_enabled" {% if plan.sms_enabled %}checked{% endif %}>
+                            SMS Alerts
+                        </label>
+
+                        <label class="flex items-center gap-3 text-sm font-semibold text-gray-700">
+                            <input type="checkbox" name="gps_enabled" {% if plan.gps_enabled %}checked{% endif %}>
+                            Live GPS Tracking
+                        </label>
+
+                        <label class="check-row">
+                            <input type="checkbox" name="complaints_enabled" {% if plan.complaints_enabled %}checked{% endif %}>
+                            <span>Complaints & Support</span>
+                        </label>
+                    </div>
+
+                    <button type="submit"
+                            class="w-full px-4 py-3 rounded-xl bg-emerald-600 text-white font-black hover:opacity-90 transition">
+                        Save {{ plan.name }} Changes
+                    </button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- PROMOS -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+        <div class="analytics-card p-5 xl:col-span-1">
+            <h3 class="text-xl font-black text-gray-900 mb-4">Generate Promo Code</h3>
+
+            <form action="{{ url_for('superadmin_finance.create_coupon') }}" method="POST" class="space-y-4">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-                <div class="input-grid-2">
-                    <div class="form-group">
-                        <label>Monthly (GHS)</label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            name="price_monthly"
-                            value="{{ plan.price_monthly }}"
-                            class="form-control"
-                        >
-                    </div>
-
-                    <div class="form-group">
-                        <label>Annual (GHS)</label>
-                        <input
-                            type="number"
-                            step="0.01"
-                            name="price_annual"
-                            value="{{ plan.price_annual }}"
-                            class="form-control"
-                        >
-                    </div>
+                <div>
+                    <label class="block text-[11px] font-black uppercase tracking-[0.18em] text-gray-400 mb-2">Coupon Code</label>
+                    <input type="text" name="code" required placeholder="e.g. SAVE50"
+                           class="w-full px-4 py-3 rounded-xl border border-gray-300 uppercase focus:outline-none focus:ring-2 focus:ring-violet-500">
                 </div>
 
-                <div class="input-grid-2">
-                    <div class="form-group">
-                        <label>Student Limit</label>
-                        <input
-                            type="number"
-                            name="student_limit"
-                            value="{{ plan.student_limit }}"
-                            class="form-control"
-                        >
-                    </div>
-
-                    <div class="form-group">
-                        <label>Scanner Limit</label>
-                        <input
-                            type="number"
-                            name="scanner_limit"
-                            value="{{ plan.scanner_limit }}"
-                            class="form-control"
-                        >
-                    </div>
+                <div>
+                    <label class="block text-[11px] font-black uppercase tracking-[0.18em] text-gray-400 mb-2">Discount Percentage</label>
+                    <input type="number" step="1" max="100" name="discount_percentage" required
+                           class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500">
                 </div>
 
-                <div class="entitlements-box">
-                    <p class="entitlements-title">Entitlements</p>
-
-                    <label class="check-row">
-                        <input type="checkbox" name="whatsapp_enabled" {% if plan.whatsapp_enabled %}checked{% endif %}>
-                        <span>WhatsApp Broadcasts</span>
-                    </label>
-
-                    <label class="check-row">
-                        <input type="checkbox" name="sms_enabled" {% if plan.sms_enabled %}checked{% endif %}>
-                        <span>SMS Alerts</span>
-                    </label>
-
-                    <label class="check-row">
-                        <input type="checkbox" name="gps_enabled" {% if plan.gps_enabled %}checked{% endif %}>
-                        <span>Live GPS Tracking</span>
-                    </label>
+                <div>
+                    <label class="block text-[11px] font-black uppercase tracking-[0.18em] text-gray-400 mb-2">Usage Limit</label>
+                    <input type="number" name="usage_limit" value="-1" required
+                           class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-violet-500">
                 </div>
 
-                <button type="submit" class="submit-btn">
-                    Save {{ plan.name }} Changes
-                </button>
-            </form>
-        </div>
-        {% endfor %}
-    </div>
-
-    <div class="bottom-grid">
-
-        <div class="panel-card">
-            <h3>Generate Promo Code</h3>
-
-            <form action="{{ url_for('superadmin_finance.create_coupon') }}" method="POST">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-                <div class="form-group" style="margin-bottom: 12px;">
-                    <label>Coupon Code</label>
-                    <input
-                        type="text"
-                        name="code"
-                        required
-                        placeholder="e.g. SAVE50"
-                        class="form-control"
-                        style="text-transform: uppercase;"
-                    >
-                </div>
-
-                <div class="form-group" style="margin-bottom: 12px;">
-                    <label>Discount Percentage (%)</label>
-                    <input
-                        type="number"
-                        step="1"
-                        max="100"
-                        name="discount_percentage"
-                        required
-                        class="form-control"
-                    >
-                </div>
-
-                <div class="form-group" style="margin-bottom: 20px;">
-                    <label>Usage Limit (-1 for unlimited)</label>
-                    <input
-                        type="number"
-                        name="usage_limit"
-                        value="-1"
-                        required
-                        class="form-control"
-                    >
-                </div>
-
-                <button type="submit" class="promo-btn">
+                <button type="submit"
+                        class="w-full px-4 py-3 rounded-xl bg-violet-600 text-white font-black hover:opacity-90 transition">
                     Create Promo Code
                 </button>
             </form>
-
-            <h4 class="subheading">Active Promos</h4>
-
-            <ul class="promo-list">
-                {% for coupon in coupons %}
-                <li>
-                    <span class="promo-code">{{ coupon.code }}</span>
-                    <span class="promo-discount">{{ coupon.discount_percentage }}% OFF</span>
-                    <span class="promo-usage">
-                        {{ coupon.times_used }}/{{ coupon.usage_limit if coupon.usage_limit != -1 else '∞' }}
-                    </span>
-                </li>
-                {% else %}
-                <li style="display: block; color: #9ca3af; padding: 10px 0;">
-                    No active promo codes.
-                </li>
-                {% endfor %}
-            </ul>
         </div>
 
-        <div class="panel-card">
-            <h3>Recent Transactions</h3>
+        <div class="analytics-card p-5 xl:col-span-2">
+            <h3 class="text-xl font-black text-gray-900 mb-4">Active Promo Codes</h3>
 
-            <!-- Desktop / Tablet Table -->
-            <div class="transactions-table-wrap">
-                <table class="transactions-table">
+            <div class="transactions-scrollbox" style="max-height: 360px;">
+                <table class="min-w-full text-sm">
                     <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>School</th>
-                            <th>Amount</th>
-                            <th>Status</th>
+                        <tr class="bg-gray-50 border-y border-gray-200 text-left">
+                            <th class="px-4 py-3 font-black uppercase tracking-wider text-gray-500 text-xs">Code</th>
+                            <th class="px-4 py-3 font-black uppercase tracking-wider text-gray-500 text-xs">Discount</th>
+                            <th class="px-4 py-3 font-black uppercase tracking-wider text-gray-500 text-xs">Usage</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for txn in recent_transactions %}
-                        <tr>
-                            <td>{{ txn.paid_at.strftime('%Y-%m-%d %H:%M') if txn.paid_at else 'N/A' }}</td>
-                            <td style="font-weight: 600;">School #{{ txn.school_id }}</td>
-                            <td style="font-weight: 900;">GHS {{ "%.2f"|format(txn.amount) }}</td>
-                            <td>
-                                {% if txn.status == 'success' %}
-                                    <span class="status-paid">✔ PAID</span>
-                                {% else %}
-                                    <span class="status-failed">✘ {{ txn.status.upper() }}</span>
-                                {% endif %}
+                        {% for coupon in coupons %}
+                        <tr class="border-b border-gray-100">
+                            <td class="px-4 py-4 font-black text-gray-900 whitespace-nowrap">{{ coupon.code }}</td>
+                            <td class="px-4 py-4 font-bold text-emerald-600 whitespace-nowrap">{{ coupon.discount_percentage }}% OFF</td>
+                            <td class="px-4 py-4 text-gray-600 whitespace-nowrap">
+                                {{ coupon.times_used }}/{{ coupon.usage_limit if coupon.usage_limit != -1 else '∞' }}
                             </td>
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="4" class="empty-state">No revenue recorded yet.</td>
+                            <td colspan="3" class="px-4 py-10 text-center text-gray-400 font-semibold">
+                                No active promo codes.
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-
-            <!-- Mobile Cards -->
-            <div class="mobile-transactions">
-                {% for txn in recent_transactions %}
-                <div class="txn-card">
-                    <div class="txn-top">
-                        <div>
-                            <div class="txn-label">Date</div>
-                            <div class="txn-value">{{ txn.paid_at.strftime('%Y-%m-%d %H:%M') if txn.paid_at else 'N/A' }}</div>
-                        </div>
-
-                        <div>
-                            <div class="txn-label">Amount</div>
-                            <div class="txn-value txn-amount">GHS {{ "%.2f"|format(txn.amount) }}</div>
-                        </div>
-                    </div>
-
-                    <div style="margin-bottom: 10px;">
-                        <div class="txn-label">School</div>
-                        <div class="txn-value">{{ txn.school.name if txn.school else 'Unknown School' }}</div>
-                    </div>
-
-                    <div>
-                        <div class="txn-label">Status</div>
-                        <div style="margin-top: 4px;">
-                            {% if txn.status == 'success' %}
-                                <span class="status-paid">✔ PAID</span>
-                            {% else %}
-                                <span class="status-failed">✘ {{ txn.status.upper() }}</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                {% else %}
-                <div class="empty-state">No revenue recorded yet.</div>
-                {% endfor %}
-            </div>
         </div>
-
     </div>
 </div>
+
+<script>
+    const monthlyRevenueLabels = {{ monthly_revenue_labels|tojson }};
+    const monthlyRevenueData = {{ monthly_revenue_data|tojson }};
+    const channelBreakdownLabels = {{ channel_breakdown_labels|tojson }};
+    const channelBreakdownData = {{ channel_breakdown_data|tojson }};
+    const statusBreakdownLabels = {{ status_breakdown_labels|tojson }};
+    const statusBreakdownData = {{ status_breakdown_data|tojson }};
+    const planDistributionLabels = {{ plan_distribution_labels|tojson }};
+    const planDistributionData = {{ plan_distribution_data|tojson }};
+    const topSchoolLabels = {{ top_school_labels|tojson }};
+    const topSchoolData = {{ top_school_data|tojson }};
+
+    const sharedPalette = [
+        '#2563eb', '#16a34a', '#7c3aed', '#f59e0b', '#ef4444',
+        '#06b6d4', '#14b8a6', '#8b5cf6', '#f97316', '#64748b'
+    ];
+
+    function moneyTick(value) {
+        return 'GHS ' + Number(value).toLocaleString();
+    }
+
+    new Chart(document.getElementById('monthlyRevenueChart'), {
+        type: 'line',
+        data: {
+            labels: monthlyRevenueLabels,
+            datasets: [{
+                label: 'Revenue (GHS)',
+                data: monthlyRevenueData,
+                borderColor: '#2563eb',
+                backgroundColor: 'rgba(37, 99, 235, 0.12)',
+                fill: true,
+                tension: 0.35,
+                borderWidth: 3,
+                pointRadius: 4,
+                pointHoverRadius: 5
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: true }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: moneyTick
+                    }
+                }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('paymentChannelsChart'), {
+        type: 'doughnut',
+        data: {
+            labels: channelBreakdownLabels,
+            datasets: [{
+                data: channelBreakdownData,
+                backgroundColor: sharedPalette,
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('transactionStatusChart'), {
+        type: 'bar',
+        data: {
+            labels: statusBreakdownLabels,
+            datasets: [{
+                label: 'Transactions',
+                data: statusBreakdownData,
+                backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                borderRadius: 10
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('planDistributionChart'), {
+        type: 'doughnut',
+        data: {
+            labels: planDistributionLabels,
+            datasets: [{
+                data: planDistributionData,
+                backgroundColor: sharedPalette,
+                borderWidth: 2,
+                borderColor: '#ffffff'
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+
+    new Chart(document.getElementById('topSchoolsChart'), {
+        type: 'bar',
+        data: {
+            labels: topSchoolLabels,
+            datasets: [{
+                label: 'Collected Revenue (GHS)',
+                data: topSchoolData,
+                backgroundColor: '#0f766e',
+                borderRadius: 10
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: moneyTick
+                    }
+                }
+            }
+        }
+    });
+
+    const txnSearch = document.getElementById('txnSearch');
+    const txnStatusFilter = document.getElementById('txnStatusFilter');
+    const txnRows = Array.from(document.querySelectorAll('.txn-row'));
+    const txnCards = Array.from(document.querySelectorAll('.txn-card'));
+    const visibleTxnCount = document.getElementById('visibleTxnCount');
+
+    function applyTransactionFilters() {
+        const searchValue = (txnSearch?.value || '').trim().toLowerCase();
+        const statusValue = txnStatusFilter?.value || 'all';
+        let visibleCount = 0;
+
+        txnRows.forEach(row => {
+            const matchesSearch = !searchValue || row.dataset.search.includes(searchValue);
+            const matchesStatus = statusValue === 'all' || row.dataset.status === statusValue;
+            const show = matchesSearch && matchesStatus;
+            row.style.display = show ? '' : 'none';
+            if (show) visibleCount += 1;
+        });
+
+        txnCards.forEach(card => {
+            const matchesSearch = !searchValue || card.dataset.search.includes(searchValue);
+            const matchesStatus = statusValue === 'all' || card.dataset.status === statusValue;
+            card.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+        });
+
+        if (visibleTxnCount) visibleTxnCount.textContent = visibleCount;
+    }
+
+    if (txnSearch) txnSearch.addEventListener('input', applyTransactionFilters);
+    if (txnStatusFilter) txnStatusFilter.addEventListener('change', applyTransactionFilters);
+
+    function printTransactions() {
+        const visibleRows = Array.from(document.querySelectorAll('#transactions-table tbody .txn-row'))
+            .filter(row => row.style.display !== 'none');
+
+        if (!visibleRows.length) {
+            alert('No visible transactions to print.');
+            return;
+        }
+
+        const theadHtml = document.querySelector('#transactions-table thead').outerHTML;
+        const tbodyHtml = visibleRows.map(row => row.outerHTML).join('');
+
+        const printWindow = window.open('', '_blank', 'width=1200,height=800');
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Transaction Ledger Print</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        padding: 24px;
+                        color: #111827;
+                    }
+                    h1 {
+                        margin: 0 0 6px 0;
+                        font-size: 24px;
+                    }
+                    p {
+                        margin: 0 0 18px 0;
+                        color: #6b7280;
+                        font-size: 14px;
+                    }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        font-size: 13px;
+                    }
+                    th, td {
+                        border: 1px solid #d1d5db;
+                        padding: 10px;
+                        text-align: left;
+                        vertical-align: top;
+                    }
+                    thead tr {
+                        background: #f3f4f6;
+                    }
+                    .inline-flex {
+                        display: inline-block;
+                    }
+                    .rounded-full {
+                        border-radius: 999px;
+                    }
+                    .bg-emerald-100 { background: #d1fae5; }
+                    .text-emerald-800 { color: #065f46; }
+                    .bg-amber-100 { background: #fef3c7; }
+                    .text-amber-800 { color: #92400e; }
+                    .bg-red-100 { background: #fee2e2; }
+                    .text-red-800 { color: #991b1b; }
+                    a {
+                        color: #2563eb;
+                        text-decoration: none;
+                    }
+                </style>
+            </head>
+            <body>
+                <h1>ATOM Gate Transaction Ledger</h1>
+                <p>Generated on ${new Date().toLocaleString()}</p>
+                <table>
+                    ${theadHtml}
+                    <tbody>${tbodyHtml}</tbody>
+                </table>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 300);
+    }
+
+    applyTransactionFilters();
+</script>
 {% endblock %}

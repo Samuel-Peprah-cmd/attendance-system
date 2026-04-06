@@ -78,16 +78,34 @@
                 <p class="text-[9px] text-gray-400 mt-2 font-bold uppercase">Current Lock: <span id="coords-display">{{ school.latitude }}, {{ school.longitude }}</span></p>
             </div>
         </div>
-        <div style="margin-top: 20px; padding: 20px; background-color: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
-            <h3>🔐 ATOM Gate Secure Terminal</h3>
-            <p>Register this device's fingerprint or Face ID to quickly unlock the security terminal.</p>
-    
+        <div class="mt-5 p-5 bg-slate-50 rounded-2xl border border-slate-200 lg:col-span-2">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h3 class="text-xl font-black text-gray-800">🔐 ATOM Gate Secure Terminal</h3>
+                    <p class="text-sm text-gray-500 mt-1">
+                        Save a passkey once and keep using fingerprint, Face ID, or Windows Hello until you reset it.
+                    </p>
+                </div>
+                <div class="text-sm font-bold text-gray-500">
+                    Saved passkeys: {{ current_user.passkeys.count() }}
+                </div>
+            </div>
+
             <input type="hidden" id="csrf_token" value="{{ csrf_token() }}">
-    
-            <button type="button" id="btn-register-biometric" style="background-color: #2563eb; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">
-                Register Fingerprint / Face ID
-            </button>
-            <p id="biometric-status" style="margin-top: 10px; font-weight: bold; color: #16a34a;"></p>
+
+            <div class="flex flex-col sm:flex-row gap-3 mt-5">
+                <button type="button" id="btn-register-biometric"
+                        class="px-5 py-3 rounded-xl bg-blue-600 text-white font-black hover:opacity-90 transition">
+                    Save / Add Passkey
+                </button>
+
+                <button type="button" id="btn-reset-biometric"
+                        class="px-5 py-3 rounded-xl bg-red-600 text-white font-black hover:opacity-90 transition">
+                    Reset Passkeys
+                </button>
+            </div>
+
+            <p id="biometric-status" class="mt-4 text-sm font-bold text-gray-700"></p>
         </div>
     </div>
 </div>
@@ -168,40 +186,32 @@
 </script>
 
 <script src="https://unpkg.com/@simplewebauthn/browser/dist/bundle/index.umd.min.js"></script>
-
 <script>
-    const { startRegistration } = SimpleWebAuthnBrowser;
+    const { startRegistration, startAuthentication } = SimpleWebAuthnBrowser;
+    const statusText = document.getElementById('biometric-status');
+    const csrfToken = document.getElementById('csrf_token').value;
 
     document.getElementById('btn-register-biometric').addEventListener('click', async () => {
-        const statusText = document.getElementById('biometric-status');
-        const csrfToken = document.getElementById('csrf_token').value; // Grab the VIP pass!
-        
-        statusText.innerText = "Requesting secure challenge...";
-        statusText.style.color = "#2563eb";
+        statusText.innerText = 'Requesting secure passkey setup...';
+        statusText.style.color = '#2563eb';
 
         try {
-            // Step 1: Send request WITH the CSRF token
-            const resp = await fetch('/api/biometric/register-options', { 
+            const resp = await fetch('/api/biometric/register-options', {
                 method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrfToken // Show the VIP pass to Flask
-                }
+                headers: { 'X-CSRFToken': csrfToken }
             });
-            
-            if (!resp.ok) throw new Error("Server rejected the request. Status: " + resp.status);
-            const options = await resp.json();
 
-            // Step 2: WAKE UP THE DEVICE'S FINGERPRINT SCANNER!
-            statusText.innerText = "Please scan your fingerprint or face...";
+            const options = await resp.json();
+            if (!resp.ok) throw new Error(options.message || 'Could not start registration.');
+
+            statusText.innerText = 'Use fingerprint, Face ID, or Windows Hello now...';
             const attResp = await startRegistration(options);
 
-            // Step 3: Send the signature back WITH the CSRF token
-            statusText.innerText = "Verifying signature...";
             const verificationResp = await fetch('/api/biometric/register-verify', {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken // Show the VIP pass again
+                    'X-CSRFToken': csrfToken
                 },
                 body: JSON.stringify(attResp),
             });
@@ -209,16 +219,41 @@
             const verificationJSON = await verificationResp.json();
 
             if (verificationJSON.success) {
-                statusText.innerText = "✅ Device successfully registered! You can now use it to unlock the terminal.";
-                statusText.style.color = "#16a34a";
+                statusText.innerText = '✅ Passkey saved successfully.';
+                statusText.style.color = '#16a34a';
+                setTimeout(() => window.location.reload(), 800);
             } else {
-                statusText.innerText = "❌ Verification failed: " + verificationJSON.message;
-                statusText.style.color = "#dc2626";
+                throw new Error(verificationJSON.message || 'Registration failed.');
             }
         } catch (error) {
             console.error(error);
-            statusText.innerText = "❌ Error: Could not access biometric hardware.";
-            statusText.style.color = "#dc2626";
+            statusText.innerText = '❌ ' + error.message;
+            statusText.style.color = '#dc2626';
+        }
+    });
+
+    document.getElementById('btn-reset-biometric').addEventListener('click', async () => {
+        if (!confirm('This will remove saved passkeys for this admin. Continue?')) return;
+
+        statusText.innerText = 'Resetting saved passkeys...';
+        statusText.style.color = '#2563eb';
+
+        try {
+            const resp = await fetch('/api/biometric/reset-passkeys', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken }
+            });
+
+            const result = await resp.json();
+            if (!resp.ok || !result.success) throw new Error(result.message || 'Reset failed.');
+
+            statusText.innerText = '✅ Saved passkeys removed.';
+            statusText.style.color = '#16a34a';
+            setTimeout(() => window.location.reload(), 800);
+        } catch (error) {
+            console.error(error);
+            statusText.innerText = '❌ ' + error.message;
+            statusText.style.color = '#dc2626';
         }
     });
 </script>

@@ -175,10 +175,6 @@ def process_scan():
     db.session.add(new_log)
     db.session.commit()
 
-    # 7. Response Construction
-    # photo_folder = 'students' if p_type == 'student' else 'staff'
-    # photo_url = url_for('static', filename=f'uploads/{photo_folder}/{participant.photo_path}', _external=True)
-
     photo_url = participant.photo_path
     
     # LEGACY FALLBACK: If the photo doesn't start with 'http', it's an old local file!
@@ -221,20 +217,26 @@ def process_scan():
         "status": "SUCCESS" if is_on_campus else "BREACH"
     }), 200
 
+
 @scanner_api_bp.route('/ping', methods=['GET'])
 def ping():
-    """Device heartbeat to show 'Online' status in dashboard"""
+    """Device heartbeat + activation metadata for terminal setup"""
     device_key = request.headers.get('X-Device-Key')
     if not device_key:
         return jsonify({"success": False, "message": "No key"}), 400
+
     device = ScannerDevice.query.filter_by(api_key=device_key, is_active=True).first()
-    if device:
-        return jsonify({
-            "status": "online", 
-            "school": device.school.name,
-            "device_name": device.device_name
-        }), 200
-    return jsonify({"success": False}), 401
+    if not device:
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
+    return jsonify({
+        "success": True,
+        "status": "online",
+        "school_id": device.school_id,
+        "school_name": device.school.name if device.school else None,
+        "school": device.school.name if device.school else None,
+        "device_name": device.device_name
+    }), 200
 
 @scanner_api_bp.route('/twilio/incoming', methods=['POST'])
 def twilio_incoming():

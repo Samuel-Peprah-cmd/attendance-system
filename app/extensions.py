@@ -7,11 +7,13 @@ from flask_limiter import Limiter       # Rate Limiter
 from flask_cors import CORS
 from flask_limiter.util import get_remote_address
 from flask_mail import Mail
+from flask_socketio import SocketIO
 
 db = SQLAlchemy()
 login_manager = LoginManager()
 mail = Mail()
 migrate = Migrate()
+socketio = SocketIO()
 csrf = CSRFProtect()
 cors = CORS()
 login_manager.login_view = "auth.login"
