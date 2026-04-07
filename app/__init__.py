@@ -2,6 +2,8 @@ from flask import Flask, flash, redirect, url_for
 from config import Config
 from app.extensions import db, migrate, mail, login_manager, socketio
 from app.extensions import csrf, limiter, cors
+from flask import current_app
+
 
 def create_app():
     app = Flask(__name__)
@@ -33,6 +35,14 @@ def create_app():
     #     }
     # })
     limiter.init_app(app)
+    
+    @app.context_processor
+    def inject_current():
+        from flask_login import current_user
+        # Create a custom 'current' object that mimics your previous structure
+        class Current:
+            user = current_user
+        return dict(current=Current())
 
     # Import and register Blueprints
     from app.routes.auth import auth_bp

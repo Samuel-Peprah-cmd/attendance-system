@@ -164,7 +164,7 @@
 
                 {% elif current_user.role == 'parent' %}
                     <p class="text-[9px] text-gray-500 font-bold uppercase px-3 mt-4 mb-2 tracking-[0.2em]">Family Portal</p>
-                    {{ nav_link('dashboard.parent_dashboard', '👨‍👩‍👧‍👦', 'My Children') }}
+                    {{ nav_link('parents.dashboard', '👨‍👩‍👧‍👦', 'My Children') }}
                     {{ nav_link('attendance.parent_logs', '🕒', 'Safety History') }}
                     {{ nav_link('complaints.complaints_home', '💬', 'Complaints', locked=not has_feature('complaints')) }}
                 {% endif %}

@@ -14,9 +14,22 @@
                 class="bg-brand text-white px-5 py-2 rounded-lg font-bold shadow-md text-xs hover:brightness-95">
                 Download PVC Card
             </a>
-            <a href="{{ url_for('students.list_students') }}" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-bold text-xs border border-gray-200">
-                Exit
-            </a>
+            {% if current.user %}
+                {% if current.user.role == 'parent' %}
+                    <a href="{{ url_for('dashboard.parent_dashboard') }}" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-bold text-xs border border-gray-200">
+                        Exit
+                    </a>
+                {% elif current.user.role in ['admin', 'school_admin'] %}
+                    <a href="{{ url_for('students.list_students') }}" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-bold text-xs border border-gray-200">
+                        Exit
+                    </a>
+                {% else %}
+                    <!-- Fallback for any other role -->
+                    <a href="{{ url_for('dashboard.index') }}" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-bold text-xs border border-gray-200">
+                        Exit
+                    </a>
+                {% endif %}
+            {% endif %}
         </div>
     </div>
 </div>

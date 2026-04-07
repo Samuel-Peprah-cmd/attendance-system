@@ -15,7 +15,7 @@ def dashboard():
     # THE MAGIC: Find all students where the guardian email matches this logged-in parent
     my_children = Student.query.filter_by(guardian_one_email=current_user.email).all()
     
-    return render_template("parents/dashboard.html", children=my_children)
+    return render_template("dashboard/parent_view.html", children=my_children)
 
 @parents_bp.route("/child-id/<int:student_id>")
 @login_required

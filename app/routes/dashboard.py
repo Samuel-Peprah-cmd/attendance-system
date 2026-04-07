@@ -114,7 +114,9 @@ def landing_page():
 def index():
     # 🚨 1. SUPER ADMIN REDIRECT 
     if current_user.role == 'super_admin':
-        return redirect(url_for('schools.manage_schools')) 
+        return redirect(url_for('schools.manage_schools'))
+    if current_user.role == 'parents':
+        return redirect(url_for('dashboard.parent_dashboard'))
         
     school_id = current_user.school_id
     school = School.query.get(school_id)
@@ -299,7 +301,7 @@ def parent_dashboard():
     
     # 'students' relationship in the User model automatically finds their kids
     children = current_user.students 
-    return render_template("dashboard/parent_view.html", children=children)
+    return render_template("parents/dashboard.html", children=children)
 
 admin_bp = Blueprint('admin', __name__)
 

@@ -4,25 +4,156 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
+    .finance-page {
+        background:
+            radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 22%),
+            radial-gradient(circle at top left, rgba(168, 85, 247, 0.08), transparent 20%),
+            linear-gradient(180deg, #f8fbff 0%, #f8fafc 100%);
+        border-radius: 2rem;
+    }
+
     .finance-card {
-        background: white;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+        border: 1px solid rgba(226, 232, 240, 0.95);
+        border-radius: 1.5rem;
+        box-shadow: 0 16px 38px rgba(15, 23, 42, 0.07);
+        overflow: hidden;
+    }
+
+    .metric-card {
+        position: relative;
+        isolation: isolate;
+    }
+
+    .metric-card::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        opacity: 0.12;
+        z-index: 0;
+        pointer-events: none;
+    }
+
+    .metric-card > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    .metric-blue::before {
+        background: linear-gradient(135deg, #2563eb, #60a5fa);
+    }
+
+    .metric-emerald::before {
+        background: linear-gradient(135deg, #059669, #34d399);
+    }
+
+    .metric-cyan::before {
+        background: linear-gradient(135deg, #0891b2, #67e8f9);
+    }
+
+    .metric-violet::before {
+        background: linear-gradient(135deg, #7c3aed, #c084fc);
+    }
+
+    .metric-slate::before {
+        background: linear-gradient(135deg, #334155, #94a3b8);
+    }
+
+    .metric-orange::before {
+        background: linear-gradient(135deg, #ea580c, #fdba74);
+    }
+
+    .metric-rose::before {
+        background: linear-gradient(135deg, #e11d48, #fda4af);
+    }
+
+    .metric-teal::before {
+        background: linear-gradient(135deg, #0f766e, #5eead4);
+    }
+
+    .card-eyebrow {
+        font-size: 0.68rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: #64748b;
+    }
+
+    .feature-tile {
+        border-radius: 1.1rem;
         border: 1px solid #e5e7eb;
-        border-radius: 1.25rem;
-        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.05);
+        padding: 1rem;
+        background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .feature-tile:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+    }
+
+    .feature-enabled {
+        background:
+            radial-gradient(circle at top right, rgba(16, 185, 129, 0.12), transparent 35%),
+            linear-gradient(180deg, #ffffff 0%, #f0fdf4 100%);
+        border-color: #bbf7d0;
+    }
+
+    .feature-disabled {
+        background:
+            radial-gradient(circle at top right, rgba(239, 68, 68, 0.08), transparent 35%),
+            linear-gradient(180deg, #ffffff 0%, #fff7f7 100%);
+        border-color: #fecaca;
+    }
+
+    .usage-shell {
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    }
+
+    .usage-track {
+        width: 100%;
+        height: 0.9rem;
+        border-radius: 999px;
+        overflow: hidden;
+        background: #e5e7eb;
+        box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
+    }
+
+    .usage-fill {
+        height: 100%;
+        border-radius: 999px;
+    }
+
+    .usage-fill-blue {
+        background: linear-gradient(90deg, #2563eb, #60a5fa);
+    }
+
+    .usage-fill-emerald {
+        background: linear-gradient(90deg, #059669, #34d399);
+    }
+
+    .usage-fill-red {
+        background: linear-gradient(90deg, #dc2626, #fb7185);
     }
 
     .chart-wrap {
         position: relative;
-        height: 300px;
+        height: 320px;
+        border-radius: 1.25rem;
+        background:
+            radial-gradient(circle at top right, rgba(59, 130, 246, 0.06), transparent 30%),
+            linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid #e5e7eb;
+        padding: 0.75rem;
     }
 
     .ledger-scrollbox {
-        max-height: 540px;
+        max-height: 560px;
         overflow-y: auto;
         overflow-x: auto;
         border: 1px solid #e5e7eb;
-        border-radius: 1rem;
-        background: white;
+        border-radius: 1.25rem;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
     }
 
     .ledger-scrollbox::-webkit-scrollbar {
@@ -43,16 +174,105 @@
         position: sticky;
         top: 0;
         z-index: 5;
-        background: #f9fafb;
+        background: #f8fafc;
+    }
+
+    .mobile-transaction-card {
+        border-radius: 1.25rem;
+        border: 1px solid #e5e7eb;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+    }
+
+    .soft-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.38rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.68rem;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .section-title {
+        font-size: 1.35rem;
+        font-weight: 900;
+        color: #0f172a;
+        letter-spacing: -0.02em;
+    }
+
+    .section-subtitle {
+        font-size: 0.95rem;
+        color: #64748b;
+        margin-top: 0.35rem;
+    }
+
+    .filter-control {
+        width: 100%;
+        padding: 0.85rem 1rem;
+        border-radius: 1rem;
+        border: 1px solid #d1d5db;
+        background: #fff;
+        color: #111827;
+        outline: none;
+        transition: all 0.2s ease;
+    }
+
+    .filter-control:focus {
+        border-color: rgba(37, 99, 235, 0.6);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
+    }
+
+    .header-actions .action-btn {
+        min-height: 48px;
+    }
+
+    @media (max-width: 1024px) {
+        .chart-wrap {
+            height: 280px;
+        }
     }
 
     @media (max-width: 768px) {
+        .finance-page {
+            border-radius: 1.4rem;
+        }
+
         .chart-wrap {
             height: 250px;
+            padding: 0.5rem;
         }
 
         .ledger-scrollbox {
             max-height: 420px;
+        }
+
+        .section-title {
+            font-size: 1.15rem;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .finance-card {
+            border-radius: 1.25rem;
+        }
+
+        .chart-wrap {
+            height: 235px;
+        }
+
+        .mobile-stack {
+            gap: 0.75rem;
+        }
+
+        .header-actions {
+            width: 100%;
+        }
+
+        .header-actions .action-btn {
+            width: 100%;
         }
     }
 
@@ -72,381 +292,382 @@
     }
 </style>
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 py-5 sm:py-6 space-y-6">
-
-    <!-- Header -->
-    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
-        <div>
-            <p class="text-xs font-black uppercase tracking-[0.2em] text-brand mb-2">Billing Intelligence</p>
-            <h1 class="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">
-                Billing & Subscription Dashboard
-            </h1>
-            <p class="text-sm sm:text-base text-gray-500 mt-2">
-                Subscription health, usage analytics, payment trends, and ledger history.
-            </p>
-        </div>
-
-        <div class="flex flex-col sm:flex-row gap-3">
-            <a href="{{ url_for('billing.pricing_page') }}"
-               class="inline-flex justify-center items-center px-5 py-3 bg-brand text-white text-sm font-bold rounded-xl shadow-md hover:opacity-90 transition">
-                Upgrade Plan
-            </a>
-            <button onclick="printTransactions()"
-                    class="inline-flex justify-center items-center px-5 py-3 bg-gray-900 text-white text-sm font-bold rounded-xl shadow-md hover:opacity-90 transition">
-                🖨️ Print Ledger
-            </button>
-        </div>
-    </div>
-
-    <!-- KPI Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div class="finance-card p-5 border-l-4 border-blue-600">
-            <p class="text-xs font-black uppercase tracking-[0.18em] text-gray-400">Current Package</p>
-            <h2 class="text-2xl font-black text-gray-900 mt-3 break-words">
-                {{ current_plan.name if current_plan else 'No Active Plan' }}
-            </h2>
-            <p class="text-sm mt-2 {% if subscription and subscription.status == 'active' %}text-emerald-600{% else %}text-red-500{% endif %}">
-                {% if subscription and subscription.status == 'active' %}
-                    Active until {{ subscription.end_date.strftime('%B %d, %Y') }}
-                {% else %}
-                    Past Due or Inactive
-                {% endif %}
-            </p>
-        </div>
-
-        <div class="finance-card p-5 border-l-4 border-emerald-600">
-            <p class="text-xs font-black uppercase tracking-[0.18em] text-gray-400">Total Paid</p>
-            <h2 class="text-2xl font-black text-gray-900 mt-3">GHS {{ "%.2f"|format(total_spent) }}</h2>
-            <p class="text-sm text-gray-500 mt-2">
-                Across {{ successful_transactions }} successful payment(s).
-            </p>
-        </div>
-
-        <div class="finance-card p-5 border-l-4 border-cyan-600">
-            <p class="text-xs font-black uppercase tracking-[0.18em] text-gray-400">Payment Success Rate</p>
-            <h2 class="text-2xl font-black text-gray-900 mt-3">{{ "%.2f"|format(success_rate) }}%</h2>
-            <p class="text-sm text-gray-500 mt-2">
-                {{ successful_transactions }} paid / {{ total_transactions }} total transactions.
-            </p>
-        </div>
-
-        <div class="finance-card p-5 border-l-4 border-violet-600">
-            <p class="text-xs font-black uppercase tracking-[0.18em] text-gray-400">Days Remaining</p>
-            <h2 class="text-2xl font-black text-gray-900 mt-3">
-                {{ days_remaining if days_remaining is not none else 'N/A' }}
-            </h2>
-            <p class="text-sm text-gray-500 mt-2">
-                {% if renewal_amount is not none and subscription %}
-                    Next {{ subscription.billing_cycle|capitalize }} renewal: GHS {{ "%.2f"|format(renewal_amount) }}
-                {% else %}
-                    No renewal amount available.
-                {% endif %}
-            </p>
-        </div>
-    </div>
-
-    <!-- Summary Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="finance-card p-5">
-            <p class="text-xs font-black uppercase tracking-[0.18em] text-gray-400">Average Payment</p>
-            <h3 class="text-2xl font-black text-gray-900 mt-2">GHS {{ "%.2f"|format(avg_payment) }}</h3>
-            <p class="text-sm text-gray-500 mt-2">Average amount across successful transactions.</p>
-        </div>
-
-        <div class="finance-card p-5">
-            <p class="text-xs font-black uppercase tracking-[0.18em] text-gray-400">Last Successful Payment</p>
-            <h3 class="text-xl font-black text-gray-900 mt-2">
-                {{ last_successful_payment.paid_at.strftime('%b %d, %Y') if last_successful_payment and last_successful_payment.paid_at else 'N/A' }}
-            </h3>
-            <p class="text-sm text-gray-500 mt-2">
-                {% if last_successful_payment %}
-                    {{ last_successful_payment.currency }} {{ "%.2f"|format(last_successful_payment.amount) }}
-                {% else %}
-                    No successful payments recorded yet.
-                {% endif %}
-            </p>
-        </div>
-
-        <div class="finance-card p-5">
-            <p class="text-xs font-black uppercase tracking-[0.18em] text-gray-400">Billing Cycle</p>
-            <h3 class="text-2xl font-black text-gray-900 mt-2">
-                {{ subscription.billing_cycle|capitalize if subscription else 'N/A' }}
-            </h3>
-            <p class="text-sm text-gray-500 mt-2">
-                Current subscription billing schedule.
-            </p>
-        </div>
-    </div>
-
-    <!-- Usage -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <div class="finance-card p-5">
-            <div class="flex items-center justify-between gap-4 mb-4">
-                <div>
-                    <h3 class="text-xl font-black text-gray-900">Student Capacity</h3>
-                    <p class="text-sm text-gray-500">Current enrollment against plan allowance.</p>
-                </div>
-                <span class="text-sm font-black text-gray-700">
-                    {{ student_count }} / {{ current_plan.student_limit if current_plan and current_plan.student_limit != -1 else 'Unlimited' }}
-                </span>
-            </div>
-
-            <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
-                <div class="h-3 rounded-full {{ 'bg-red-500' if student_pct > 90 else 'bg-brand' }}"
-                     style="width: {{ student_pct if current_plan and current_plan.student_limit != -1 else 100 }}%">
-                </div>
-            </div>
-
-            <p class="text-sm text-gray-500 mt-3">
-                {{ "%.0f"|format(student_pct) }}% of student capacity used.
-            </p>
-        </div>
-
-        <div class="finance-card p-5">
-            <div class="flex items-center justify-between gap-4 mb-4">
-                <div>
-                    <h3 class="text-xl font-black text-gray-900">Scanner Devices</h3>
-                    <p class="text-sm text-gray-500">Active devices against plan allowance.</p>
-                </div>
-                <span class="text-sm font-black text-gray-700">
-                    {{ device_count }} / {{ current_plan.scanner_limit if current_plan and current_plan.scanner_limit != -1 else 'Unlimited' }}
-                </span>
-            </div>
-
-            <div class="w-full bg-gray-100 rounded-full h-3 overflow-hidden">
-                <div class="h-3 rounded-full {{ 'bg-red-500' if device_pct > 90 else 'bg-brand' }}"
-                     style="width: {{ device_pct if current_plan and current_plan.scanner_limit != -1 else 100 }}%">
-                </div>
-            </div>
-
-            <p class="text-sm text-gray-500 mt-3">
-                {{ "%.0f"|format(device_pct) }}% of scanner capacity used.
-            </p>
-        </div>
-    </div>
-
-    <!-- Charts -->
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div class="finance-card p-5 xl:col-span-2">
-            <h3 class="text-xl font-black text-gray-900">Payment Trend</h3>
-            <p class="text-sm text-gray-500 mb-4">Successful spend over the last 6 months.</p>
-            <div class="chart-wrap">
-                <canvas id="monthlySpendChart"></canvas>
-            </div>
-        </div>
-
-        <div class="finance-card p-5">
-            <h3 class="text-xl font-black text-gray-900">Payment Methods</h3>
-            <p class="text-sm text-gray-500 mb-4">Breakdown of payment channels used.</p>
-            <div class="chart-wrap">
-                <canvas id="paymentMethodsChart"></canvas>
-            </div>
-        </div>
-
-        <div class="finance-card p-5 xl:col-span-1">
-            <h3 class="text-xl font-black text-gray-900">Transaction Status</h3>
-            <p class="text-sm text-gray-500 mb-4">Paid, pending, and failed counts.</p>
-            <div class="chart-wrap">
-                <canvas id="transactionStatusChart"></canvas>
-            </div>
-        </div>
-
-        <div class="finance-card p-5 xl:col-span-2">
-            <h3 class="text-xl font-black text-gray-900">Plan Features</h3>
-            <p class="text-sm text-gray-500 mb-4">What your current subscription includes.</p>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div class="rounded-xl border border-gray-200 p-4">
-                    <p class="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400 mb-2">WhatsApp Alerts</p>
-                    <p class="font-bold {{ 'text-emerald-600' if current_plan and current_plan.whatsapp_enabled else 'text-red-500' }}">
-                        {{ 'Enabled' if current_plan and current_plan.whatsapp_enabled else 'Not Included' }}
-                    </p>
-                </div>
-
-                <div class="rounded-xl border border-gray-200 p-4">
-                    <p class="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400 mb-2">SMS Alerts</p>
-                    <p class="font-bold {{ 'text-emerald-600' if current_plan and current_plan.sms_enabled else 'text-red-500' }}">
-                        {{ 'Enabled' if current_plan and current_plan.sms_enabled else 'Not Included' }}
-                    </p>
-                </div>
-
-                <div class="rounded-xl border border-gray-200 p-4">
-                    <p class="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400 mb-2">GPS Intelligence</p>
-                    <p class="font-bold {{ 'text-emerald-600' if current_plan and current_plan.gps_enabled else 'text-red-500' }}">
-                        {{ 'Enabled' if current_plan and current_plan.gps_enabled else 'Not Included' }}
-                    </p>
-                </div>
-
-                <div class="rounded-xl border border-gray-200 p-4">
-                    <p class="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400 mb-2">CHAT</p>
-                    <p class="font-bold {{ 'text-emerald-600' if current_plan and current_plan.complaints_enabled else 'text-red-500' }}">
-                        {{ 'Enabled' if current_plan and current_plan.complaints_enabled else 'Not Included' }}
-                    </p>
-                </div>
-
-                <div class="rounded-xl border border-gray-200 p-4">
-                    <p class="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400 mb-2">Status</p>
-                    <p class="font-bold {{ 'text-emerald-600' if subscription and subscription.status == 'active' else 'text-red-500' }}">
-                        {{ subscription.status|replace('_', ' ')|capitalize if subscription else 'No Subscription' }}
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Ledger -->
-    <div class="finance-card p-5">
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-5">
+<div class="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
+    <div class="finance-page p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-7">
+        <!-- Header -->
+        <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
             <div>
-                <h3 class="text-xl font-black text-gray-900">Payment Ledger</h3>
-                <p class="text-sm text-gray-500">Search, filter, review, and print your payment history.</p>
+                <p class="text-xs font-black uppercase tracking-[0.2em] text-brand mb-2">Billing Intelligence</p>
+                <h1 class="text-2xl sm:text-4xl font-black text-gray-900 tracking-tight">
+                    Billing & Subscription Dashboard
+                </h1>
+                <p class="text-sm sm:text-base text-gray-500 mt-2 max-w-2xl">
+                    Subscription health, usage analytics, payment trends, plan benefits, and ledger history in one place.
+                </p>
             </div>
 
-            <div class="flex flex-col sm:flex-row gap-3">
-                <input
-                    id="txnSearch"
-                    type="text"
-                    placeholder="Search reference, method, amount..."
-                    class="w-full sm:w-80 px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                <select
-                    id="txnStatusFilter"
-                    class="px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                    <option value="all">All Statuses</option>
-                    <option value="success">Paid</option>
-                    <option value="pending">Pending</option>
-                    <option value="failed">Failed</option>
-                </select>
+            <div class="header-actions flex flex-col sm:flex-row gap-3">
+                <a href="{{ url_for('billing.pricing_page') }}"
+                   class="action-btn inline-flex justify-center items-center px-5 py-3 bg-brand text-white text-sm font-bold rounded-2xl shadow-md hover:opacity-90 transition">
+                    Upgrade Plan
+                </a>
+                <button onclick="printTransactions()"
+                        class="action-btn inline-flex justify-center items-center px-5 py-3 bg-gray-900 text-white text-sm font-bold rounded-2xl shadow-md hover:opacity-90 transition">
+                    🖨️ Print Ledger
+                </button>
             </div>
         </div>
 
-        <div class="flex items-center justify-between mb-4">
-            <p class="text-sm text-gray-500">
-                Showing <span id="visibleTxnCount" class="font-black text-gray-800">{{ transactions|length }}</span>
-                visible transaction(s)
-            </p>
-            <button onclick="printTransactions()"
-                    class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-brand text-white text-sm font-bold hover:opacity-90 transition">
-                Print Visible Rows
-            </button>
+        <!-- KPI Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <div class="finance-card metric-card metric-blue p-5">
+                <p class="card-eyebrow">Current Package</p>
+                <h2 class="text-2xl font-black text-gray-900 mt-3 break-words">
+                    {{ current_plan.name if current_plan else 'No Active Plan' }}
+                </h2>
+                <p class="text-sm mt-2 {% if subscription and subscription.status == 'active' %}text-emerald-700{% else %}text-red-600{% endif %}">
+                    {% if subscription and subscription.status == 'active' %}
+                        Active until {{ subscription.end_date.strftime('%B %d, %Y') }}
+                    {% else %}
+                        Past Due or Inactive
+                    {% endif %}
+                </p>
+            </div>
+
+            <div class="finance-card metric-card metric-emerald p-5">
+                <p class="card-eyebrow">Total Paid</p>
+                <h2 class="text-2xl font-black text-gray-900 mt-3">GHS {{ "%.2f"|format(total_spent) }}</h2>
+                <p class="text-sm text-gray-600 mt-2">
+                    Across {{ successful_transactions }} successful payment(s).
+                </p>
+            </div>
+
+            <div class="finance-card metric-card metric-cyan p-5">
+                <p class="card-eyebrow">Payment Success Rate</p>
+                <h2 class="text-2xl font-black text-gray-900 mt-3">{{ "%.2f"|format(success_rate) }}%</h2>
+                <p class="text-sm text-gray-600 mt-2">
+                    {{ successful_transactions }} paid / {{ total_transactions }} total transactions.
+                </p>
+            </div>
+
+            <div class="finance-card metric-card metric-violet p-5">
+                <p class="card-eyebrow">Days Remaining</p>
+                <h2 class="text-2xl font-black text-gray-900 mt-3">
+                    {{ days_remaining if days_remaining is not none else 'N/A' }}
+                </h2>
+                <p class="text-sm text-gray-600 mt-2">
+                    {% if renewal_amount is not none and subscription %}
+                        Next {{ subscription.billing_cycle|capitalize }} renewal: GHS {{ "%.2f"|format(renewal_amount) }}
+                    {% else %}
+                        No renewal amount available.
+                    {% endif %}
+                </p>
+            </div>
         </div>
 
-        <!-- Desktop table -->
-        <div class="hidden md:block ledger-scrollbox" id="print-area">
-            <table class="min-w-full text-sm" id="transactions-table">
-                <thead>
-                    <tr class="bg-gray-50 border-y border-gray-200 text-left">
-                        <th class="px-4 py-3 font-black uppercase tracking-wider text-gray-500 text-xs">Date</th>
-                        <th class="px-4 py-3 font-black uppercase tracking-wider text-gray-500 text-xs">Reference</th>
-                        <th class="px-4 py-3 font-black uppercase tracking-wider text-gray-500 text-xs">Method</th>
-                        <th class="px-4 py-3 font-black uppercase tracking-wider text-gray-500 text-xs">Amount</th>
-                        <th class="px-4 py-3 font-black uppercase tracking-wider text-gray-500 text-xs">Status</th>
-                        <th class="px-4 py-3 font-black uppercase tracking-wider text-gray-500 text-xs">Receipt</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for txn in transactions %}
-                    <tr
-                        class="txn-row border-b border-gray-100 hover:bg-gray-50"
-                        data-status="{{ txn.status|lower }}"
-                        data-search="{{ ((txn.provider_reference or '') ~ ' ' ~ (txn.channel or '') ~ ' ' ~ ('%.2f'|format(txn.amount)))|lower }}"
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="finance-card metric-card metric-orange p-5">
+                <p class="card-eyebrow">Average Payment</p>
+                <h3 class="text-2xl font-black text-gray-900 mt-2">GHS {{ "%.2f"|format(avg_payment) }}</h3>
+                <p class="text-sm text-gray-600 mt-2">Average amount across successful transactions.</p>
+            </div>
+
+            <div class="finance-card metric-card metric-teal p-5">
+                <p class="card-eyebrow">Last Successful Payment</p>
+                <h3 class="text-xl font-black text-gray-900 mt-2">
+                    {{ last_successful_payment.paid_at.strftime('%b %d, %Y') if last_successful_payment and last_successful_payment.paid_at else 'N/A' }}
+                </h3>
+                <p class="text-sm text-gray-600 mt-2">
+                    {% if last_successful_payment %}
+                        {{ last_successful_payment.currency }} {{ "%.2f"|format(last_successful_payment.amount) }}
+                    {% else %}
+                        No successful payments recorded yet.
+                    {% endif %}
+                </p>
+            </div>
+
+            <div class="finance-card metric-card metric-rose p-5">
+                <p class="card-eyebrow">Billing Cycle</p>
+                <h3 class="text-2xl font-black text-gray-900 mt-2">
+                    {{ subscription.billing_cycle|capitalize if subscription else 'N/A' }}
+                </h3>
+                <p class="text-sm text-gray-600 mt-2">
+                    Current subscription billing schedule.
+                </p>
+            </div>
+        </div>
+
+        <!-- Usage -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+            <div class="finance-card usage-shell p-5">
+                <div class="flex items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h3 class="section-title">Student Capacity</h3>
+                        <p class="section-subtitle">Current enrollment against plan allowance.</p>
+                    </div>
+                    <span class="text-sm font-black text-gray-700">
+                        {{ student_count }} / {{ current_plan.student_limit if current_plan and current_plan.student_limit != -1 else 'Unlimited' }}
+                    </span>
+                </div>
+
+                <div class="usage-track">
+                    <div class="usage-fill {{ 'usage-fill-red' if student_pct > 90 else 'usage-fill-blue' }}"
+                         style="width: {{ student_pct if current_plan and current_plan.student_limit != -1 else 100 }}%">
+                    </div>
+                </div>
+
+                <p class="text-sm text-gray-600 mt-3">
+                    {{ "%.0f"|format(student_pct) }}% of student capacity used.
+                </p>
+            </div>
+
+            <div class="finance-card usage-shell p-5">
+                <div class="flex items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h3 class="section-title">Scanner Devices</h3>
+                        <p class="section-subtitle">Active devices against plan allowance.</p>
+                    </div>
+                    <span class="text-sm font-black text-gray-700">
+                        {{ device_count }} / {{ current_plan.scanner_limit if current_plan and current_plan.scanner_limit != -1 else 'Unlimited' }}
+                    </span>
+                </div>
+
+                <div class="usage-track">
+                    <div class="usage-fill {{ 'usage-fill-red' if device_pct > 90 else 'usage-fill-emerald' }}"
+                         style="width: {{ device_pct if current_plan and current_plan.scanner_limit != -1 else 100 }}%">
+                    </div>
+                </div>
+
+                <p class="text-sm text-gray-600 mt-3">
+                    {{ "%.0f"|format(device_pct) }}% of scanner capacity used.
+                </p>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
+            <div class="finance-card p-5 xl:col-span-2">
+                <h3 class="section-title">Payment Trend</h3>
+                <p class="section-subtitle mb-4">Successful spend over the last 6 months.</p>
+                <div class="chart-wrap">
+                    <canvas id="monthlySpendChart"></canvas>
+                </div>
+            </div>
+
+            <div class="finance-card p-5">
+                <h3 class="section-title">Payment Methods</h3>
+                <p class="section-subtitle mb-4">Breakdown of payment channels used.</p>
+                <div class="chart-wrap">
+                    <canvas id="paymentMethodsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="finance-card p-5 xl:col-span-1">
+                <h3 class="section-title">Transaction Status</h3>
+                <p class="section-subtitle mb-4">Paid, pending, and failed counts.</p>
+                <div class="chart-wrap">
+                    <canvas id="transactionStatusChart"></canvas>
+                </div>
+            </div>
+
+            <div class="finance-card p-5 xl:col-span-2">
+                <h3 class="section-title">Plan Features</h3>
+                <p class="section-subtitle mb-4">What your current subscription includes.</p>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div class="feature-tile {{ 'feature-enabled' if current_plan and current_plan.whatsapp_enabled else 'feature-disabled' }}">
+                        <p class="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400 mb-2">WhatsApp Alerts</p>
+                        <p class="font-black {{ 'text-emerald-700' if current_plan and current_plan.whatsapp_enabled else 'text-red-600' }}">
+                            {{ 'Enabled' if current_plan and current_plan.whatsapp_enabled else 'Not Included' }}
+                        </p>
+                    </div>
+
+                    <div class="feature-tile {{ 'feature-enabled' if current_plan and current_plan.sms_enabled else 'feature-disabled' }}">
+                        <p class="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400 mb-2">SMS Alerts</p>
+                        <p class="font-black {{ 'text-emerald-700' if current_plan and current_plan.sms_enabled else 'text-red-600' }}">
+                            {{ 'Enabled' if current_plan and current_plan.sms_enabled else 'Not Included' }}
+                        </p>
+                    </div>
+
+                    <div class="feature-tile {{ 'feature-enabled' if current_plan and current_plan.gps_enabled else 'feature-disabled' }}">
+                        <p class="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400 mb-2">GPS Intelligence</p>
+                        <p class="font-black {{ 'text-emerald-700' if current_plan and current_plan.gps_enabled else 'text-red-600' }}">
+                            {{ 'Enabled' if current_plan and current_plan.gps_enabled else 'Not Included' }}
+                        </p>
+                    </div>
+
+                    <div class="feature-tile {{ 'feature-enabled' if current_plan and current_plan.complaints_enabled else 'feature-disabled' }}">
+                        <p class="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400 mb-2">Chat</p>
+                        <p class="font-black {{ 'text-emerald-700' if current_plan and current_plan.complaints_enabled else 'text-red-600' }}">
+                            {{ 'Enabled' if current_plan and current_plan.complaints_enabled else 'Not Included' }}
+                        </p>
+                    </div>
+
+                    <div class="feature-tile {{ 'feature-enabled' if subscription and subscription.status == 'active' else 'feature-disabled' }}">
+                        <p class="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400 mb-2">Status</p>
+                        <p class="font-black {{ 'text-emerald-700' if subscription and subscription.status == 'active' else 'text-red-600' }}">
+                            {{ subscription.status|replace('_', ' ')|capitalize if subscription else 'No Subscription' }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ledger -->
+        <div class="finance-card p-5">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-5">
+                <div>
+                    <h3 class="section-title">Payment Ledger</h3>
+                    <p class="section-subtitle">Search, filter, review, and print your payment history.</p>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+                    <input
+                        id="txnSearch"
+                        type="text"
+                        placeholder="Search reference, method, amount..."
+                        class="filter-control w-full sm:w-80"
                     >
-                        <td class="px-4 py-4 text-gray-700">
-                            {{ txn.paid_at.strftime('%Y-%m-%d %H:%M') if txn.paid_at else 'N/A' }}
-                        </td>
-                        <td class="px-4 py-4 font-bold text-gray-800 whitespace-nowrap">{{ txn.provider_reference }}</td>
-                        <td class="px-4 py-4 text-gray-600 whitespace-nowrap">
+                    <select
+                        id="txnStatusFilter"
+                        class="filter-control"
+                    >
+                        <option value="all">All Statuses</option>
+                        <option value="success">Paid</option>
+                        <option value="pending">Pending</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <p class="text-sm text-gray-500">
+                    Showing <span id="visibleTxnCount" class="font-black text-gray-800">{{ transactions|length }}</span>
+                    visible transaction(s)
+                </p>
+                <button onclick="printTransactions()"
+                        class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-brand text-white text-sm font-bold hover:opacity-90 transition w-full sm:w-auto">
+                    Print Visible Rows
+                </button>
+            </div>
+
+            <!-- Desktop table -->
+            <div class="hidden md:block ledger-scrollbox" id="print-area">
+                <table class="min-w-full text-sm" id="transactions-table">
+                    <thead>
+                        <tr class="bg-gray-50 border-y border-gray-200 text-left">
+                            <th class="px-4 py-3 font-black uppercase tracking-wider text-gray-500 text-xs">Date</th>
+                            <th class="px-4 py-3 font-black uppercase tracking-wider text-gray-500 text-xs">Reference</th>
+                            <th class="px-4 py-3 font-black uppercase tracking-wider text-gray-500 text-xs">Method</th>
+                            <th class="px-4 py-3 font-black uppercase tracking-wider text-gray-500 text-xs">Amount</th>
+                            <th class="px-4 py-3 font-black uppercase tracking-wider text-gray-500 text-xs">Status</th>
+                            <th class="px-4 py-3 font-black uppercase tracking-wider text-gray-500 text-xs">Receipt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for txn in transactions %}
+                        <tr
+                            class="txn-row border-b border-gray-100 hover:bg-blue-50/40 transition"
+                            data-status="{{ txn.status|lower }}"
+                            data-search="{{ ((txn.provider_reference or '') ~ ' ' ~ (txn.channel or '') ~ ' ' ~ ('%.2f'|format(txn.amount)))|lower }}"
+                        >
+                            <td class="px-4 py-4 text-gray-700">
+                                {{ txn.paid_at.strftime('%Y-%m-%d %H:%M') if txn.paid_at else 'N/A' }}
+                            </td>
+                            <td class="px-4 py-4 font-bold text-gray-800 whitespace-nowrap">{{ txn.provider_reference }}</td>
+                            <td class="px-4 py-4 text-gray-600 whitespace-nowrap">
+                                {% if txn.channel %}
+                                    {{ txn.channel.replace('_', ' ')|title }}
+                                {% else %}
+                                    <span class="italic text-gray-400">Pending / Unknown</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-4 font-black text-gray-900 whitespace-nowrap">
+                                {{ txn.currency }} {{ "%.2f"|format(txn.amount) }}
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                {% if txn.status == 'success' %}
+                                    <span class="soft-badge bg-emerald-100 text-emerald-800">Paid</span>
+                                {% elif txn.status == 'pending' %}
+                                    <span class="soft-badge bg-amber-100 text-amber-800">Pending</span>
+                                {% else %}
+                                    <span class="soft-badge bg-red-100 text-red-800">{{ txn.status.upper() }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-4 py-4 whitespace-nowrap">
+                                {% if txn.metadata_json and txn.metadata_json.id %}
+                                    <a href="https://paystack.com/receipt/{{ txn.metadata_json.id }}"
+                                       target="_blank"
+                                       class="text-brand font-bold hover:underline">
+                                        View Receipt
+                                    </a>
+                                {% else %}
+                                    <span class="italic text-gray-400">Processing...</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="px-4 py-10 text-center text-gray-400 font-semibold">
+                                No payment history found yet.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mobile cards -->
+            <div class="md:hidden space-y-3">
+                {% for txn in transactions %}
+                <div
+                    class="mobile-transaction-card p-4"
+                    data-status="{{ txn.status|lower }}"
+                    data-search="{{ ((txn.provider_reference or '') ~ ' ' ~ (txn.channel or '') ~ ' ' ~ ('%.2f'|format(txn.amount)))|lower }}"
+                >
+                    <div class="flex justify-between gap-4 mb-3">
+                        <div>
+                            <p class="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400">Date</p>
+                            <p class="text-sm font-bold text-gray-900">
+                                {{ txn.paid_at.strftime('%b %d, %Y') if txn.paid_at else 'N/A' }}
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400">Amount</p>
+                            <p class="text-sm font-black text-gray-900">
+                                {{ txn.currency }} {{ "%.2f"|format(txn.amount) }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2 text-sm">
+                        <p><span class="font-black text-gray-500">Reference:</span> {{ txn.provider_reference }}</p>
+                        <p>
+                            <span class="font-black text-gray-500">Method:</span>
                             {% if txn.channel %}
                                 {{ txn.channel.replace('_', ' ')|title }}
                             {% else %}
                                 <span class="italic text-gray-400">Pending / Unknown</span>
                             {% endif %}
-                        </td>
-                        <td class="px-4 py-4 font-black text-gray-900 whitespace-nowrap">
-                            {{ txn.currency }} {{ "%.2f"|format(txn.amount) }}
-                        </td>
-                        <td class="px-4 py-4 whitespace-nowrap">
+                        </p>
+                        <div class="pt-2">
                             {% if txn.status == 'success' %}
-                                <span class="inline-flex px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800">PAID</span>
+                                <span class="soft-badge bg-emerald-100 text-emerald-800">Paid</span>
                             {% elif txn.status == 'pending' %}
-                                <span class="inline-flex px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-800">PENDING</span>
+                                <span class="soft-badge bg-amber-100 text-amber-800">Pending</span>
                             {% else %}
-                                <span class="inline-flex px-3 py-1 rounded-full text-xs font-black bg-red-100 text-red-800">{{ txn.status.upper() }}</span>
+                                <span class="soft-badge bg-red-100 text-red-800">{{ txn.status.upper() }}</span>
                             {% endif %}
-                        </td>
-                        <td class="px-4 py-4 whitespace-nowrap">
-                            {% if txn.metadata_json and txn.metadata_json.id %}
-                                <a href="https://paystack.com/receipt/{{ txn.metadata_json.id }}"
-                                   target="_blank"
-                                   class="text-brand font-bold hover:underline">
-                                    View Receipt
-                                </a>
-                            {% else %}
-                                <span class="italic text-gray-400">Processing...</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="6" class="px-4 py-10 text-center text-gray-400 font-semibold">
-                            No payment history found yet.
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Mobile cards -->
-        <div class="md:hidden space-y-3">
-            {% for txn in transactions %}
-            <div
-                class="txn-card border border-gray-200 rounded-2xl p-4 bg-white"
-                data-status="{{ txn.status|lower }}"
-                data-search="{{ ((txn.provider_reference or '') ~ ' ' ~ (txn.channel or '') ~ ' ' ~ ('%.2f'|format(txn.amount)))|lower }}"
-            >
-                <div class="flex justify-between gap-4 mb-3">
-                    <div>
-                        <p class="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400">Date</p>
-                        <p class="text-sm font-bold text-gray-900">
-                            {{ txn.paid_at.strftime('%b %d, %Y') if txn.paid_at else 'N/A' }}
-                        </p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400">Amount</p>
-                        <p class="text-sm font-black text-gray-900">
-                            {{ txn.currency }} {{ "%.2f"|format(txn.amount) }}
-                        </p>
+                        </div>
                     </div>
                 </div>
-
-                <div class="space-y-2 text-sm">
-                    <p><span class="font-black text-gray-500">Reference:</span> {{ txn.provider_reference }}</p>
-                    <p>
-                        <span class="font-black text-gray-500">Method:</span>
-                        {% if txn.channel %}
-                            {{ txn.channel.replace('_', ' ')|title }}
-                        {% else %}
-                            <span class="italic text-gray-400">Pending / Unknown</span>
-                        {% endif %}
-                    </p>
-                    <div class="pt-2">
-                        {% if txn.status == 'success' %}
-                            <span class="inline-flex px-3 py-1 rounded-full text-xs font-black bg-emerald-100 text-emerald-800">PAID</span>
-                        {% elif txn.status == 'pending' %}
-                            <span class="inline-flex px-3 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-800">PENDING</span>
-                        {% else %}
-                            <span class="inline-flex px-3 py-1 rounded-full text-xs font-black bg-red-100 text-red-800">{{ txn.status.upper() }}</span>
-                        {% endif %}
-                    </div>
+                {% else %}
+                <div class="py-10 text-center text-gray-400 font-semibold">
+                    No payment history found yet.
                 </div>
+                {% endfor %}
             </div>
-            {% else %}
-            <div class="py-10 text-center text-gray-400 font-semibold">
-                No payment history found yet.
-            </div>
-            {% endfor %}
         </div>
     </div>
 </div>
@@ -538,7 +759,7 @@
     const txnSearch = document.getElementById('txnSearch');
     const txnStatusFilter = document.getElementById('txnStatusFilter');
     const txnRows = Array.from(document.querySelectorAll('.txn-row'));
-    const txnCards = Array.from(document.querySelectorAll('.txn-card'));
+    const txnCards = Array.from(document.querySelectorAll('.mobile-transaction-card'));
     const visibleTxnCount = document.getElementById('visibleTxnCount');
 
     function applyTransactionFilters() {

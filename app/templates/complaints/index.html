@@ -4,247 +4,502 @@
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 
 <style>
-    .chat-shell {
-        height: calc(100vh - 160px);
+    .complaints-shell {
+        min-height: calc(100vh - 170px);
     }
-    .messages-scroll {
-        height: calc(100vh - 360px);
+
+    .panel-card {
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+        border: 1px solid rgba(226, 232, 240, 0.95);
+        border-radius: 1.75rem;
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
     }
+
+    .soft-card {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 1.25rem;
+    }
+
     .threads-scroll {
-        height: calc(100vh - 260px);
+        max-height: 620px;
+        overflow-y: auto;
     }
+
+    .messages-scroll {
+        min-height: 360px;
+        max-height: 620px;
+        overflow-y: auto;
+        scroll-behavior: smooth;
+        background:
+            radial-gradient(circle at top right, rgba(37, 99, 235, 0.05), transparent 28%),
+            linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+    }
+
+    .threads-scroll::-webkit-scrollbar,
+    .messages-scroll::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .threads-scroll::-webkit-scrollbar-thumb,
+    .messages-scroll::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 999px;
+    }
+
+    .thread-active {
+        background: linear-gradient(180deg, rgba(37, 99, 235, 0.08), rgba(37, 99, 235, 0.04));
+        border-color: rgba(37, 99, 235, 0.22);
+        box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.06);
+    }
+
+    .thread-card {
+        transition: all 0.2s ease;
+    }
+
+    .thread-card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+    }
+
+    .bubble-wrap {
+        display: flex;
+        width: 100%;
+    }
+
     .bubble-me {
         background: linear-gradient(135deg, #2563eb, #1d4ed8);
         color: white;
-        border-radius: 1.25rem 1.25rem 0.35rem 1.25rem;
+        border-radius: 1.35rem 1.35rem 0.4rem 1.35rem;
+        box-shadow: 0 10px 24px rgba(37, 99, 235, 0.22);
     }
+
     .bubble-other {
-        background: #f3f4f6;
+        background: #ffffff;
         color: #111827;
-        border-radius: 1.25rem 1.25rem 1.25rem 0.35rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 1.35rem 1.35rem 1.35rem 0.4rem;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
     }
-    .thread-active {
-        background: rgba(37, 99, 235, 0.08);
-        border-color: rgba(37, 99, 235, 0.2);
+
+    .message-bubble {
+        max-width: min(74%, 720px);
+        padding: 1rem 1rem 0.95rem;
+    }
+
+    .attachment-tile {
+        display: block;
+        border-radius: 1rem;
+        overflow: hidden;
+        margin-top: 0.85rem;
+    }
+
+    .attachment-doc {
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        background: rgba(255, 255, 255, 0.12);
+        padding: 0.95rem 1rem;
+        font-size: 0.9rem;
+        font-weight: 800;
+        line-height: 1.4;
+        text-decoration: none;
+    }
+
+    .bubble-other .attachment-doc {
+        border: 1px solid #dbe3ee;
+        background: #f8fafc;
+        color: #0f172a;
+    }
+
+    .composer-box {
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+    }
+
+    .badge-pill {
+        border-radius: 999px;
+        padding: 0.42rem 0.8rem;
+        font-size: 0.68rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        line-height: 1;
+    }
+
+    .empty-state-ring {
+        background:
+            radial-gradient(circle at center, rgba(37, 99, 235, 0.08), rgba(37, 99, 235, 0.03));
+    }
+
+    .section-label {
+        font-size: 0.68rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        color: #64748b;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.9rem 1rem;
+        border-radius: 1rem;
+        border: 1px solid #d1d5db;
+        background: #ffffff;
+        font-size: 0.95rem;
+        color: #111827;
+        outline: none;
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus {
+        border-color: rgba(37, 99, 235, 0.6);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+    }
+
+    .compose-textarea {
+        min-height: 118px;
+        resize: vertical;
+    }
+
+    .sticky-thread-head {
+        position: sticky;
+        top: 0;
+        z-index: 8;
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.94);
+    }
+
+    @media (max-width: 1279px) {
+        .complaints-shell {
+            min-height: auto;
+        }
+
+        .threads-scroll,
+        .messages-scroll {
+            max-height: none;
+        }
+    }
+
+    @media (max-width: 767px) {
+        .panel-card {
+            border-radius: 1.4rem;
+        }
+
+        .message-bubble {
+            max-width: 92%;
+            padding: 0.9rem 0.9rem 0.85rem;
+        }
+
+        .threads-scroll {
+            max-height: 360px;
+        }
+
+        .messages-scroll {
+            min-height: 52vh;
+            max-height: 52vh;
+            padding-left: 0.9rem;
+            padding-right: 0.9rem;
+        }
+
+        .compose-textarea {
+            min-height: 96px;
+        }
+
+        .mobile-stack-gap {
+            gap: 0.75rem;
+        }
+
+        .mobile-chat-panel {
+            display: flex;
+            flex-direction: column;
+            min-height: 75vh;
+        }
+
+        .mobile-chat-main {
+            display: flex;
+            flex-direction: column;
+            min-height: 65vh;
+        }
+
+        .mobile-chat-main .messages-scroll {
+            flex: 1 1 auto;
+        }
+
+        .mobile-chat-main .composer-box {
+            flex-shrink: 0;
+        }
     }
 </style>
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 py-5 sm:py-6">
-    <div class="flex items-center justify-between gap-4 mb-6">
+<div class="max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-6">
+    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6">
         <div>
-            <p class="text-xs font-black uppercase tracking-[0.2em] text-brand mb-2">Support Center</p>
-            <h1 class="text-3xl sm:text-4xl font-black text-gray-900 tracking-tight">Complaints & Messaging</h1>
-            <p class="text-sm text-gray-500 mt-2">
-                Real-time support messaging with document, image, and video sharing.
+            <p class="section-label mb-2">Support Center</p>
+            <h1 class="text-2xl sm:text-4xl font-black text-gray-900 tracking-tight">Complaints & Messaging</h1>
+            <p class="text-sm sm:text-base text-gray-500 mt-2 max-w-2xl">
+                Real-time support chat for parents, school administrators, and ATOM Gate support with image, video, and document sharing.
             </p>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 chat-shell">
-        <!-- LEFT -->
-        <aside class="xl:col-span-4 bg-white border border-gray-200 rounded-3xl shadow-sm p-4 sm:p-5 flex flex-col">
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 lg:gap-6 complaints-shell">
+        <!-- LEFT SIDEBAR -->
+        <aside class="xl:col-span-4 panel-card p-4 sm:p-5 flex flex-col">
             <div class="flex items-center justify-between gap-3 mb-4">
-                <h2 class="text-lg font-black text-gray-900">Conversations</h2>
+                <div>
+                    <p class="section-label mb-1">Inbox</p>
+                    <h2 class="text-lg sm:text-xl font-black text-gray-900">Conversations</h2>
+                </div>
             </div>
 
             {% if current_user.role == 'parent' %}
-            <form id="parent-create-form" class="mb-4 p-4 rounded-2xl border border-gray-200 bg-gray-50 space-y-3">
+            <form id="parent-create-form" class="soft-card p-4 mb-4 space-y-3">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <h3 class="text-sm font-black text-gray-900">New Complaint</h3>
-                <select name="student_id" class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white">
+                <div>
+                    <p class="section-label mb-1">Create</p>
+                    <h3 class="text-sm sm:text-base font-black text-gray-900">Open New Complaint</h3>
+                </div>
+
+                <select name="student_id" class="form-control">
                     <option value="">Select Child</option>
                     {% for child in children %}
                     <option value="{{ child.id }}">{{ child.full_name }}</option>
                     {% endfor %}
                 </select>
-                <input type="text" name="subject" placeholder="Complaint subject"
-                       class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white">
-                <select name="priority" class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white">
-                    <option value="normal">Normal</option>
-                    <option value="high">High</option>
-                    <option value="urgent">Urgent</option>
-                    <option value="low">Low</option>
+
+                <input type="text" name="subject" placeholder="Complaint subject" class="form-control">
+
+                <select name="priority" class="form-control">
+                    <option value="normal">Normal Priority</option>
+                    <option value="high">High Priority</option>
+                    <option value="urgent">Urgent Priority</option>
+                    <option value="low">Low Priority</option>
                 </select>
-                <textarea name="message" placeholder="Describe the issue..." rows="3"
-                          class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white"></textarea>
+
+                <textarea name="message" placeholder="Describe the issue clearly..." rows="3" class="form-control"></textarea>
+
                 <button type="submit"
-                        class="w-full px-4 py-3 rounded-xl bg-brand text-white font-black hover:opacity-90 transition">
+                        class="w-full px-4 py-3 rounded-2xl bg-brand text-white font-black text-sm sm:text-base hover:opacity-90 transition shadow-sm">
                     Open Complaint
                 </button>
             </form>
             {% elif current_user.role == 'school_admin' %}
-            <form id="support-create-form" class="mb-4 p-4 rounded-2xl border border-gray-200 bg-gray-50 space-y-3">
+            <form id="support-create-form" class="soft-card p-4 mb-4 space-y-3">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <h3 class="text-sm font-black text-gray-900">New Support Ticket to ATOM Gate</h3>
-                <input type="text" name="subject" placeholder="Support subject"
-                       class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white">
-                <select name="priority" class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white">
-                    <option value="normal">Normal</option>
-                    <option value="high">High</option>
-                    <option value="urgent">Urgent</option>
-                    <option value="low">Low</option>
+                <div>
+                    <p class="section-label mb-1">Create</p>
+                    <h3 class="text-sm sm:text-base font-black text-gray-900">Open Support Thread</h3>
+                </div>
+
+                <input type="text" name="subject" placeholder="Support subject" class="form-control">
+
+                <select name="priority" class="form-control">
+                    <option value="normal">Normal Priority</option>
+                    <option value="high">High Priority</option>
+                    <option value="urgent">Urgent Priority</option>
+                    <option value="low">Low Priority</option>
                 </select>
-                <textarea name="message" placeholder="What do you need help with?" rows="3"
-                          class="w-full px-4 py-3 rounded-xl border border-gray-300 bg-white"></textarea>
+
+                <textarea name="message" placeholder="What do you need help with?" rows="3" class="form-control"></textarea>
+
                 <button type="submit"
-                        class="w-full px-4 py-3 rounded-xl bg-gray-900 text-white font-black hover:opacity-90 transition">
+                        class="w-full px-4 py-3 rounded-2xl bg-gray-900 text-white font-black text-sm sm:text-base hover:opacity-90 transition shadow-sm">
                     Open Support Thread
                 </button>
             </form>
             {% endif %}
 
-            <input id="threadSearch"
-                   type="text"
-                   placeholder="Search conversations..."
-                   class="w-full px-4 py-3 rounded-xl border border-gray-300 mb-4">
+            <div class="relative mb-4">
+                <input id="threadSearch"
+                       type="text"
+                       placeholder="Search conversations..."
+                       class="form-control pl-11">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔎</span>
+            </div>
 
-            <div id="threadList" class="threads-scroll overflow-y-auto space-y-3 pr-1">
+            <div id="threadList" class="threads-scroll space-y-3 pr-1">
                 {% for thread in threads %}
                 <a href="{{ url_for('complaints.complaints_home', thread_id=thread.id) }}"
-                   class="thread-card block border rounded-2xl p-4 hover:bg-gray-50 transition {{ 'thread-active' if selected_thread and selected_thread.id == thread.id else 'border-gray-200' }}"
+                   class="thread-card block border rounded-2xl p-4 {{ 'thread-active' if selected_thread and selected_thread.id == thread.id else 'border-gray-200 bg-white' }}"
                    data-search="{{ (thread.subject ~ ' ' ~ thread.subtitle ~ ' ' ~ thread.last_message_preview)|lower }}">
                     <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0">
+                        <div class="min-w-0 flex-1">
                             <h3 class="font-black text-gray-900 truncate">{{ thread.subject }}</h3>
                             <p class="text-xs text-gray-500 mt-1 truncate">{{ thread.subtitle }}</p>
                         </div>
                         {% if thread.unread_count > 0 %}
-                        <span class="inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full bg-red-500 text-white text-xs font-black">
+                        <span class="inline-flex items-center justify-center min-w-[24px] h-6 px-2 rounded-full bg-red-500 text-white text-xs font-black shadow-sm">
                             {{ thread.unread_count }}
                         </span>
                         {% endif %}
                     </div>
+
                     <div class="flex items-center gap-2 mt-3 flex-wrap">
-                        <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase
+                        <span class="badge-pill
                             {% if thread.priority == 'urgent' %}bg-red-100 text-red-700
                             {% elif thread.priority == 'high' %}bg-orange-100 text-orange-700
                             {% elif thread.priority == 'low' %}bg-slate-100 text-slate-700
                             {% else %}bg-blue-100 text-blue-700{% endif %}">
                             {{ thread.priority }}
                         </span>
-                        <span class="px-2.5 py-1 rounded-full text-[10px] font-black uppercase bg-gray-100 text-gray-700">
+
+                        <span class="badge-pill bg-gray-100 text-gray-700">
                             {{ thread.status }}
                         </span>
+
+                        <span class="badge-pill bg-indigo-50 text-indigo-700">
+                            {{ 'School Support' if thread.thread_type == 'school_support' else 'Parent Thread' }}
+                        </span>
                     </div>
+
                     <p class="text-sm text-gray-600 mt-3 truncate">{{ thread.last_message_preview }}</p>
                 </a>
                 {% else %}
-                <div class="py-12 text-center text-gray-400 font-semibold">
+                <div class="soft-card py-12 px-5 text-center text-gray-400 font-semibold">
                     No complaint threads yet.
                 </div>
                 {% endfor %}
             </div>
         </aside>
 
-        <!-- CENTER -->
-        <section class="xl:col-span-8 bg-white border border-gray-200 rounded-3xl shadow-sm flex flex-col overflow-hidden">
+        <!-- MAIN CHAT -->
+        <section class="xl:col-span-8 panel-card overflow-hidden mobile-chat-panel">
             {% if selected_thread %}
-            <div class="px-5 sm:px-6 py-4 border-b border-gray-200 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <div>
-                    <h2 class="text-xl font-black text-gray-900">{{ selected_thread.subject }}</h2>
-                    <p class="text-sm text-gray-500 mt-1">
-                        {% if selected_thread.thread_type == 'parent_school' %}
-                            {{ selected_thread.student.full_name if selected_thread.student else 'Student' }} • {{ selected_thread.school.name if selected_thread.school else 'School' }}
-                        {% else %}
-                            {{ selected_thread.school.name if selected_thread.school else 'School' }} • ATOM Gate Support
-                        {% endif %}
-                    </p>
-                </div>
+            <div class="mobile-chat-main">
+                <div class="sticky-thread-head px-4 sm:px-6 py-4 border-b border-gray-200">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mobile-stack-gap">
+                        <div class="min-w-0">
+                            <p class="section-label mb-1">Active Conversation</p>
+                            <h2 class="text-lg sm:text-2xl font-black text-gray-900 truncate">{{ selected_thread.subject }}</h2>
+                            <p class="text-sm text-gray-500 mt-1">
+                                {% if selected_thread.thread_type == 'parent_school' %}
+                                    {{ selected_thread.student.full_name if selected_thread.student else 'Student' }} • {{ selected_thread.school.name if selected_thread.school else 'School' }}
+                                {% else %}
+                                    {{ selected_thread.school.name if selected_thread.school else 'School' }} • ATOM Gate Support
+                                {% endif %}
+                            </p>
+                        </div>
 
-                <div class="flex items-center gap-3 flex-wrap">
-                    <span class="px-3 py-1.5 rounded-full text-xs font-black uppercase bg-gray-100 text-gray-700">
-                        {{ selected_thread.status }}
-                    </span>
+                        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                            <span class="badge-pill bg-gray-100 text-gray-700">
+                                {{ selected_thread.status }}
+                            </span>
 
-                    {% if current_user.role in ['school_admin', 'super_admin'] %}
-                    <form id="statusForm" class="flex items-center gap-2">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <select name="status" class="px-3 py-2 rounded-xl border border-gray-300 bg-white text-sm">
-                            <option value="open" {% if selected_thread.status == 'open' %}selected{% endif %}>Open</option>
-                            <option value="pending" {% if selected_thread.status == 'pending' %}selected{% endif %}>Pending</option>
-                            <option value="resolved" {% if selected_thread.status == 'resolved' %}selected{% endif %}>Resolved</option>
-                            <option value="closed" {% if selected_thread.status == 'closed' %}selected{% endif %}>Closed</option>
-                        </select>
-                        <button type="submit" class="px-4 py-2 rounded-xl bg-gray-900 text-white text-sm font-black">
-                            Update
-                        </button>
-                    </form>
-                    {% endif %}
-                </div>
-            </div>
-
-            <div id="messagesArea" class="messages-scroll overflow-y-auto px-4 sm:px-6 py-5 bg-slate-50">
-                <div id="typingIndicator" class="hidden text-xs text-gray-500 font-bold mb-3">Someone is typing...</div>
-
-                <div id="messagesList" class="space-y-4">
-                    {% for msg in selected_messages %}
-                    <div class="flex {% if msg.sender_id == current_user.id %}justify-end{% else %}justify-start{% endif %}">
-                        <div class="max-w-[85%] sm:max-w-[70%] px-4 py-3 shadow-sm {% if msg.sender_id == current_user.id %}bubble-me{% else %}bubble-other{% endif %}">
-                            <div class="flex items-center justify-between gap-3 mb-1">
-                                <span class="text-[11px] font-black uppercase tracking-[0.14em] {% if msg.sender_id == current_user.id %}text-blue-100{% else %}text-gray-500{% endif %}">
-                                    {{ 'You' if msg.sender_id == current_user.id else (msg.sender.email if msg.sender else 'User') }}
-                                </span>
-                                <span class="text-[10px] {% if msg.sender_id == current_user.id %}text-blue-100{% else %}text-gray-400{% endif %}">
-                                    {{ msg.created_at.strftime('%d %b %Y, %I:%M %p') }}
-                                </span>
-                            </div>
-
-                            {% if msg.body %}
-                            <div class="text-sm leading-6 whitespace-pre-wrap">{{ msg.body }}</div>
+                            {% if selected_thread.priority == 'urgent' %}
+                            <span class="badge-pill bg-red-100 text-red-700">Urgent</span>
+                            {% elif selected_thread.priority == 'high' %}
+                            <span class="badge-pill bg-orange-100 text-orange-700">High</span>
+                            {% elif selected_thread.priority == 'low' %}
+                            <span class="badge-pill bg-slate-100 text-slate-700">Low</span>
+                            {% else %}
+                            <span class="badge-pill bg-blue-100 text-blue-700">Normal</span>
                             {% endif %}
 
-                            {% for att in msg.attachments.all() %}
-                                {% if att.media_kind == 'image' %}
-                                    <a href="{{ att.file_url }}" target="_blank">
-                                        <img src="{{ att.file_url }}" alt="{{ att.file_name }}" class="rounded-2xl border border-white/20 max-h-72 object-cover">
-                                    </a>
-                                {% elif att.media_kind == 'video' %}
-                                    <video controls class="w-full rounded-2xl border border-white/20 max-h-72">
-                                        <source src="{{ att.file_url }}" type="{{ att.mime_type or 'video/mp4' }}">
-                                    </video>
-                                {% else %}
-                                    <a href="{{ att.file_url }}" target="_blank"
-                                        class="block rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-bold underline">
-                                        📎 {{ att.file_name }}
-                                    </a>
-                                {% endif %}
-                            {% endfor %}
+                            {% if current_user.role in ['school_admin', 'super_admin'] %}
+                            <form id="statusForm" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <select name="status" class="form-control !py-2.5 !rounded-xl !text-sm !min-w-[140px]">
+                                    <option value="open" {% if selected_thread.status == 'open' %}selected{% endif %}>Open</option>
+                                    <option value="pending" {% if selected_thread.status == 'pending' %}selected{% endif %}>Pending</option>
+                                    <option value="resolved" {% if selected_thread.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                                    <option value="closed" {% if selected_thread.status == 'closed' %}selected{% endif %}>Closed</option>
+                                </select>
+                                <button type="submit"
+                                        class="px-4 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-black hover:opacity-90 transition">
+                                    Update
+                                </button>
+                            </form>
+                            {% endif %}
                         </div>
                     </div>
-                    {% endfor %}
+                </div>
+
+                <div id="messagesArea" class="messages-scroll px-3 sm:px-6 py-4 sm:py-5">
+                    <div id="typingIndicator"
+                         class="hidden mb-3 inline-flex items-center gap-2 rounded-full bg-white border border-gray-200 px-3 py-2 text-xs font-bold text-gray-500 shadow-sm">
+                        <span class="animate-pulse">●</span>
+                        Someone is typing...
+                    </div>
+
+                    <div id="messagesList" class="space-y-4 sm:space-y-5">
+                        {% for msg in selected_messages %}
+                        <div class="bubble-wrap {% if msg.sender_id == current_user.id %}justify-end{% else %}justify-start{% endif %}">
+                            <div class="message-bubble {% if msg.sender_id == current_user.id %}bubble-me{% else %}bubble-other{% endif %}">
+                                <div class="flex items-center justify-between gap-3 mb-2">
+                                    <span class="text-[11px] font-black uppercase tracking-[0.14em] {% if msg.sender_id == current_user.id %}text-blue-100{% else %}text-gray-500{% endif %}">
+                                        {{ 'You' if msg.sender_id == current_user.id else (msg.sender.email if msg.sender else 'User') }}
+                                    </span>
+                                    <span class="text-[10px] {% if msg.sender_id == current_user.id %}text-blue-100{% else %}text-gray-400{% endif %}">
+                                        {{ msg.created_at.strftime('%d %b %Y, %I:%M %p') }}
+                                    </span>
+                                </div>
+
+                                {% if msg.body %}
+                                <div class="text-sm leading-6 whitespace-pre-wrap break-words">{{ msg.body }}</div>
+                                {% endif %}
+
+                                {% for att in msg.attachments.all() %}
+                                    {% if att.media_kind == 'image' %}
+                                        <a href="{{ att.file_url }}" target="_blank" class="attachment-tile">
+                                            <img src="{{ att.file_url }}"
+                                                 alt="{{ att.file_name }}"
+                                                 class="w-full rounded-2xl border border-white/20 max-h-80 object-cover">
+                                        </a>
+                                    {% elif att.media_kind == 'video' %}
+                                        <div class="attachment-tile">
+                                            <video controls class="w-full rounded-2xl border border-white/20 max-h-80 bg-black">
+                                                <source src="{{ att.file_url }}" type="{{ att.mime_type or 'video/mp4' }}">
+                                            </video>
+                                        </div>
+                                    {% else %}
+                                        <a href="{{ att.file_url }}" target="_blank" class="attachment-doc attachment-tile">
+                                            📎 {{ att.file_name }}
+                                        </a>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="composer-box p-4 sm:p-5 border-t border-gray-200">
+                    <form id="messageForm" class="space-y-3">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <textarea id="messageInput"
+                                  name="body"
+                                  rows="3"
+                                  placeholder="Write a message..."
+                                  class="form-control compose-textarea"></textarea>
+
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                                <input type="file" id="fileInput" class="hidden">
+                                <button type="button"
+                                        id="attachBtn"
+                                        class="px-4 py-2.5 rounded-xl border border-gray-300 bg-white text-sm font-black text-gray-700 hover:bg-gray-50 transition">
+                                    Attach File
+                                </button>
+                                <span id="fileNamePreview" class="text-xs text-gray-500 font-semibold break-all"></span>
+                            </div>
+
+                            <button type="submit"
+                                    class="px-5 py-3 rounded-2xl bg-brand text-white text-sm font-black hover:opacity-90 transition shadow-sm w-full sm:w-auto">
+                                Send Message
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
-
-            <div class="p-4 sm:p-5 border-t border-gray-200 bg-white">
-                <form id="messageForm" class="space-y-3">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <textarea id="messageInput" name="body" rows="3"
-                              placeholder="Write a message..."
-                              class="w-full px-4 py-3 rounded-2xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <div class="flex items-center gap-3">
-                            <input type="file" id="fileInput" class="hidden">
-                            <button type="button" id="attachBtn"
-                                    class="px-4 py-2.5 rounded-xl border border-gray-300 bg-white text-sm font-black text-gray-700">
-                                Attach File
-                            </button>
-                            <span id="fileNamePreview" class="text-xs text-gray-500 font-semibold"></span>
-                        </div>
-
-                        <button type="submit"
-                                class="px-5 py-3 rounded-xl bg-brand text-white text-sm font-black hover:opacity-90 transition">
-                            Send Message
-                        </button>
-                    </div>
-                </form>
-            </div>
             {% else %}
-            <div class="flex-1 flex items-center justify-center px-8 text-center">
-                <div>
-                    <div class="w-24 h-24 rounded-[2rem] bg-gray-100 flex items-center justify-center text-4xl mx-auto mb-5">💬</div>
-                    <h2 class="text-2xl font-black text-gray-900">Select a Conversation</h2>
-                    <p class="text-gray-500 mt-2">Open a thread from the left to start messaging in real time.</p>
+            <div class="flex-1 flex items-center justify-center px-6 py-12 text-center min-h-[420px]">
+                <div class="max-w-md">
+                    <div class="w-24 h-24 rounded-[2rem] empty-state-ring border border-blue-100 flex items-center justify-center text-4xl mx-auto mb-5 shadow-sm">
+                        💬
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-black text-gray-900">Select a Conversation</h2>
+                    <p class="text-gray-500 mt-3 leading-7">
+                        Choose a thread from the left to view messages, share files, and continue the conversation in real time.
+                    </p>
                 </div>
             </div>
             {% endif %}
@@ -350,24 +605,24 @@
 
     function renderAttachment(att) {
         if (att.media_kind === 'image') {
-            return `<div class="mt-3"><a href="${att.file_url}" target="_blank"><img src="${att.file_url}" class="rounded-2xl border border-white/20 max-h-72 object-cover"></a></div>`;
+            return `<div class="attachment-tile"><a href="${att.file_url}" target="_blank"><img src="${att.file_url}" class="w-full rounded-2xl border border-white/20 max-h-80 object-cover"></a></div>`;
         }
         if (att.media_kind === 'video') {
-            return `<div class="mt-3"><video controls class="w-full rounded-2xl border border-white/20 max-h-72"><source src="${att.file_url}" type="${att.mime_type || 'video/mp4'}"></video></div>`;
+            return `<div class="attachment-tile"><video controls class="w-full rounded-2xl border border-white/20 max-h-80 bg-black"><source src="${att.file_url}" type="${att.mime_type || 'video/mp4'}"></video></div>`;
         }
-        return `<div class="mt-3"><a href="${att.file_url}" target="_blank" class="block rounded-2xl border border-white/20 bg-white/10 px-4 py-3 text-sm font-bold underline">📎 ${att.file_name}</a></div>`;
+        return `<a href="${att.file_url}" target="_blank" class="attachment-doc attachment-tile">📎 ${att.file_name}</a>`;
     }
 
     function appendMessage(msg) {
         const mine = msg.sender_id === currentUserId;
         const wrapper = document.createElement('div');
-        wrapper.className = `flex ${mine ? 'justify-end' : 'justify-start'}`;
+        wrapper.className = `bubble-wrap ${mine ? 'justify-end' : 'justify-start'}`;
 
         const attachmentsHtml = (msg.attachments || []).map(renderAttachment).join('');
 
         wrapper.innerHTML = `
-            <div class="max-w-[85%] sm:max-w-[70%] px-4 py-3 shadow-sm ${mine ? 'bubble-me' : 'bubble-other'}">
-                <div class="flex items-center justify-between gap-3 mb-1">
+            <div class="message-bubble ${mine ? 'bubble-me' : 'bubble-other'}">
+                <div class="flex items-center justify-between gap-3 mb-2">
                     <span class="text-[11px] font-black uppercase tracking-[0.14em] ${mine ? 'text-blue-100' : 'text-gray-500'}">
                         ${mine ? 'You' : (msg.sender_email || 'User')}
                     </span>
@@ -375,7 +630,7 @@
                         ${msg.created_at}
                     </span>
                 </div>
-                ${msg.body ? `<div class="text-sm leading-6 whitespace-pre-wrap">${msg.body}</div>` : ''}
+                ${msg.body ? `<div class="text-sm leading-6 whitespace-pre-wrap break-words">${msg.body}</div>` : ''}
                 ${attachmentsHtml}
             </div>
         `;

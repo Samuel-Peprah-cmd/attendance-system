@@ -32,6 +32,8 @@ def login():
             # If they are active (or a super_admin), let them into the dashboard
             if user.role == 'super_admin':
                 return redirect(url_for("schools.manage_schools"))
+            if user.role == 'parent':
+                return redirect(url_for("dashboard.parent_dashboard"))
             return redirect(url_for("dashboard.index"))
         
         flash("Invalid credentials.", "danger")
